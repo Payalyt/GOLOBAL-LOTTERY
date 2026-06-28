@@ -1,0 +1,197 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "A user registered in the system containing credit and winning balances.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "balance": { "type": "number" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "dob": { "type": "string" },
+        "phone": { "type": "string" },
+        "country": { "type": "string" },
+        "winningsBalance": { "type": "number" },
+        "commissionBalance": { "type": "number" },
+        "profileImage": { "type": "string" },
+        "nidNumber": { "type": "string" },
+        "passportNumber": { "type": "string" }
+      },
+      "required": ["name", "email", "balance", "role", "phone", "country"]
+    },
+    "WithdrawalRequest": {
+      "title": "WithdrawalRequest",
+      "description": "Record representing a simulated cashout bank wire or MFS request.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "amount": { "type": "number" },
+        "bankName": { "type": "string" },
+        "iban": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"] },
+        "accountName": { "type": "string" },
+        "userBalanceAtRequest": { "type": "number" }
+      },
+      "required": ["id", "email", "amount", "bankName", "iban", "date", "status"]
+    },
+    "DepositRequest": {
+      "title": "DepositRequest",
+      "description": "Record representing a pending or processed deposit ticket via mobile gateways.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "amount": { "type": "number" },
+        "gateway": { "type": "string" },
+        "transactionId": { "type": "string" },
+        "details": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"] }
+      },
+      "required": ["id", "email", "amount", "gateway", "transactionId", "date", "status"]
+    },
+    "PurchasedTicket": {
+      "title": "PurchasedTicket",
+      "description": "A lottery ticket purchased by a user containing custom picked numbers.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "numbers": { "type": "array" },
+        "price": { "type": "number" },
+        "gameName": { "type": "string" },
+        "purchaseDate": { "type": "string" },
+        "email": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Won", "Lost"] },
+        "payout": { "type": "string" }
+      },
+      "required": ["id", "numbers", "price", "gameName", "purchaseDate", "email", "status"]
+    },
+    "HistoricalDraw": {
+      "title": "HistoricalDraw",
+      "description": "Historical lottery draws recorded on the platform.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "gameName": { "type": "string" },
+        "drawDate": { "type": "string" },
+        "winningNumbers": { "type": "array" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "gameName", "drawDate", "winningNumbers", "status"]
+    },
+    "DailyRaffleWinner": {
+      "title": "DailyRaffleWinner",
+      "description": "A customer highlighted as a daily raffle draw winner.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "country": { "type": "string" },
+        "flag": { "type": "string" },
+        "ticket": { "type": "string" },
+        "prize": { "type": "string" },
+        "game": { "type": "string" },
+        "avatarBg": { "type": "string" },
+        "initials": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["id", "name", "country", "flag", "ticket", "prize", "game", "avatarBg", "initials"]
+    },
+    "SiteThemeConfig": {
+      "title": "SiteThemeConfig",
+      "description": "Admin configuration and customized texts/MFS details for the web app.",
+      "type": "object",
+      "properties": {
+        "primaryHex": { "type": "string" },
+        "primaryLogoText": { "type": "string" },
+        "heroHeadline": { "type": "string" },
+        "heroJackpotAmount": { "type": "string" },
+        "heroDetails": { "type": "string" },
+        "heroDaysToGo": { "type": "string" },
+        "bannerMascotUrl": { "type": "string" },
+        "customBgColor": { "type": "string" },
+        "heroBannerBgType": { "type": "string" },
+        "heroBannerBgSolidHex": { "type": "string" },
+        "allGamesSolidBg": { "type": "boolean" },
+        "allGamesSolidHex": { "type": "string" },
+        "bkashNumber": { "type": "string" },
+        "bkashEnabled": { "type": "boolean" },
+        "bkashInstructions": { "type": "string" },
+        "nagadNumber": { "type": "string" },
+        "nagadEnabled": { "type": "boolean" },
+        "nagadInstructions": { "type": "string" },
+        "rocketNumber": { "type": "string" },
+        "rocketEnabled": { "type": "boolean" },
+        "rocketInstructions": { "type": "string" },
+        "visaEnabled": { "type": "boolean" },
+        "visaInstructions": { "type": "string" },
+        "mastercardEnabled": { "type": "boolean" },
+        "mastercardInstructions": { "type": "string" },
+        "usdtAddress": { "type": "string" },
+        "usdtEnabled": { "type": "boolean" },
+        "usdtInstructions": { "type": "string" },
+        "governmentFeePct": { "type": "number" },
+        "maxWithdrawalAmount": { "type": "number" },
+        "agentWhatsappLink": { "type": "string" },
+        "agentImoLink": { "type": "string" },
+        "agentTelegramLink": { "type": "string" },
+        "agentEnabled": { "type": "boolean" },
+        "agentInstructions": { "type": "string" }
+      }
+    },
+    "DynamicGame": {
+      "title": "DynamicGame",
+      "description": "Lottery Game metadata details dynamic config.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "prize": { "type": "string" },
+        "price": { "type": "number" },
+        "drawTime": { "type": "string" },
+        "targetDateStr": { "type": "string" },
+        "bgHex": { "type": "string" },
+        "isSolidStyle": { "type": "boolean" },
+        "ballCount": { "type": "number" },
+        "maxBallValue": { "type": "number" }
+      },
+      "required": ["name", "prize", "price", "drawTime", "targetDateStr", "bgHex", "isSolidStyle"]
+    }
+  },
+  "firestore": {
+    "/users/{email}": {
+      "schema": "UserProfile",
+      "description": "User profile collection, mapped by user's email for seamless cross-device auth matches."
+    },
+    "/withdrawalRequests/{requestId}": {
+      "schema": "WithdrawalRequest",
+      "description": "Withdrawal request collection."
+    },
+    "/depositRequests/{requestId}": {
+      "schema": "DepositRequest",
+      "description": "Deposit request collection."
+    },
+    "/purchasedTickets/{ticketId}": {
+      "schema": "PurchasedTicket",
+      "description": "Purchased tickets details collection."
+    },
+    "/historicalDraws/{drawId}": {
+      "schema": "HistoricalDraw",
+      "description": "Historical lottery draws collection."
+    },
+    "/raffleWinners/{winnerId}": {
+      "schema": "DailyRaffleWinner",
+      "description": "Daily raffle winner details collection."
+    },
+    "/siteConfigs/{configId}": {
+      "schema": "SiteThemeConfig",
+      "description": "Site configurations documents."
+    },
+    "/dynamicGames/{gameName}": {
+      "schema": "DynamicGame",
+      "description": "Dynamic game configuration collection."
+    }
+  }
+}
