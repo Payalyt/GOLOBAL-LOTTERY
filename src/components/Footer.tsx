@@ -425,13 +425,13 @@ export function Footer() {
                 </span>
                 <span className="text-[10px] text-zinc-500 font-mono">@drawsupport</span>
               </a>
-              <a href="#" className="bg-zinc-900 border border-zinc-800 hover:border-teal-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
+              <a href={siteConfig.agentImoLink || "https://imo.im/"} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-teal-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'IMO Chat' : 'ইমো চ্যাট'}
                 </span>
                 <span className="text-[10px] text-zinc-500 font-mono">Live IMO</span>
               </a>
-              <a href="#" className="bg-zinc-900 border border-zinc-800 hover:border-purple-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
+              <a href={siteConfig.agentWhatsappLink || "https://wa.me/1234567890"} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-purple-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'Live Chat' : 'লাইভ চ্যাট'}
                 </span>

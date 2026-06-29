@@ -64,12 +64,12 @@ export function Checkout() {
     setIsProcessing(true);
 
     setTimeout(() => {
-      // Direct MFS gateway or card payment simulation: Auto-credit profile with exact deficit to pass balance constraints
-      if (paymentMethod === 'bkash' || paymentMethod === 'nagad' || paymentMethod === 'card') {
-        const currentUserBalance = user.balance;
-        if (currentUserBalance < totalAmount) {
-          updateUserBalance(user.email, totalAmount - currentUserBalance);
-        }
+      // Check if user has sufficient balance before executing buy tickets
+      const currentUserBalance = user.balance;
+      if (currentUserBalance < totalAmount) {
+        setIsProcessing(false);
+        alert(`Insufficient balance. Please deposit funds via Dashboard. Short of $${(totalAmount - currentUserBalance).toFixed(2)}`);
+        return;
       }
 
       // Execute buy tickets

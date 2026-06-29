@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, UserProfile } from '../context/AuthContext';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Eye, EyeOff, X } from 'lucide-react';
 
 const COUNTRIES_LIST = [
@@ -146,9 +146,27 @@ export function Register() {
     }
 
     try {
-      // 1. Create authentication in Firebase Auth
-      let authUser: any;
       const emailToUse = formData.email.trim().toLowerCase();
+
+      // 1. Check if user already exists in Firestore to prevent duplicate registration
+      try {
+        const userDocRef = doc(db, 'users', emailToUse);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          setErrorMsg(
+            language === 'en'
+              ? "This email is already registered. You cannot create multiple accounts with the same email. Please use a different email or log in."
+              : "এই ইমেইলটি ইতিমধ্যে নিবন্ধিত হয়েছে। একটি ইমেইল দিয়ে একাধিক অ্যাকাউন্ট খোলা সম্ভব নয়। অনুগ্রহ করে অন্য ইমেইল ব্যবহার করুন বা লগইন করুন।"
+          );
+          setLoading(false);
+          return;
+        }
+      } catch (fsCheckErr) {
+        console.warn("Firestore pre-check failed, continuing...", fsCheckErr);
+      }
+
+      // 2. Create authentication in Firebase Auth
+      let authUser: any;
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, emailToUse, formData.password);
         authUser = userCredential.user;

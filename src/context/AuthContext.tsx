@@ -181,6 +181,7 @@ interface AuthContextType {
   buyTickets: (newTickets: Array<{ id: number; numbers: number[]; price: number; gameName: string }>) => boolean;
   updateUserBalance: (email: string, amount: number) => void;
   updateUserProfileFields: (email: string, fields: Partial<UserProfile>) => Promise<void>;
+  deleteUserFirestore: (email: string) => Promise<void>;
   triggerDraw: (gameName: string, winningNumbers: number[]) => { matchedIds: number[]; payoutTotal: number };
   logout: () => void;
   historicalDraws: HistoricalDraw[];
@@ -915,6 +916,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteUserFirestore = async (email: string) => {
+    try {
+      const userRef = doc(db, 'users', email.toLowerCase());
+      await deleteDoc(userRef);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `users/${email}`);
+    }
+  };
+
   const addHistoricalDraw = async (draw: HistoricalDraw) => {
     try {
       await setDoc(doc(db, 'historicalDraws', draw.id), draw);
@@ -1123,6 +1133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       buyTickets,
       updateUserBalance,
       updateUserProfileFields,
+      deleteUserFirestore,
       triggerDraw,
       logout,
       historicalDraws,

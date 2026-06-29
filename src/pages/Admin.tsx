@@ -28,7 +28,8 @@ export function Admin() {
     updateWithdrawalStatus,
     depositRequests = [],
     setDepositRequests,
-    updateDepositStatus
+    updateDepositStatus,
+    deleteUserFirestore
   } = useAuth();
   
   const navigate = useNavigate();
@@ -629,11 +630,16 @@ export function Admin() {
   };
 
   // Delete simulated user profile
-  const handleDeleteUser = (email: string) => {
-    if (email === user.email) {
+  const handleDeleteUser = async (email: string) => {
+    if (email === user?.email) {
       alert("Cannot delete your own admin profile!");
       return;
     }
+    
+    if (deleteUserFirestore) {
+       await deleteUserFirestore(email);
+    }
+    // Update local state temporarily for fast feedback
     setAllUsers(prev => prev.filter(u => u.email !== email));
   };
 
