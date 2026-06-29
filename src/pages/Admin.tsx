@@ -11,6 +11,7 @@ export function Admin() {
     setAllUsers, 
     tickets, 
     updateUserBalance, 
+    updateUserProfileFields,
     triggerDraw,
     historicalDraws,
     addHistoricalDraw,
@@ -594,6 +595,22 @@ export function Admin() {
     updateUserBalance(selectedUserEmail, amt * mult);
     alert(`💼 Adjusted user account balance successfully!`);
     setAdjustmentAmount('100');
+  };
+
+  const handleBalanceOverride = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserEmail) {
+      alert("Please select a target user account.");
+      return;
+    }
+    const amt = parseFloat(adjustmentAmount);
+    if (isNaN(amt) || amt < 0) {
+      alert("Enter a valid number.");
+      return;
+    }
+    updateUserProfileFields(selectedUserEmail, { balance: amt });
+    alert(`💼 Exact balance set successfully to $${amt}!`);
+    setAdjustmentAmount('');
   };
 
   // Promote/demote role
@@ -1693,6 +1710,12 @@ export function Admin() {
                     className="bg-zinc-800 hover:bg-zinc-700 text-white font-bold p-2.5 rounded-xl text-xs uppercase cursor-pointer shrink-0 border border-zinc-700"
                   >
                     - Deduct
+                  </button>
+                  <button 
+                    onClick={(e) => handleBalanceOverride(e)}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold p-2.5 rounded-xl text-xs uppercase cursor-pointer shrink-0 ml-1"
+                  >
+                    = Set Exact
                   </button>
                 </form>
               </div>
