@@ -659,7 +659,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubSite = onSnapshot(doc(db, 'siteConfigs', 'default'), (snap) => {
       if (snap.exists()) {
-        setSiteConfig(snap.data() as SiteThemeConfig);
+        const data = snap.data() as Partial<SiteThemeConfig>;
+        setSiteConfig({ ...DEFAULT_SITE_CONFIG, ...data });
       }
     }, (err) => handleFirestoreError(err, OperationType.GET, 'siteConfigs/default'));
 

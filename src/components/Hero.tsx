@@ -37,6 +37,13 @@ export function Hero() {
     return () => clearInterval(interval);
   }, [activeBanners.length]);
 
+  // Ensure slide index is within bounds if banners change
+  useEffect(() => {
+    if (currentSlide >= activeBanners.length) {
+      setCurrentSlide(0);
+    }
+  }, [activeBanners.length, currentSlide]);
+
   const handlePrevSlide = (e: React.MouseEvent) => {
     e.stopPropagation();
     setCurrentSlide(prev => (prev - 1 + activeBanners.length) % activeBanners.length);
@@ -49,7 +56,7 @@ export function Hero() {
 
   // If there are active custom banners, render the dynamic slider
   if (activeBanners.length > 0) {
-    const banner = activeBanners[currentSlide];
+    const banner = activeBanners[currentSlide] || activeBanners[0];
     const resolvedImageUrl = resolveBannerImage(banner.imageUrl);
 
     // Dynamic background styles based on customized configurations
