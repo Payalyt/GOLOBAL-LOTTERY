@@ -5,6 +5,10 @@ import { useAuth } from '../context/AuthContext';
 
 export function resolveBannerImage(url: string): string {
   if (!url) return '';
+  // Convert old /src/assets/images paths to /images
+  if (url.startsWith('/src/assets/images/')) {
+    return url.replace('/src/assets/images/', '/images/');
+  }
   // Convert standard Imgbb sharing link to direct image link!
   // e.g., https://ibb.co/spTPp8qB -> https://i.ibb.co/spTPp8qB/image.png
   // e.g., http://ibb.co/spTPp8qB -> https://i.ibb.co/spTPp8qB/image.png
@@ -239,7 +243,7 @@ export function Hero() {
             className="w-full object-cover scale-[1.02] group-hover:scale-105 transition-transform duration-[1200ms] h-[200px] sm:h-[280px] md:h-[320px]"
             referrerPolicy="no-referrer"
             onError={(e) => {
-              e.currentTarget.src = "/src/assets/images/emirates_winner_mascot_1781774955947.jpg";
+              e.currentTarget.src = "/images/emirates_winner_mascot_1781774955947.jpg";
             }}
           />
           {/* Shimmer gradient glass layer */}

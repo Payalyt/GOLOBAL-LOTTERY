@@ -2084,7 +2084,7 @@ export function Admin() {
                     <div className="flex flex-wrap gap-2 mt-2 select-none">
                       <button
                         type="button"
-                        onClick={() => setBannerMascotUrl('/src/assets/images/emirates_winner_mascot_1781774955947.jpg')}
+                        onClick={() => setBannerMascotUrl('/images/emirates_winner_mascot_1781774955947.jpg')}
                         className="bg-zinc-850 hover:bg-zinc-800 text-zinc-350 hover:text-white px-3 py-1.5 rounded text-[9.5px] font-bold transition-colors cursor-pointer border border-zinc-800"
                       >
                         ⭐ Default Mascot
@@ -2181,7 +2181,7 @@ export function Admin() {
                 </form>
 
                 {/* Real-time Dynamic Game Settings Configuration */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-6">
+                <div className="lg:col-span-5 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-6">
                   <div className="bg-zinc-950 p-5 rounded-2xl border border-zinc-800 space-y-4">
                     <div className="border-b border-zinc-900 pb-2">
                       <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest block">🎛️ Individual Game Settings Editor</span>
@@ -3079,7 +3079,7 @@ export function Admin() {
                           type="text"
                           value={newWinnerImageUrl}
                           onChange={(e) => setNewWinnerImageUrl(e.target.value)}
-                          placeholder="e.g. https://images.unsplash.com/... or /src/assets/images/winner.jpg"
+                          placeholder="e.g. https://images.unsplash.com/... or /images/winner.jpg"
                           className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-emerald-500 font-mono"
                         />
                       </div>

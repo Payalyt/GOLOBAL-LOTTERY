@@ -263,7 +263,7 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
   heroJackpotAmount: '$50,000,000',
   heroDetails: 'Draw ends 21st June & resets to $30,000,000',
   heroDaysToGo: '3',
-  bannerMascotUrl: '/src/assets/images/emirates_winner_mascot_1781774955947.jpg',
+  bannerMascotUrl: '/images/emirates_winner_mascot_1781774955947.jpg',
   customBgColor: '#F4F4F6',
   heroBannerBgType: 'gradient',
   heroBannerBgSolidHex: '#E52535',
@@ -996,6 +996,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateSiteConfig = async (newConfig: Partial<SiteThemeConfig>) => {
     try {
+      setSiteConfig(prev => ({ ...prev, ...newConfig }));
       await setDoc(doc(db, 'siteConfigs', 'default'), newConfig, { merge: true });
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, 'siteConfigs/default');

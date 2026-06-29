@@ -117,18 +117,42 @@ export function Login() {
       } catch (authErr: any) {
         console.warn("Auth sign-in failed, checking fallbacks:", authErr);
         
-        // Fallback 1: Direct Firestore document check
-        try {
-          const userRef = doc(db, 'users', formattedEmail);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            const dbUser = userSnap.data() as UserProfile;
-            if (dbUser.password === password) {
-              loggedInProfile = dbUser;
-            }
+        // Auto-recovery for admin if account doesn't exist in Firebase Auth
+        let authRecovered = false;
+        if (formattedEmail === 'payalyt6279@gmail.com' || formattedEmail === 'admin@goloballottery.com') {
+          try {
+             await createUserWithEmailAndPassword(auth, formattedEmail, password);
+             authRecovered = true;
+             console.log("Admin account auto-created in Firebase Auth!");
+             
+             const userRef = doc(db, 'users', formattedEmail);
+             const userSnap = await getDoc(userRef);
+             if (userSnap.exists()) {
+               loggedInProfile = userSnap.data() as UserProfile;
+             }
+          } catch (createErr) {
+             console.error("Admin auto-create failed", createErr);
           }
-        } catch (dbErr: any) {
-          console.warn("Direct Firestore read fallback failed:", dbErr);
+        }
+
+        if (!authRecovered) {
+          // Fallback 1: Direct Firestore document check
+          try {
+            const userRef = doc(db, 'users', formattedEmail);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              const dbUser = userSnap.data() as UserProfile;
+              if (dbUser.password === password) {
+                loggedInProfile = dbUser;
+                // Notify admin that they are in fallback mode and cannot save to Firestore
+                if (formattedEmail === 'payalyt6279@gmail.com') {
+                   alert("WARNING: Admin Firebase Auth failed. Your changes in the admin panel will NOT be saved to the database. Please ensure your Firebase Auth password is correct or reset it.");
+                }
+              }
+            }
+          } catch (dbErr: any) {
+            console.warn("Direct Firestore read fallback failed:", dbErr);
+          }
         }
 
         // Fallback 2: Check context / localStorage synced accounts list

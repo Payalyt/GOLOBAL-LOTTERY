@@ -17,7 +17,7 @@ export function WinnersShowcase() {
             {/* Image card wrapper */}
             <div className="relative w-full rounded-2xl overflow-hidden aspect-square max-h-[300px]">
               <img 
-                src="/src/assets/images/emirates_winner_robert_1781775078543.jpg" 
+                src="/images/emirates_winner_robert_1781775078543.jpg" 
                 alt={language === 'en' ? 'Robert Burkovski - Golobal Lottery Winner' : 'রবার্ট বারকোভস্কি - গ্লোবাল লটারি বিজয়ী'} 
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 referrerPolicy="no-referrer"
@@ -53,7 +53,7 @@ export function WinnersShowcase() {
             {/* Video player frame mockup */}
             <div className="relative w-full rounded-2xl overflow-hidden aspect-video flex items-center justify-center">
               <img 
-                src="/src/assets/images/emirates_interview_thumbnail_1781775097474.jpg" 
+                src="/images/emirates_interview_thumbnail_1781775097474.jpg" 
                 alt="Golobal Lottery Winner Interview" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
