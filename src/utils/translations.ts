@@ -53,7 +53,7 @@ export const translations = {
     security_settings: 'Security Settings',
     transaction_history: 'Transaction History',
     agent_support: 'Agent Support',
-    system_admin: 'System Admin Panel',
+    system_admin: 'System Settings',
     username: 'Username',
     email_address: 'Email Address',
     phone_number: 'Phone Number',
@@ -66,7 +66,7 @@ export const translations = {
 
     // Admin Panel
     admin_panel_title: 'System Control',
-    admin_hub: 'Admin Hub',
+    admin_hub: 'System Core',
     dashboard_stats: 'Dashboard Stats',
     manage_games: 'Manage Games',
     manage_winners: 'Manage Winners',
@@ -147,7 +147,7 @@ export const translations = {
     security_settings: 'নিরাপত্তা সেটিংস',
     transaction_history: 'লেনদেনের ইতিহাস',
     agent_support: 'এজেন্ট সাপোর্ট',
-    system_admin: 'সিস্টেম এডমিন প্যানেল',
+    system_admin: 'সিস্টেম সেটিংস',
     username: 'ইউজারনেম',
     email_address: 'ইমেইল ঠিকানা',
     phone_number: 'মোবাইল নম্বর',
@@ -160,7 +160,7 @@ export const translations = {
 
     // Admin Panel
     admin_panel_title: 'সিস্টেম নিয়ন্ত্রণ',
-    admin_hub: 'এডমিন হাব',
+    admin_hub: 'সিস্টেম কোড',
     dashboard_stats: 'পরিসংখ্যান',
     manage_games: 'গেম পরিচালনা',
     manage_winners: 'বিজয়ী তালিকা পরিচালনা',

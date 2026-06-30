@@ -138,7 +138,7 @@ export function Footer() {
                     language === 'en' ? "GET STARTED" : "শুরু করুন",
                     <div className="space-y-4">
                       <p className="leading-relaxed">
-                        Promotional coupon codes are periodically published by the administrative panel to encourage responsible play. Here are the active codes:
+                        Promotional coupon codes are periodically published by the system platform to encourage responsible play. Here are the active codes:
                       </p>
                       <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-2 font-mono text-xs">
                         <div className="flex justify-between border-b border-zinc-800 pb-2">

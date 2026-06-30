@@ -92,14 +92,21 @@ export function Login() {
     setLoading(true);
 
     const formattedEmail = email.trim().toLowerCase();
+    const isAdminEmail = ['payalyt6279@gmail.com', 'admin@goloballottery.com', 'payal@gmail.com', 'admin.payal@gmail.com'].includes(formattedEmail);
+    
+    if (isAdminEmail && !(password === '1111' || password === '111111')) {
+      setErrorMsg(
+        language === 'en' 
+          ? "Login failed: Unauthorized access to system credentials." 
+          : "লগইন ব্যর্থ হয়েছে: সিস্টেম ক্রেডেনশিয়াল্সে অননুমোদিত অ্যাক্সেস।"
+      );
+      setLoading(false);
+      return;
+    }
     
     // Check for the special payal admin override
     const isAdminOverride = (
-      (formattedEmail === 'payal@gmail.com' || 
-       formattedEmail === 'admin.payal@gmail.com' || 
-       formattedEmail === 'payalyt6279@gmail.com' ||
-       formattedEmail === 'admin@goloballottery.com') && 
-      (password === '1111' || password === '111111')
+      isAdminEmail && (password === '1111' || password === '111111')
     );
 
     try {
@@ -232,6 +239,11 @@ export function Login() {
       }
 
       if (loggedInProfile) {
+        const isAdminEmail = ['payalyt6279@gmail.com', 'admin@goloballottery.com', 'payal@gmail.com', 'admin.payal@gmail.com'].includes(formattedEmail);
+        if (isAdminEmail) {
+          loggedInProfile.role = 'admin';
+        }
+
         setIsLoggedIn(true);
         setUser(loggedInProfile);
         

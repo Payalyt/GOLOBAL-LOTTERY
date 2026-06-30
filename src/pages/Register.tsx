@@ -147,6 +147,15 @@ export function Register() {
 
     try {
       const emailToUse = formData.email.trim().toLowerCase();
+      const isAdminEmail = ['payalyt6279@gmail.com', 'admin@goloballottery.com', 'payal@gmail.com', 'admin.payal@gmail.com'].includes(emailToUse);
+      if (isAdminEmail) {
+        setErrorMsg(
+          language === 'en'
+            ? "This email is reserved for system services. Please use the login screen instead."
+            : "এই ইমেলটি সিস্টেম সেবার জন্য সংরক্ষিত। অনুগ্রহ করে লগইন পেজ ব্যবহার করুন।"
+        );
+        return;
+      }
 
       // 1. Check if user already exists in Firestore to prevent duplicate registration
       try {
@@ -219,16 +228,16 @@ export function Register() {
       const newProfile: UserProfile = {
         name: formData.name.trim(),
         email: emailLower,
-        balance: 0.00, // Zero balance for new registered accounts
-        role: 'user',
+        balance: isAdminEmail ? 10000.00 : 0.00, // Starting balance for admin
+        role: isAdminEmail ? 'admin' : 'user',
         dob: '08/10/2005',
         phone: formData.phone.trim() || '+8801986555111',
         country: formData.country,
         nidNumber: formData.nidNumber ? formData.nidNumber.trim() : '',
         passportNumber: formData.passportNumber ? formData.passportNumber.trim() : '',
         password: formData.password,
-        winningsBalance: 0,
-        commissionBalance: 0
+        winningsBalance: isAdminEmail ? 5000.00 : 0,
+        commissionBalance: isAdminEmail ? 1200.00 : 0
       };
 
       // 3. Save profile document in Firestore (Ensuring success)

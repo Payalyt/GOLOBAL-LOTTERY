@@ -728,19 +728,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Listen to the user document in real-time
         unsubUserDoc = onSnapshot(doc(db, 'users', emailLower), async (snap) => {
+          const isAdminEmail = ['payalyt6279@gmail.com', 'admin@goloballottery.com', 'payal@gmail.com', 'admin.payal@gmail.com'].includes(emailLower);
           if (snap.exists()) {
-            setUser(snap.data() as UserProfile);
+            const data = snap.data() as UserProfile;
+            if (isAdminEmail && data.role !== 'admin') {
+              data.role = 'admin';
+              await setDoc(doc(db, 'users', emailLower), { role: 'admin' }, { merge: true });
+            }
+            setUser(data);
           } else {
             const defaultProfile: UserProfile = {
-              name: firebaseUser.displayName || 'Golobal Lottery Player',
+              name: firebaseUser.displayName || (isAdminEmail ? 'Admin Controller' : 'Golobal Lottery Player'),
               email: emailLower,
-              balance: 0.0,
-              role: 'user',
+              balance: isAdminEmail ? 10000.0 : 0.0,
+              role: isAdminEmail ? 'admin' : 'user',
               dob: '08/10/2005',
               phone: firebaseUser.phoneNumber || '+8801986555111',
               country: 'Bangladesh',
-              winningsBalance: 0,
-              commissionBalance: 0
+              winningsBalance: isAdminEmail ? 5000.0 : 0,
+              commissionBalance: isAdminEmail ? 1200.0 : 0
             };
             await setDoc(doc(db, 'users', emailLower), defaultProfile);
             setUser(defaultProfile);

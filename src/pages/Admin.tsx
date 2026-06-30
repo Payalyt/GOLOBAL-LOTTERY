@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth, UserProfile, DynamicGame } from '../context/AuthContext';
-import { ShieldCheck, Users, Radio, History, Newspaper, Plus, DollarSign, Award, Trash2, Sliders, TrendingUp, Coins, Check, Calendar, Ticket, Gift, Edit2 } from 'lucide-react';
+import { ShieldCheck, Users, Radio, History, Newspaper, Plus, DollarSign, Award, Trash2, Sliders, TrendingUp, Coins, Check, Calendar, Ticket, Gift, Edit2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { resolveBannerImage } from '../components/Hero';
 
@@ -32,7 +32,8 @@ export function Admin() {
     depositRequests = [],
     setDepositRequests,
     updateDepositStatus,
-    deleteUserFirestore
+    deleteUserFirestore,
+    logout
   } = useAuth();
   
   const navigate = useNavigate();
@@ -171,6 +172,73 @@ export function Admin() {
   const [gwType, setGwType] = useState<'deposit' | 'withdrawal' | 'both'>('both');
   const [gwMinAmount, setGwMinAmount] = useState('10');
   const [gwMaxAmount, setGwMaxAmount] = useState('100000');
+
+  // Manual User Profile Editor States
+  const [selectedEditUser, setSelectedEditUser] = useState<UserProfile | null>(null);
+  const [editUserName, setEditUserName] = useState('');
+  const [editUserEmail, setEditUserEmail] = useState('');
+  const [editUserPassword, setEditUserPassword] = useState('');
+  const [editUserBalance, setEditUserBalance] = useState('');
+  const [editUserWinnings, setEditUserWinnings] = useState('');
+  const [editUserCommission, setEditUserCommission] = useState('');
+  const [editUserCountry, setEditUserCountry] = useState('');
+  const [editUserPhone, setEditUserPhone] = useState('');
+  const [editUserRole, setEditUserRole] = useState<'user' | 'admin'>('user');
+
+  const handleSelectUserForEdit = (user: UserProfile) => {
+    setSelectedEditUser(user);
+    setEditUserName(user.name);
+    setEditUserEmail(user.email);
+    setEditUserPassword(user.password || '');
+    setEditUserBalance(user.balance.toString());
+    setEditUserWinnings((user.winningsBalance || 0).toString());
+    setEditUserCommission((user.commissionBalance || 0).toString());
+    setEditUserCountry(user.country || '');
+    setEditUserPhone(user.phone || '');
+    setEditUserRole(user.role || 'user');
+  };
+
+  const handleSaveUserManualChanges = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEditUser) return;
+
+    const balanceNum = parseFloat(editUserBalance);
+    const winningsNum = parseFloat(editUserWinnings);
+    const commissionNum = parseFloat(editUserCommission);
+
+    if (isNaN(balanceNum) || isNaN(winningsNum) || isNaN(commissionNum)) {
+      alert("Please enter valid numeric balance values.");
+      return;
+    }
+
+    const updatedFields: Partial<UserProfile> = {
+      name: editUserName,
+      password: editUserPassword,
+      balance: balanceNum,
+      winningsBalance: winningsNum,
+      commissionBalance: commissionNum,
+      country: editUserCountry,
+      phone: editUserPhone,
+      role: editUserRole,
+    };
+
+    try {
+      await updateUserProfileFields(selectedEditUser.email, updatedFields);
+      
+      // Update local state allUsers
+      setAllUsers(prev => prev.map(u => {
+        if (u.email.toLowerCase() === selectedEditUser.email.toLowerCase()) {
+          return { ...u, ...updatedFields };
+        }
+        return u;
+      }));
+
+      alert("🎉 User Profile updated successfully!");
+      setSelectedEditUser(null);
+    } catch (err) {
+      alert("Error saving manual user modifications.");
+    }
+  };
 
   const currentBanners = siteConfig.banners || [];
   const currentGateways = siteConfig.paymentGateways || [];
@@ -592,23 +660,25 @@ export function Admin() {
   // Deny access if not admin
   if (!user || user.role !== 'admin') {
     return (
-      <div className="max-w-md mx-auto my-16 bg-white border border-gray-200 text-center p-8 rounded-2xl shadow-xl text-gray-900 space-y-6">
-        <ShieldCheck className="w-16 h-16 text-red-605 text-red-500 mx-auto" />
-        <h1 className="text-3xl font-black uppercase text-red-600">Access Denied</h1>
-        <p className="text-sm text-gray-500">
-          Your current profile email (<b>{user?.email || 'Guest'}</b>) is not authorized in the System Administrator database. Please log in with the admin credentials:
-        </p>
-        <div className="bg-red-50 p-4 border border-red-200 rounded-xl text-xs text-left font-mono text-red-800">
-          <p>📧 Email: <b>admin@goloballottery.com</b></p>
-          <p>📧 Email: <b>payalyt6279@gmail.com</b></p>
-          <p>🔑 Password: <b>111111</b></p>
+      <div className="min-h-screen bg-[#070709] text-zinc-100 flex flex-col items-center justify-center p-6 text-center font-sans">
+        <div className="max-w-md w-full space-y-6">
+          <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto shadow-md">
+            <ShieldCheck className="w-8 h-8 text-zinc-500" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-4xl font-black uppercase tracking-wider text-white">404</h1>
+            <h2 className="text-xs font-black uppercase tracking-widest text-zinc-400">Page Not Found</h2>
+            <p className="text-xs text-zinc-500 leading-relaxed max-w-sm mx-auto mt-2">
+              The directory or path you specified does not exist or has been restricted by system firewall protocols.
+            </p>
+          </div>
+          <button 
+            onClick={() => navigate('/')}
+            className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white font-black py-3.5 rounded-xl text-[10px] uppercase tracking-widest border border-zinc-800 hover:border-zinc-700 transition transform active:scale-95 cursor-pointer shadow-lg"
+          >
+            Return to Homepage
+          </button>
         </div>
-        <button 
-          onClick={() => navigate('/login')}
-          className="w-full bg-black hover:bg-gray-800 text-white font-bold py-3 rounded-xl text-xs uppercase cursor-pointer"
-        >
-          Go back to Login Gateway
-        </button>
       </div>
     );
   }
@@ -766,40 +836,44 @@ export function Admin() {
   const USD_TO_BDT = 117;
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-red-500/30">
+    <div className="min-h-screen bg-[#070709] text-zinc-100 font-sans selection:bg-red-500/30">
       
       {/* Dynamic Sidebar Backdrop (Mobile Only) */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 lg:hidden animate-in fade-in duration-300"
+          className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 lg:hidden animate-in fade-in duration-300"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       {/* Primary Admin Top Bar */}
-      <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/60 px-4 sm:px-8 py-3.5 flex justify-between items-center">
+      <header className="sticky top-0 z-40 bg-[#09090b]/90 backdrop-blur-xl border-b border-zinc-800/70 px-4 sm:px-8 py-4 flex justify-between items-center shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-600/20">
-            <ShieldCheck className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/20">
+            <ShieldCheck className="w-5.5 h-5.5 text-white animate-pulse" />
           </div>
           <div>
-            <h2 className="text-sm font-black uppercase tracking-widest text-white leading-none">System Core</h2>
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter mt-1 block">Root Administrator Terminal</span>
+            <h2 className="text-xs font-black uppercase tracking-widest text-white leading-none">System Core Interface</h2>
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1 block">Root Administrator Terminal (এডমিন কন্ট্রোল)</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex flex-col items-end mr-2">
             <span className="text-[10px] font-black text-white uppercase tracking-wider">{user?.name}</span>
-            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">{user?.email}</span>
+            <span className="text-[9px] font-bold text-red-500 uppercase tracking-widest">Master Administrator</span>
           </div>
           <div className="h-8 w-[1px] bg-zinc-800 mx-1 hidden sm:block" />
           <button 
-            onClick={() => navigate('/login')}
-            className="p-2.5 bg-zinc-900 hover:bg-red-600/10 text-zinc-400 hover:text-red-500 border border-zinc-800 rounded-xl transition-all cursor-pointer group"
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
+            className="p-2.5 bg-zinc-900/50 hover:bg-red-600/20 text-zinc-400 hover:text-white border border-zinc-800 rounded-xl transition-all cursor-pointer group flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest px-3.5"
             title="Sign Out"
           >
-            <ShieldCheck className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span>Exit</span>
+            <X className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform text-red-500" />
           </button>
         </div>
       </header>
@@ -807,34 +881,34 @@ export function Admin() {
       <div className="max-w-[1600px] mx-auto p-4 sm:p-8 space-y-8 pb-20">
         
         {/* Mobile Status Bar (Visible on smaller screens) */}
-        <div className="lg:hidden flex justify-between items-center bg-zinc-950 border border-zinc-800 p-4 rounded-3xl shadow-xl">
+        <div className="lg:hidden flex justify-between items-center bg-zinc-950 border border-zinc-800/80 p-4 rounded-3xl shadow-xl">
           <div className="flex items-center gap-3">
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-            <span className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.2em]">Operational</span>
+            <span className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.2em]">System operational</span>
           </div>
           <button 
             type="button"
             onClick={() => setIsMobileMenuOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-all active:scale-95"
           >
-            Terminal Menu <Sliders className="w-3.5 h-3.5" />
+            Terminal Menu <Sliders className="w-3.5 h-3.5 text-red-500" />
           </button>
         </div>
 
         {/* Global Admin Banner (Desktop) */}
-        <div className="hidden lg:flex bg-[#121215] border border-zinc-800/80 p-8 rounded-[40px] flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-2xl relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-red-600/40 to-transparent group-hover:via-red-500/60 transition-all duration-1000" />
+        <div className="hidden lg:flex bg-[#0d0d11] border border-zinc-800/80 p-8 rounded-[32px] flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-2xl relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-red-600/50 to-transparent group-hover:via-red-500/70 transition-all duration-1000" />
           <div className="flex items-center gap-6">
-            <div className="p-5 bg-gradient-to-br from-red-600 to-red-700 rounded-[2rem] text-white shadow-xl shadow-red-900/20 shrink-0 transform group-hover:rotate-3 transition-transform">
+            <div className="p-5 bg-gradient-to-br from-red-600 to-red-700 rounded-3xl text-white shadow-xl shadow-red-900/20 shrink-0 transform group-hover:rotate-3 transition-transform">
               <ShieldCheck className="w-10 h-10" />
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-4xl font-black uppercase tracking-tight text-white italic">Admin Console</h1>
-                <span className="text-[10px] font-black tracking-widest bg-red-600/10 text-red-500 border border-red-500/20 px-3 py-1 rounded-full">PRODUCTION</span>
+                <h1 className="text-4xl font-black uppercase tracking-tight text-white italic">ADMIN CORE PANEL</h1>
+                <span className="text-[10px] font-black tracking-widest bg-red-600/10 text-red-500 border border-red-500/20 px-3 py-1 rounded-full">LIVE MODE</span>
               </div>
-              <p className="text-zinc-500 text-xs mt-2 uppercase tracking-[0.15em] font-medium leading-relaxed max-w-xl">
-                Manage lottery algorithms, verify user transactions, and maintain visual branding integrity for the global platform.
+              <p className="text-zinc-400 text-xs mt-2 uppercase tracking-[0.1em] font-semibold leading-relaxed max-w-xl">
+                Manual system controllers, live lottery triggers, deposit & withdrawal approvals, visual adjustments, and site branding management.
               </p>
             </div>
           </div>
@@ -842,24 +916,24 @@ export function Admin() {
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate('/dashboard')}
-              className="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-black text-[10px] uppercase tracking-widest px-6 py-4 rounded-2xl border border-zinc-800 transition-all hover:-translate-y-0.5 active:translate-y-0"
+              className="bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 font-black text-[10px] uppercase tracking-widest px-6 py-4 rounded-2xl border border-zinc-800 transition-all hover:border-zinc-700 active:translate-y-0"
             >
               Public Dashboard
             </button>
             <button 
               onClick={() => navigate('/')}
-              className="bg-white hover:bg-zinc-100 text-black font-black text-[10px] uppercase tracking-widest px-6 py-4 rounded-2xl transition-all shadow-xl shadow-white/5 hover:-translate-y-0.5 active:translate-y-0"
+              className="bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase tracking-widest px-6 py-4 rounded-2xl transition-all shadow-xl shadow-red-600/10 active:translate-y-0"
             >
-              Live Site view
+              Go to Live Site
             </button>
           </div>
         </div>
 
         {/* Statistics Hero Bento Grid (Beautiful currency dual metric layout USD + Bangladeshi Taka BDT) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           
           {/* Card 1: Users Total Balance Capital */}
-          <div className="bg-[#121215] border border-zinc-800/80 p-6 rounded-3xl shadow-xl relative overflow-hidden group hover:border-zinc-700 transition-all duration-300">
+          <div className="bg-[#0e0e12] border border-zinc-800/80 p-6 rounded-3xl shadow-xl relative overflow-hidden group hover:border-zinc-700 transition-all duration-300">
             <div className="absolute top-0 right-0 w-24 h-24 bg-red-600/5 rounded-full blur-2xl group-hover:bg-red-600/10 transition-colors" />
             <div className="flex justify-between items-start">
               <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">USERS TOTAL BALANCE</span>
@@ -868,12 +942,12 @@ export function Admin() {
             <div className="mt-4">
               <span className="text-3xl font-black tracking-tight text-white font-mono">${totalUserBalance.toFixed(2)}</span>
               <span className="text-sm font-bold text-zinc-400 font-mono block mt-0.5">৳{(totalUserBalance * USD_TO_BDT).toLocaleString('en-BD', { maximumFractionDigits: 0 })} BDT</span>
-              <span className="text-[9px] text-zinc-500 block mt-1.5 uppercase font-extrabold">Across {allUsers.length} simulated member accounts</span>
+              <span className="text-[9px] text-zinc-500 block mt-2 uppercase font-extrabold">Across {allUsers.length} simulated member accounts</span>
             </div>
           </div>
 
           {/* Card 2: Total Money Won */}
-          <div className="bg-[#121215] border border-zinc-800/80 p-6 rounded-3xl shadow-xl relative overflow-hidden group hover:border-zinc-700 transition-all duration-300">
+          <div className="bg-[#0e0e12] border border-zinc-800/80 p-6 rounded-3xl shadow-xl relative overflow-hidden group hover:border-zinc-700 transition-all duration-300">
             <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-600/5 rounded-full blur-2xl group-hover:bg-yellow-600/10 transition-colors" />
             <div className="flex justify-between items-start">
               <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">TOTAL MONEY WON</span>
@@ -882,12 +956,12 @@ export function Admin() {
             <div className="mt-4">
               <span className="text-3xl font-black tracking-tight text-yellow-500 font-mono">${totalWinningsWon.toFixed(2)}</span>
               <span className="text-sm font-bold text-zinc-400 font-mono block mt-0.5">৳{(totalWinningsWon * USD_TO_BDT).toLocaleString('en-BD', { maximumFractionDigits: 0 })} BDT</span>
-              <span className="text-[9px] text-zinc-500 block mt-1.5 uppercase font-extrabold">Distributed prize disbursements</span>
+              <span className="text-[9px] text-zinc-500 block mt-2 uppercase font-extrabold">Distributed prize disbursements</span>
             </div>
           </div>
 
           {/* Card 3: Total Tickets Bought */}
-          <div className="bg-[#121215] border border-zinc-800/80 p-6 rounded-3xl shadow-xl relative overflow-hidden group hover:border-zinc-700 transition-all duration-300">
+          <div className="bg-[#0e0e12] border border-zinc-800/80 p-6 rounded-3xl shadow-xl relative overflow-hidden group hover:border-zinc-700 transition-all duration-300">
             <div className="absolute top-0 right-0 w-24 h-24 bg-green-600/5 rounded-full blur-2xl group-hover:bg-green-600/10 transition-colors" />
             <div className="flex justify-between items-start">
               <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">TICKETS PURCHASED</span>
@@ -896,12 +970,12 @@ export function Admin() {
             <div className="mt-4">
               <span className="text-3xl font-black tracking-tight text-emerald-400 font-mono">{totalTicketsBought} pcs</span>
               <span className="text-sm font-bold text-zinc-400 font-mono block mt-0.5">${totalSalesRevenue.toFixed(2)} USD (৳{(totalSalesRevenue * USD_TO_BDT).toLocaleString('en-BD', { maximumFractionDigits: 0 })})</span>
-              <span className="text-[9px] text-zinc-500 block mt-1.5 uppercase font-extrabold">Cumulative drawing ticket sales</span>
+              <span className="text-[9px] text-zinc-500 block mt-2 uppercase font-extrabold">Cumulative drawing ticket sales</span>
             </div>
           </div>
 
           {/* Card 4: Total WithdrawalsRequested */}
-          <div className="bg-[#121215] border border-zinc-800/80 p-6 rounded-3xl shadow-xl relative overflow-hidden group hover:border-zinc-700 transition-all duration-300">
+          <div className="bg-[#0e0e12] border border-zinc-800/80 p-6 rounded-3xl shadow-xl relative overflow-hidden group hover:border-zinc-700 transition-all duration-300">
             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-600/5 rounded-full blur-2xl group-hover:bg-blue-600/10 transition-colors" />
             <div className="flex justify-between items-start">
               <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">WITHDRAW REQUESTS</span>
@@ -910,7 +984,7 @@ export function Admin() {
             <div className="mt-4">
               <span className="text-3xl font-black tracking-tight text-blue-400 font-mono">{totalWithdrawCount} files</span>
               <span className="text-sm font-bold text-zinc-400 font-mono block mt-0.5">${totalWithdrawAmount.toFixed(2)} USD (৳{(totalWithdrawAmount * USD_TO_BDT).toLocaleString('en-BD', { maximumFractionDigits: 0 })})</span>
-              <span className="text-[9px] text-zinc-500 block mt-1.5 uppercase font-extrabold">{pendingWithdrawRequests.length} Pending • {approvedWithdrawRequests.length} Approved</span>
+              <span className="text-[9px] text-zinc-500 block mt-2 uppercase font-extrabold">{pendingWithdrawRequests.length} Pending • {approvedWithdrawRequests.length} Approved</span>
             </div>
           </div>
         </div>
@@ -920,21 +994,21 @@ export function Admin() {
           
           {/* Left Sidebar (Desktop Only) */}
           <div className="hidden lg:block lg:col-span-3 space-y-6 sticky top-6">
-            <div className="bg-[#121215] border border-zinc-800/80 p-5 rounded-3xl space-y-6">
+            <div className="bg-[#0b0b0e] border border-zinc-800 p-5 rounded-3xl space-y-6 shadow-xl">
               
               <div className="space-y-3">
-                <span className="text-[9px] font-black tracking-[0.2em] text-zinc-600 uppercase block px-3">Primary Management</span>
+                <span className="text-[9px] font-black tracking-[0.2em] text-zinc-500 uppercase block px-3">Primary Management</span>
                 
                 <button 
                   onClick={() => setActiveTab('lottery')}
-                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1.5 transition-all cursor-pointer group ${
+                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1 transition-all cursor-pointer group ${
                     activeTab === 'lottery' 
-                      ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 ring-1 ring-red-400/20' 
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50 bg-zinc-950/20 border border-zinc-900/50'
+                      ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/20 border border-red-500/30' 
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50 bg-zinc-950/40 border border-zinc-900/80'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 font-black text-xs uppercase tracking-wider">
-                    <Radio className={`w-4 h-4 shrink-0 ${activeTab === 'lottery' ? 'text-white' : 'text-zinc-500 group-hover:text-red-500'}`} />
+                    <Radio className={`w-4 h-4 shrink-0 ${activeTab === 'lottery' ? 'text-white' : 'text-zinc-400 group-hover:text-red-500'}`} />
                     <span>Lottery Draws</span>
                   </div>
                   <span className={`text-[10px] font-medium leading-relaxed text-left ${activeTab === 'lottery' ? 'text-red-100/80' : 'text-zinc-500'}`}>
@@ -944,14 +1018,14 @@ export function Admin() {
 
                 <button 
                   onClick={() => setActiveTab('raffle')}
-                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1.5 transition-all cursor-pointer group ${
+                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1 transition-all cursor-pointer group ${
                     activeTab === 'raffle' 
-                      ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 ring-1 ring-red-400/20' 
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50 bg-zinc-950/20 border border-zinc-900/50'
+                      ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/20 border border-red-500/30' 
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50 bg-zinc-950/40 border border-zinc-900/80'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 font-black text-xs uppercase tracking-wider">
-                    <Gift className={`w-4 h-4 shrink-0 ${activeTab === 'raffle' ? 'text-white' : 'text-zinc-500 group-hover:text-red-500'}`} />
+                    <Gift className={`w-4 h-4 shrink-0 ${activeTab === 'raffle' ? 'text-white' : 'text-zinc-400 group-hover:text-red-500'}`} />
                     <span>Raffle Winners</span>
                   </div>
                   <span className={`text-[10px] font-medium leading-relaxed text-left ${activeTab === 'raffle' ? 'text-red-100/80' : 'text-zinc-500'}`}>
@@ -961,14 +1035,14 @@ export function Admin() {
 
                 <button 
                   onClick={() => setActiveTab('users')}
-                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1.5 transition-all cursor-pointer group ${
+                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1 transition-all cursor-pointer group ${
                     activeTab === 'users' 
-                      ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 ring-1 ring-red-400/20' 
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50 bg-zinc-950/20 border border-zinc-900/50'
+                      ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/20 border border-red-500/30' 
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50 bg-zinc-950/40 border border-zinc-900/80'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 font-black text-xs uppercase tracking-wider">
-                    <Users className={`w-4 h-4 shrink-0 ${activeTab === 'users' ? 'text-white' : 'text-zinc-500 group-hover:text-red-500'}`} />
+                    <Users className={`w-4 h-4 shrink-0 ${activeTab === 'users' ? 'text-white' : 'text-zinc-400 group-hover:text-red-500'}`} />
                     <span>User Database</span>
                   </div>
                   <span className={`text-[10px] font-medium leading-relaxed text-left ${activeTab === 'users' ? 'text-red-100/80' : 'text-zinc-500'}`}>
@@ -978,18 +1052,18 @@ export function Admin() {
               </div>
 
               <div className="space-y-3">
-                <span className="text-[9px] font-black tracking-[0.2em] text-zinc-600 uppercase block px-3">Financial Gateway</span>
+                <span className="text-[9px] font-black tracking-[0.2em] text-zinc-500 uppercase block px-3">Financial Gateway</span>
 
                 <button 
                   onClick={() => setActiveTab('deposits')}
-                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1.5 transition-all cursor-pointer group ${
+                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1 transition-all cursor-pointer group ${
                     activeTab === 'deposits' 
-                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-1 ring-emerald-400/20' 
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50 bg-zinc-950/20 border border-zinc-900/50'
+                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-600/20 border border-emerald-500/30' 
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50 bg-zinc-950/40 border border-zinc-900/80'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 font-black text-xs uppercase tracking-wider">
-                    <Coins className={`w-4 h-4 shrink-0 ${activeTab === 'deposits' ? 'text-white' : 'text-zinc-500 group-hover:text-emerald-500'}`} />
+                    <Coins className={`w-4 h-4 shrink-0 ${activeTab === 'deposits' ? 'text-white' : 'text-zinc-400 group-hover:text-emerald-500'}`} />
                     <span>Deposits Queue</span>
                   </div>
                   <span className={`text-[10px] font-medium leading-relaxed text-left ${activeTab === 'deposits' ? 'text-emerald-100/80' : 'text-zinc-500'}`}>
@@ -999,14 +1073,14 @@ export function Admin() {
 
                 <button 
                   onClick={() => setActiveTab('withdrawals')}
-                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1.5 transition-all cursor-pointer group ${
+                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1 transition-all cursor-pointer group ${
                     activeTab === 'withdrawals' 
-                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-1 ring-emerald-400/20' 
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50 bg-zinc-950/20 border border-zinc-900/50'
+                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-600/20 border border-emerald-500/30' 
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50 bg-zinc-950/40 border border-zinc-900/80'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 font-black text-xs uppercase tracking-wider">
-                    <TrendingUp className={`w-4 h-4 shrink-0 ${activeTab === 'withdrawals' ? 'text-white' : 'text-zinc-500 group-hover:text-emerald-500'}`} />
+                    <TrendingUp className={`w-4 h-4 shrink-0 ${activeTab === 'withdrawals' ? 'text-white' : 'text-zinc-400 group-hover:text-emerald-500'}`} />
                     <span>Withdrawals</span>
                   </div>
                   <span className={`text-[10px] font-medium leading-relaxed text-left ${activeTab === 'withdrawals' ? 'text-emerald-100/80' : 'text-zinc-500'}`}>
@@ -1016,14 +1090,14 @@ export function Admin() {
 
                 <button 
                   onClick={() => setActiveTab('gateways')}
-                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1.5 transition-all cursor-pointer group ${
+                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1 transition-all cursor-pointer group ${
                     activeTab === 'gateways' 
-                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-1 ring-emerald-400/20' 
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50 bg-zinc-950/20 border border-zinc-900/50'
+                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-600/20 border border-emerald-500/30' 
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50 bg-zinc-950/40 border border-zinc-900/80'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 font-black text-xs uppercase tracking-wider">
-                    <DollarSign className={`w-4 h-4 shrink-0 ${activeTab === 'gateways' ? 'text-white' : 'text-zinc-500 group-hover:text-emerald-500'}`} />
+                    <DollarSign className={`w-4 h-4 shrink-0 ${activeTab === 'gateways' ? 'text-white' : 'text-zinc-400 group-hover:text-emerald-500'}`} />
                     <span>Method Settings</span>
                   </div>
                   <span className={`text-[10px] font-medium leading-relaxed text-left ${activeTab === 'gateways' ? 'text-emerald-100/80' : 'text-zinc-500'}`}>
@@ -1033,18 +1107,18 @@ export function Admin() {
               </div>
 
               <div className="space-y-3">
-                <span className="text-[9px] font-black tracking-[0.2em] text-zinc-600 uppercase block px-3">Site Branding</span>
+                <span className="text-[9px] font-black tracking-[0.2em] text-zinc-500 uppercase block px-3">Site Branding</span>
 
                 <button 
                   onClick={() => setActiveTab('customizer')}
-                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1.5 transition-all cursor-pointer group ${
+                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1 transition-all cursor-pointer group ${
                     activeTab === 'customizer' 
-                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400/20' 
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50 bg-zinc-950/20 border border-zinc-900/50'
+                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/20 border border-indigo-500/30' 
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50 bg-zinc-950/40 border border-zinc-900/80'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 font-black text-xs uppercase tracking-wider">
-                    <Sliders className={`w-4 h-4 shrink-0 ${activeTab === 'customizer' ? 'text-white' : 'text-zinc-500 group-hover:text-indigo-500'}`} />
+                    <Sliders className={`w-4 h-4 shrink-0 ${activeTab === 'customizer' ? 'text-white' : 'text-zinc-400 group-hover:text-indigo-500'}`} />
                     <span>Visual Identity</span>
                   </div>
                   <span className={`text-[10px] font-medium leading-relaxed text-left ${activeTab === 'customizer' ? 'text-indigo-100/80' : 'text-zinc-500'}`}>
@@ -1054,14 +1128,14 @@ export function Admin() {
 
                 <button 
                   onClick={() => setActiveTab('announcements')}
-                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1.5 transition-all cursor-pointer group ${
+                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1 transition-all cursor-pointer group ${
                     activeTab === 'announcements' 
-                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400/20' 
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50 bg-zinc-950/20 border border-zinc-900/50'
+                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/20 border border-indigo-500/30' 
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50 bg-zinc-950/40 border border-zinc-900/80'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 font-black text-xs uppercase tracking-wider">
-                    <Newspaper className={`w-4 h-4 shrink-0 ${activeTab === 'announcements' ? 'text-white' : 'text-zinc-500 group-hover:text-indigo-500'}`} />
+                    <Newspaper className={`w-4 h-4 shrink-0 ${activeTab === 'announcements' ? 'text-white' : 'text-zinc-400 group-hover:text-indigo-500'}`} />
                     <span>Announcements</span>
                   </div>
                   <span className={`text-[10px] font-medium leading-relaxed text-left ${activeTab === 'announcements' ? 'text-indigo-100/80' : 'text-zinc-500'}`}>
@@ -1142,7 +1216,7 @@ export function Admin() {
           </div>
 
           {/* Right Content Column (Dynamic section container) */}
-          <div className="lg:col-span-9 bg-[#121215] border border-zinc-800/80 p-4 sm:p-8 rounded-3xl min-h-[400px] shadow-2xl">
+          <div className="lg:col-span-9 bg-[#0b0b0e] border border-zinc-850 p-6 sm:p-8 rounded-[32px] min-h-[500px] shadow-2xl">
           
           {/* TAB 8: Payment Gateways Manager */}
           {activeTab === 'gateways' && (
@@ -1803,9 +1877,147 @@ export function Admin() {
                 </form>
               </div>
 
+              {/* Manual User Profile Full Editor Form */}
+              {selectedEditUser && (
+                <div className="bg-[#0b0b10] border-2 border-red-500/40 rounded-3xl p-6 sm:p-8 space-y-6 relative overflow-hidden shadow-2xl animate-fade-in mb-8">
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-red-650/5 rounded-full blur-3xl" />
+                  <div className="flex justify-between items-center border-b border-zinc-805 pb-4">
+                    <div>
+                      <span className="text-[9px] font-black tracking-widest text-red-500 uppercase">Interactive Override Terminal</span>
+                      <h3 className="text-lg font-black text-white mt-1 uppercase">Manually Edit Profile: {selectedEditUser.name}</h3>
+                      <p className="text-[11px] text-zinc-400 mt-0.5">Modify main account balance, winnings wallet, security permissions, and core credentials.</p>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => setSelectedEditUser(null)}
+                      className="p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-xl border border-zinc-800 transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSaveUserManualChanges} className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div>
+                      <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider block">Full Name (নাম)</label>
+                      <input 
+                        type="text" 
+                        value={editUserName}
+                        onChange={(e) => setEditUserName(e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800 text-sm p-3 rounded-xl block w-full mt-1.5 text-white font-semibold focus:ring-1 focus:ring-red-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider block">Email Address (ইমেইল - Read Only)</label>
+                      <input 
+                        type="email" 
+                        value={editUserEmail}
+                        disabled
+                        className="bg-zinc-900 border border-zinc-850 text-sm p-3 rounded-xl block w-full mt-1.5 text-zinc-500 font-semibold cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider block">Profile Password (পাসওয়ার্ড)</label>
+                      <input 
+                        type="text" 
+                        value={editUserPassword}
+                        onChange={(e) => setEditUserPassword(e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800 text-sm p-3 rounded-xl block w-full mt-1.5 text-white font-mono focus:ring-1 focus:ring-red-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black text-green-450 uppercase tracking-wider block">Main Balance (৳ / $ একাউন্ট ব্যালেন্স)</label>
+                      <input 
+                        type="number" 
+                        step="any"
+                        value={editUserBalance}
+                        onChange={(e) => setEditUserBalance(e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800 text-sm p-3 rounded-xl block w-full mt-1.5 text-green-400 font-black font-mono focus:ring-1 focus:ring-green-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black text-yellow-500 uppercase tracking-wider block">Winnings Balance (৳ / $ উইনিং ব্যালেন্স)</label>
+                      <input 
+                        type="number" 
+                        step="any"
+                        value={editUserWinnings}
+                        onChange={(e) => setEditUserWinnings(e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800 text-sm p-3 rounded-xl block w-full mt-1.5 text-yellow-500 font-black font-mono focus:ring-1 focus:ring-yellow-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black text-indigo-400 uppercase tracking-wider block">Commission Balance (৳ / $ কমিশন ব্যালেন্স)</label>
+                      <input 
+                        type="number" 
+                        step="any"
+                        value={editUserCommission}
+                        onChange={(e) => setEditUserCommission(e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800 text-sm p-3 rounded-xl block w-full mt-1.5 text-indigo-400 font-black font-mono focus:ring-1 focus:ring-indigo-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider block">Country (দেশ)</label>
+                      <input 
+                        type="text" 
+                        value={editUserCountry}
+                        onChange={(e) => setEditUserCountry(e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800 text-sm p-3 rounded-xl block w-full mt-1.5 text-white font-semibold focus:ring-1 focus:ring-red-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider block">Phone Number (মোবাইল নম্বর)</label>
+                      <input 
+                        type="text" 
+                        value={editUserPhone}
+                        onChange={(e) => setEditUserPhone(e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800 text-sm p-3 rounded-xl block w-full mt-1.5 text-white font-mono focus:ring-1 focus:ring-red-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider block">Security Role Permission (রোল)</label>
+                      <select 
+                        value={editUserRole}
+                        onChange={(e) => setEditUserRole(e.target.value as 'user' | 'admin')}
+                        className="bg-zinc-950 border border-zinc-800 text-sm p-3 rounded-xl block w-full mt-1.5 text-white font-bold focus:ring-1 focus:ring-red-500"
+                      >
+                        <option value="user">USER (সাধারণ মেম্বার)</option>
+                        <option value="admin">ADMIN (মাস্টার এডমিন)</option>
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-3 flex justify-end gap-3 pt-2">
+                      <button 
+                        type="button"
+                        onClick={() => setSelectedEditUser(null)}
+                        className="px-5 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="submit"
+                        className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-red-650/10 cursor-pointer"
+                      >
+                        Apply Changes Manually
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
               {/* Table ledger cards list */}
               <div className="overflow-x-auto bg-zinc-900 rounded-2xl border border-zinc-800">
-                <table className="w-full text-left text-xs min-w-[800px]">
+                <table className="w-full text-left text-xs min-w-[850px]">
                   <thead className="bg-zinc-950 text-zinc-400 font-bold uppercase border-b border-zinc-800">
                     <tr>
                       <th className="p-4">Profile Name</th>
@@ -1837,8 +2049,14 @@ export function Admin() {
                         </td>
                         <td className="p-4 text-right space-x-2">
                           <button
+                            onClick={() => handleSelectUserForEdit(u)}
+                            className="bg-red-600/10 hover:bg-red-600/25 text-red-500 text-[10px] font-black py-1 px-2.5 rounded uppercase border border-red-500/20 transition-all cursor-pointer"
+                          >
+                            ✏️ Edit Manual
+                          </button>
+                          <button
                             onClick={() => handleToggleUserRole(u.email)}
-                            className="bg-zinc-805 bg-zinc-800 hover:bg-zinc-700 hover:text-white text-zinc-400 text-[10px] font-bold py-1 px-2.5 rounded uppercase border border-zinc-700 transition-colors cursor-pointer"
+                            className="bg-zinc-800 hover:bg-zinc-700 hover:text-white text-zinc-400 text-[10px] font-bold py-1 px-2.5 rounded uppercase border border-zinc-700 transition-colors cursor-pointer"
                           >
                             Toggle Role
                           </button>

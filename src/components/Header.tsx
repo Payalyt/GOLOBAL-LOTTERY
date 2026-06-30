@@ -267,17 +267,6 @@ export function Header() {
             
             {isLoggedIn && user ? (
               <div className="flex items-center gap-2 sm:gap-3">
-                {/* Admin Quick Entry Button */}
-                {user.role === 'admin' && (
-                  <Link 
-                    to="/admin" 
-                    className="hidden md:flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md hover:shadow-red-500/20"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 text-white animate-pulse" />
-                    Admin Panel
-                  </Link>
-                )}
-
                 {/* User Info Text - Hidden on mobile */}
                 <div 
                   className="hidden md:flex items-center gap-2 bg-black border border-zinc-800 rounded-xl px-3 py-1.5 shadow-md text-white"
@@ -575,17 +564,6 @@ export function Header() {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                      {user.role === 'admin' && (
-                        <Link
-                          to="/admin"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="w-full text-center py-2.5 rounded-xl bg-red-650 hover:bg-red-700 bg-red-600 text-white text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-600/10"
-                        >
-                          <ShieldCheck className="w-4 h-4 text-white animate-pulse" />
-                          Admin Panel (অ্যাডমিন প্যানেল)
-                        </Link>
-                      )}
-
                       <Link
                         to="/my-account"
                         onClick={() => setIsMobileMenuOpen(false)}
