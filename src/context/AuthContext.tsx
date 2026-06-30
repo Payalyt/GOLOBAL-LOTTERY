@@ -462,7 +462,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [raffleWinners, setRaffleWinners] = useState<DailyRaffleWinner[]>([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [depositRequests, setDepositRequests] = useState<DepositRequest[]>([]);
-  const [siteConfig, setSiteConfig] = useState<SiteThemeConfig>(DEFAULT_SITE_CONFIG);
+  const [siteConfig, setSiteConfig] = useState<SiteThemeConfig>(() => {
+    try {
+      const saved = localStorage.getItem('siteConfig');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return { ...DEFAULT_SITE_CONFIG, ...parsed };
+      }
+    } catch (e) {
+      console.warn("Could not load siteConfig from localStorage:", e);
+    }
+    return DEFAULT_SITE_CONFIG;
+  });
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('theme');
@@ -682,7 +693,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubSite = onSnapshot(doc(db, 'siteConfigs', 'default'), (snap) => {
       if (snap.exists()) {
         const data = snap.data() as Partial<SiteThemeConfig>;
-        setSiteConfig({ ...DEFAULT_SITE_CONFIG, ...data });
+        const merged = { ...DEFAULT_SITE_CONFIG, ...data };
+        setSiteConfig(merged);
+        try {
+          localStorage.setItem('siteConfig', JSON.stringify(merged));
+        } catch (e) {
+          console.warn("Could not save siteConfig to localStorage:", e);
+        }
       }
     }, (err) => handleFirestoreError(err, OperationType.GET, 'siteConfigs/default'));
 
