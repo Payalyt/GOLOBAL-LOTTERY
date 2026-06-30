@@ -353,15 +353,15 @@ export function Footer() {
                       <div className="space-y-3 font-mono text-[11px] bg-zinc-900/80 p-4 rounded-xl border border-zinc-800">
                         <div>
                           <span className="text-zinc-500 block">LICENSE ISSUING BOARD:</span>
-                          <span className="text-white font-extrabold uppercase">Curacao eGaming Regulatory Authority</span>
+                          <span className="text-white font-extrabold uppercase">{siteConfig.footerLicenseBoard || 'Curacao eGaming Regulatory Authority'}</span>
                         </div>
                         <div>
                           <span className="text-zinc-500 block">LICENSE SERIAL ID:</span>
-                          <span className="text-white font-extrabold">#1668/JAZ - 2026 AUDITED LOTTERY PROTOCOL</span>
+                          <span className="text-white font-extrabold">{siteConfig.footerLicenseSerial || '#1668/JAZ - 2026 AUDITED LOTTERY PROTOCOL'}</span>
                         </div>
                         <div>
                           <span className="text-zinc-500 block">GCC DIGITAL COMPLIANCE:</span>
-                          <span className="text-white font-extrabold">GCC-L-984210 (Ministry of Economy & Safety Authority)</span>
+                          <span className="text-white font-extrabold">{siteConfig.footerGccCompliance || 'GCC-L-984210'} (Ministry of Economy & Safety Authority)</span>
                         </div>
                       </div>
                     </div>
@@ -407,35 +407,35 @@ export function Footer() {
               {language === 'en' ? 'CONTACT SUPPORT' : 'গ্রাহক সেবা'}
             </h4>
             <div className="flex flex-col gap-2.5">
-              <a href="mailto:support@draw.com" className="bg-zinc-900 border border-zinc-800 hover:border-[#E52535] p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
+              <a href={`mailto:${siteConfig.footerEmail || 'support@draw.com'}`} className="bg-zinc-900 border border-zinc-800 hover:border-[#E52535] p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'Email Support' : 'ইমেইল সাপোর্ট'}
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">support@draw.com</span>
+                <span className="text-[10px] text-zinc-500 font-mono">{siteConfig.footerEmail || 'support@draw.com'}</span>
               </a>
-              <a href="https://wa.me/1234567890" target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-green-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
+              <a href={`https://wa.me/${(siteConfig.footerWhatsapp || '+1 234 567 890').replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-green-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'WhatsApp' : 'হোয়াটসঅ্যাপ'}
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">+1 234 567 890</span>
+                <span className="text-[10px] text-zinc-500 font-mono">{siteConfig.footerWhatsapp || '+1 234 567 890'}</span>
               </a>
-              <a href="https://t.me/drawsupport" target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-blue-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
+              <a href={`https://t.me/${(siteConfig.footerTelegram || '@drawsupport').replace('@', '')}`} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-blue-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'Telegram' : 'টেলিগ্রাম'}
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">@drawsupport</span>
+                <span className="text-[10px] text-zinc-500 font-mono">{siteConfig.footerTelegram || '@drawsupport'}</span>
               </a>
               <a href={siteConfig.agentImoLink || "https://imo.im/"} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-teal-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'IMO Chat' : 'ইমো চ্যাট'}
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">Live IMO</span>
+                <span className="text-[10px] text-zinc-500 font-mono">{siteConfig.footerImo || 'Live IMO'}</span>
               </a>
               <a href={siteConfig.agentWhatsappLink || "https://wa.me/1234567890"} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-purple-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'Live Chat' : 'লাইভ চ্যাট'}
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">24/7 Agent</span>
+                <span className="text-[10px] text-zinc-500 font-mono">{siteConfig.footerLiveChat || '24/7 Agent'}</span>
               </a>
             </div>
           </div>

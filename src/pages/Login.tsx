@@ -104,9 +104,11 @@ export function Login() {
 
     try {
       let loggedInProfile: UserProfile | null = null;
+      let authSucceeded = false;
       try {
         // 1. Try real Firebase Auth Sign In
         await signInWithEmailAndPassword(auth, formattedEmail, password);
+        authSucceeded = true;
         
         // If we reach here, we are signed in!
         const userRef = doc(db, 'users', formattedEmail);
@@ -123,6 +125,7 @@ export function Login() {
           try {
              await createUserWithEmailAndPassword(auth, formattedEmail, password);
              authRecovered = true;
+             authSucceeded = true;
              console.log("Admin account auto-created in Firebase Auth!");
              
              const userRef = doc(db, 'users', formattedEmail);
@@ -154,33 +157,35 @@ export function Login() {
             console.warn("Direct Firestore read fallback failed:", dbErr);
           }
         }
+      }
 
-        // Fallback 2: Check context / localStorage synced accounts list
-        if (!loggedInProfile) {
-          const matchedLocal = allUsers.find(
-            u => u.email.toLowerCase() === formattedEmail && u.password === password
-          );
-          if (matchedLocal) {
-            loggedInProfile = matchedLocal;
-          }
+      // Fallback 2: Check context / localStorage synced accounts list
+      if (!loggedInProfile) {
+        const matchedLocal = allUsers.find(
+          u => u.email.toLowerCase() === formattedEmail && u.password === password
+        );
+        if (matchedLocal) {
+          loggedInProfile = matchedLocal;
         }
+      }
 
-        // Fallback 3: Special Admin Override
-        if (!loggedInProfile && isAdminOverride) {
-          loggedInProfile = {
-            name: formattedEmail === 'admin@goloballottery.com' ? 'Admin Controller' : 'Meshkat Sorif Payal (Admin)',
-            email: formattedEmail,
-            balance: 10000.00,
-            role: 'admin',
-            dob: '08/10/2005',
-            phone: '+8801986259552',
-            country: 'Bangladesh',
-            winningsBalance: 5000.00,
-            commissionBalance: 1200.00,
-            password: password
-          };
+      // Fallback 3: Special Admin Override
+      if (!loggedInProfile && isAdminOverride) {
+        loggedInProfile = {
+          name: formattedEmail === 'admin@goloballottery.com' ? 'Admin Controller' : 'Meshkat Sorif Payal (Admin)',
+          email: formattedEmail,
+          balance: 10000.00,
+          role: 'admin',
+          dob: '08/10/2005',
+          phone: '+8801986259552',
+          country: 'Bangladesh',
+          winningsBalance: 5000.00,
+          commissionBalance: 1200.00,
+          password: password
+        };
 
-          // Try to create the Auth account so Firestore rules work in the future
+        // Try to create the Auth account so Firestore rules work in the future
+        if (!authSucceeded) {
           try {
             await createUserWithEmailAndPassword(auth, formattedEmail, password);
             console.log("Admin account created in Firebase Auth via fallback");
@@ -194,69 +199,36 @@ export function Login() {
                console.warn("Final attempt to sign in failed:", reSignInErr);
             }
           }
-
-          // Try to save to Firestore if possible so it propagates
-          try {
-            await setDoc(doc(db, 'users', formattedEmail), loggedInProfile);
-          } catch (writeErr) {
-            console.warn("Could not write Admin fallback to Firestore:", writeErr);
-          }
         }
 
-        // If fallback succeeded, log user/admin in
-        if (loggedInProfile) {
-          console.log("Logged in successfully via local fallback verification");
+        // Try to save to Firestore if possible so it propagates
+        try {
+          await setDoc(doc(db, 'users', formattedEmail), loggedInProfile);
+        } catch (writeErr) {
+          console.warn("Could not write Admin fallback to Firestore:", writeErr);
+        }
+      }
+
+      // If fallback succeeded, log user/admin in
+      if (loggedInProfile) {
+        console.log("Logged in successfully");
+      } else {
+        // If no fallback profile matched:
+        if (!authSucceeded) {
+          setErrorMsg(
+            language === 'en' 
+              ? "Login failed: Invalid email or password." 
+              : "লগইন ব্যর্থ হয়েছে: ইমেইল বা পাসওয়ার্ড ভুল।"
+          );
         } else {
-          // If no fallback profile matched:
-          console.error("Auth error details:", authErr);
-          
-          if (authErr.code === 'auth/operation-not-allowed') {
-            setErrorMsg(t('loginFailed'));
-            setLoading(false);
-            return;
-          }
-          if (authErr.code === 'auth/wrong-password' || authErr.code === 'auth/invalid-credential' || authErr.code === 'auth/invalid-password') {
-            setErrorMsg(
-              language === 'en' 
-                ? "Incorrect password. Please try again." 
-                : "ভুল পাসওয়ার্ড। আবার চেষ্টা করুন।"
-            );
-            setLoading(false);
-            return;
-          }
-          if (authErr.code === 'auth/user-not-found') {
-            setErrorMsg(
-              language === 'en'
-                ? "No account found with this email: " + formattedEmail
-                : "এই ইমেইল দিয়ে কোনো অ্যাকাউন্ট পাওয়া যায়নি: " + formattedEmail
-            );
-            setLoading(false);
-            return;
-          }
-          if (authErr.code === 'auth/invalid-email') {
-            setErrorMsg(
-              language === 'en' ? "Invalid email format." : "অকার্যকর ইমেইল ফরম্যাট।"
-            );
-            setLoading(false);
-            return;
-          }
-          if (authErr.code === 'auth/too-many-requests') {
-            setErrorMsg(
-              language === 'en'
-                ? "Too many failed attempts. Please try again later."
-                : "অত্যধিক ব্যর্থ প্রচেষ্টা। কিছুক্ষণ পর আবার চেষ্টা করুন।"
-            );
-            setLoading(false);
-            return;
-          }
           setErrorMsg(
             language === 'en'
-              ? "Login failed: " + (authErr.message || "Unknown error")
-              : "লগইন ব্যর্থ হয়েছে: " + (authErr.message || "অজানা সমস্যা")
+              ? "Account exists but your profile was not found. Please register again with this email."
+              : "আপনার অ্যাকাউন্ট আছে কিন্তু প্রোফাইল পাওয়া যায়নি। অনুগ্রহ করে এই ইমেইল দিয়ে আবার নিবন্ধন করুন।"
           );
-          setLoading(false);
-          return;
         }
+        setLoading(false);
+        return;
       }
 
       if (loggedInProfile) {

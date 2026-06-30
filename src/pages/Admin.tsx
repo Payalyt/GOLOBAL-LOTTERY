@@ -19,6 +19,8 @@ export function Admin() {
     updateSiteConfig,
     dynamicGames,
     updateDynamicGame,
+    addDynamicGame,
+    deleteDynamicGame,
     // raffle winners dynamic handlers
     raffleWinners,
     addRaffleWinner,
@@ -424,12 +426,84 @@ export function Admin() {
   const [selectedGameToEdit, setSelectedGameToEdit] = useState<string>('MEGA7');
   const [editingGame, setEditingGame] = useState<DynamicGame | null>(null);
 
+  // Footer & Contact Info States
+  const [footerEmail, setFooterEmail] = useState(siteConfig.footerEmail || 'support@draw.com');
+  const [footerWhatsapp, setFooterWhatsapp] = useState(siteConfig.footerWhatsapp || '+1 234 567 890');
+  const [footerTelegram, setFooterTelegram] = useState(siteConfig.footerTelegram || '@drawsupport');
+  const [footerImo, setFooterImo] = useState(siteConfig.footerImo || 'Live IMO');
+  const [footerLiveChat, setFooterLiveChat] = useState(siteConfig.footerLiveChat || '24/7 Agent');
+  const [footerLicenseBoard, setFooterLicenseBoard] = useState(siteConfig.footerLicenseBoard || 'Curacao eGaming Regulatory Authority');
+  const [footerLicenseSerial, setFooterLicenseSerial] = useState(siteConfig.footerLicenseSerial || '#1668/JAZ - 2026 AUDITED LOTTERY PROTOCOL');
+  const [footerGccCompliance, setFooterGccCompliance] = useState(siteConfig.footerGccCompliance || 'GCC-L-984210');
+
+  // Add Dynamic Game form states
+  const [isAddingGame, setIsAddingGame] = useState(false);
+  const [newGameName, setNewGameName] = useState('');
+  const [newGamePrize, setNewGamePrize] = useState('$50,000,000');
+  const [newGamePrice, setNewGamePrice] = useState(10);
+  const [newGameDrawTime, setNewGameDrawTime] = useState('Every Sunday');
+  const [newGameBallCount, setNewGameBallCount] = useState(5);
+  const [newGameMaxBallValue, setNewGameMaxBallValue] = useState(49);
+  const [newGameBgHex, setNewGameBgHex] = useState('#E52535');
+
   React.useEffect(() => {
     const game = dynamicGames.find(g => g.name === selectedGameToEdit || g.id === selectedGameToEdit);
     if (game) {
       setEditingGame({ ...game });
     }
-  }, [selectedGameToEdit]);
+  }, [selectedGameToEdit, dynamicGames]);
+
+  const handleCreateNewGame = async () => {
+    if (!newGameName.trim()) {
+      alert('Please provide a game name title.');
+      return;
+    }
+    try {
+      const newGame: DynamicGame = {
+        name: newGameName.trim().toUpperCase(),
+        prize: newGamePrize,
+        price: Number(newGamePrice) || 10,
+        drawTime: newGameDrawTime,
+        targetDateStr: new Date(Date.now() + 7 * 24 * 3600000).toISOString(),
+        bgHex: newGameBgHex,
+        isSolidStyle: true,
+        ballCount: Number(newGameBallCount) || 5,
+        maxBallValue: Number(newGameMaxBallValue) || 49,
+        cardBgType: 'color'
+      };
+      await addDynamicGame(newGame);
+      setSelectedGameToEdit(newGame.name);
+      setIsAddingGame(false);
+      // Reset form fields
+      setNewGameName('');
+      setNewGamePrize('$50,000,000');
+      setNewGamePrice(10);
+      setNewGameDrawTime('Every Sunday');
+      setNewGameBallCount(5);
+      setNewGameMaxBallValue(49);
+      alert(`🎉 New game ${newGame.name} added successfully!`);
+    } catch (err) {
+      alert('❌ Failed to add new game.');
+    }
+  };
+
+  const handleDeleteSelectedGame = async () => {
+    if (!editingGame) return;
+    const confirmDel = window.confirm(`Are you absolutely sure you want to permanently delete the game "${editingGame.name}"?`);
+    if (!confirmDel) return;
+    try {
+      await deleteDynamicGame(editingGame.name);
+      alert(`🗑️ Game "${editingGame.name}" deleted successfully.`);
+      if (dynamicGames.length > 1) {
+        const remaining = dynamicGames.filter(g => g.name !== editingGame.name);
+        setSelectedGameToEdit(remaining[0].name);
+      } else {
+        setEditingGame(null);
+      }
+    } catch (err) {
+      alert('❌ Failed to delete game.');
+    }
+  };
 
   const handleUpdateEditingGame = (fields: Partial<DynamicGame>) => {
     setEditingGame(prev => prev ? { ...prev, ...fields } : null);
@@ -473,7 +547,16 @@ export function Admin() {
       agentImoLink,
       agentTelegramLink,
       agentEnabled,
-      agentInstructions
+      agentInstructions,
+      // Footer and support custom details
+      footerEmail,
+      footerWhatsapp,
+      footerTelegram,
+      footerImo,
+      footerLiveChat,
+      footerLicenseBoard,
+      footerLicenseSerial,
+      footerGccCompliance
     });
     alert("✨ Website dynamic theme configuration & payment gateways updated successfully! Walk back to homepage or checkout to view your custom branding.");
   };
@@ -2193,6 +2276,99 @@ export function Admin() {
                     </div>
                   </div>
 
+                  {/* Footer & Contact Details Customizer */}
+                  <div className="bg-zinc-950 p-5 rounded-2xl border border-zinc-800 space-y-4">
+                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest block border-b border-[#212126] pb-2">
+                      📞 Support Contacts & Legal Customizer (ফুটার কন্টাক্ট ও লাইসেন্স এডিটর)
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Email Support Address</label>
+                        <input 
+                          type="email" 
+                          value={footerEmail}
+                          onChange={(e) => setFooterEmail(e.target.value)}
+                          placeholder="support@draw.com"
+                          className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 w-full mt-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">WhatsApp Number / Link</label>
+                        <input 
+                          type="text" 
+                          value={footerWhatsapp}
+                          onChange={(e) => setFooterWhatsapp(e.target.value)}
+                          placeholder="+1 234 567 890"
+                          className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 w-full mt-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Telegram Username</label>
+                        <input 
+                          type="text" 
+                          value={footerTelegram}
+                          onChange={(e) => setFooterTelegram(e.target.value)}
+                          placeholder="@drawsupport"
+                          className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 w-full mt-1.5 text-xs text-white focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">IMO Chat ID / Text</label>
+                        <input 
+                          type="text" 
+                          value={footerImo}
+                          onChange={(e) => setFooterImo(e.target.value)}
+                          placeholder="Live IMO"
+                          className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 w-full mt-1.5 text-xs text-white focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Live Chat Text / Link</label>
+                        <input 
+                          type="text" 
+                          value={footerLiveChat}
+                          onChange={(e) => setFooterLiveChat(e.target.value)}
+                          placeholder="24/7 Agent"
+                          className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 w-full mt-1.5 text-xs text-white focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-[#212126]">
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">License Board</label>
+                        <input 
+                          type="text" 
+                          value={footerLicenseBoard}
+                          onChange={(e) => setFooterLicenseBoard(e.target.value)}
+                          placeholder="Curacao eGaming Regulatory Authority"
+                          className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 w-full mt-1.5 text-xs text-white focus:outline-none"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">License Serial ID Info</label>
+                        <input 
+                          type="text" 
+                          value={footerLicenseSerial}
+                          onChange={(e) => setFooterLicenseSerial(e.target.value)}
+                          placeholder="#1668/JAZ - 2026 AUDITED LOTTERY PROTOCOL"
+                          className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 w-full mt-1.5 text-xs text-white focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">GCC Compliance ID</label>
+                      <input 
+                        type="text" 
+                        value={footerGccCompliance}
+                        onChange={(e) => setFooterGccCompliance(e.target.value)}
+                        placeholder="GCC-L-984210"
+                        className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 w-full mt-1.5 text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
                   {/* Submit Button for Site Config */}
                   <button 
                     type="submit" 
@@ -2206,9 +2382,22 @@ export function Admin() {
                 {/* Real-time Dynamic Game Settings Configuration */}
                 <div className="lg:col-span-5 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-6">
                   <div className="bg-zinc-950 p-5 rounded-2xl border border-zinc-800 space-y-4">
-                    <div className="border-b border-zinc-900 pb-2">
-                      <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest block">🎛️ Individual Game Settings Editor</span>
-                      <p className="text-[10px] text-zinc-500 mt-0.5">Customize countdown dates, price, and display styling parameters for each game.</p>
+                    <div className="flex items-center justify-between border-b border-zinc-900 pb-2">
+                      <div>
+                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest block">🎛️ Game Settings Editor</span>
+                        <p className="text-[10px] text-zinc-500 mt-0.5">Edit, add or delete lottery games live.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingGame(!isAddingGame)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition cursor-pointer flex items-center gap-1 ${
+                          isAddingGame
+                            ? 'bg-yellow-500 text-zinc-950 font-extrabold'
+                            : 'bg-zinc-900 hover:bg-zinc-800 text-green-400 hover:text-white border border-green-500/20'
+                        }`}
+                      >
+                        {isAddingGame ? '❌ Cancel' : '➕ Add Game'}
+                      </button>
                     </div>
 
                     {/* Game Selector Tab bar inside customizer */}
@@ -2217,9 +2406,12 @@ export function Admin() {
                         <button
                           key={game.name}
                           type="button"
-                          onClick={() => setSelectedGameToEdit(game.name)}
+                          onClick={() => {
+                            setSelectedGameToEdit(game.name);
+                            setIsAddingGame(false);
+                          }}
                           className={`px-3 py-1.5 rounded-lg text-xs font-black transition whitespace-nowrap cursor-pointer ${
-                            selectedGameToEdit === game.name
+                            !isAddingGame && selectedGameToEdit === game.name
                               ? 'bg-red-600 text-white font-extrabold'
                               : 'bg-zinc-900 text-zinc-400 hover:text-white'
                           }`}
@@ -2231,6 +2423,108 @@ export function Admin() {
 
                     {/* Selected Game Config Form fields */}
                     {(() => {
+                      if (isAddingGame) {
+                        return (
+                          <div className="space-y-3 pt-2 text-zinc-300">
+                            <div className="bg-zinc-900/50 p-3 rounded-xl border border-zinc-800/60 mb-2">
+                              <span className="text-[10px] font-bold text-green-400 uppercase tracking-widest block">➕ CREATE A NEW LOTTERY GAME</span>
+                              <span className="text-[9px] text-zinc-500 block leading-tight mt-0.5">Define name, jackpot prize, ticket price, and draw frequency.</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Game Name Title</label>
+                                <input 
+                                  type="text"
+                                  value={newGameName}
+                                  onChange={(e) => setNewGameName(e.target.value)}
+                                  placeholder="E.g. COCO9"
+                                  className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 w-full text-xs mt-1 text-white focus:outline-none focus:border-green-500 uppercase font-black"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Grand Jackpot Prize</label>
+                                <input 
+                                  type="text"
+                                  value={newGamePrize}
+                                  onChange={(e) => setNewGamePrize(e.target.value)}
+                                  placeholder="E.g. $45,000,000"
+                                  className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 w-full text-xs mt-1 text-white focus:outline-none focus:border-green-500 font-bold"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Ticket Price ($)</label>
+                                <input 
+                                  type="number"
+                                  value={newGamePrice}
+                                  onChange={(e) => setNewGamePrice(Number(e.target.value))}
+                                  className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 w-full text-xs mt-1 text-white focus:outline-none focus:border-green-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Draw Frequency Description</label>
+                                <input 
+                                  type="text"
+                                  value={newGameDrawTime}
+                                  onChange={(e) => setNewGameDrawTime(e.target.value)}
+                                  placeholder="E.g. Every Friday"
+                                  className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 w-full text-xs mt-1 text-white focus:outline-none focus:border-green-500"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Balls to Select (e.g. 5, 6, 7)</label>
+                                <input 
+                                  type="number"
+                                  value={newGameBallCount}
+                                  onChange={(e) => setNewGameBallCount(Math.max(1, parseInt(e.target.value) || 1))}
+                                  className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 w-full text-xs mt-1 text-white focus:outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Max Ball Value (e.g. 39, 49)</label>
+                                <input 
+                                  type="number"
+                                  value={newGameMaxBallValue}
+                                  onChange={(e) => setNewGameMaxBallValue(Math.max(1, parseInt(e.target.value) || 1))}
+                                  className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 w-full text-xs mt-1 text-white focus:outline-none"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Card Solid Color Hex</label>
+                              <div className="flex gap-2 mt-1 items-center">
+                                <input 
+                                  type="color" 
+                                  value={newGameBgHex}
+                                  onChange={(e) => setNewGameBgHex(e.target.value)}
+                                  className="w-10 h-8 bg-zinc-950 border border-zinc-800 rounded cursor-pointer p-0.5"
+                                />
+                                <input 
+                                  type="text" 
+                                  value={newGameBgHex}
+                                  onChange={(e) => setNewGameBgHex(e.target.value)}
+                                  className="bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 flex-1 text-zinc-200 font-mono text-xs focus:outline-none"
+                                />
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={handleCreateNewGame}
+                              className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 rounded-xl text-[10px] uppercase tracking-widest transition transform active:scale-95 shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                              🚀 Create & Launch Game Now
+                            </button>
+                          </div>
+                        );
+                      }
+
                       if (!editingGame) return (
                         <div className="py-12 text-center text-zinc-500 text-[10px] font-bold uppercase tracking-widest">
                           Select a game to customize
@@ -2470,14 +2764,24 @@ export function Admin() {
                             </div>
                           )}
 
-                          <button
-                            type="button"
-                            onClick={saveIndividualGameSettings}
-                            className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest transition transform active:scale-95 shadow-lg flex items-center justify-center gap-2 cursor-pointer"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                            Update {editingGame.name} Settings Now
-                          </button>
+                          <div className="grid grid-cols-2 gap-3 mt-4">
+                            <button
+                              type="button"
+                              onClick={saveIndividualGameSettings}
+                              className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest transition transform active:scale-95 shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              Update Settings
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleDeleteSelectedGame}
+                              className="w-full bg-zinc-900 hover:bg-red-950 text-red-500 hover:text-white border border-red-500/20 hover:border-red-700 font-black py-3 rounded-xl text-[10px] uppercase tracking-widest transition transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Delete Game
+                            </button>
+                          </div>
 
                         </div>
                       );

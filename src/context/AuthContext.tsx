@@ -168,6 +168,15 @@ export interface SiteThemeConfig {
   banners?: CustomBanner[];
   // Dynamic Payment Gateways
   paymentGateways?: PaymentGateway[];
+  // Footer customizer fields
+  footerEmail?: string;
+  footerWhatsapp?: string;
+  footerTelegram?: string;
+  footerImo?: string;
+  footerLiveChat?: string;
+  footerLicenseBoard?: string;
+  footerLicenseSerial?: string;
+  footerGccCompliance?: string;
 }
 
 interface AuthContextType {
@@ -190,6 +199,8 @@ interface AuthContextType {
   updateSiteConfig: (config: Partial<SiteThemeConfig>) => void;
   dynamicGames: DynamicGame[];
   updateDynamicGame: (name: string, fields: Partial<DynamicGame>) => void;
+  addDynamicGame: (game: DynamicGame) => Promise<void>;
+  deleteDynamicGame: (name: string) => Promise<void>;
   // Raffle Winners dynamic configuration states
   raffleWinners: DailyRaffleWinner[];
   setRaffleWinners: React.Dispatch<React.SetStateAction<DailyRaffleWinner[]>>;
@@ -296,6 +307,15 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
   agentTelegramLink: 'https://t.me/md_meshkat_payal',
   agentEnabled: true,
   agentInstructions: 'You can deposit, withdraw or pay commission directly through our authorized local agents via WhatsApp, IMO or Telegram. Click any agent button below to initiate an instant chat. After transferring the money, please provide the details below.',
+  // Footer customizer fields default values
+  footerEmail: 'support@draw.com',
+  footerWhatsapp: '+1 234 567 890',
+  footerTelegram: '@drawsupport',
+  footerImo: 'Live IMO',
+  footerLiveChat: '24/7 Agent',
+  footerLicenseBoard: 'Curacao eGaming Regulatory Authority',
+  footerLicenseSerial: '#1668/JAZ - 2026 AUDITED LOTTERY PROTOCOL',
+  footerGccCompliance: 'GCC-L-984210',
   // Default Custom Banners
   banners: [
     {
@@ -384,6 +404,8 @@ const AuthContext = createContext<AuthContextType>({
   updateSiteConfig: () => {},
   dynamicGames: [],
   updateDynamicGame: () => {},
+  addDynamicGame: async () => {},
+  deleteDynamicGame: async () => {},
   raffleWinners: [],
   setRaffleWinners: () => {},
   addRaffleWinner: () => {},
@@ -1012,6 +1034,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const addDynamicGame = async (game: DynamicGame) => {
+    try {
+      await setDoc(doc(db, 'dynamicGames', game.name), game);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `dynamicGames/${game.name}`);
+    }
+  };
+
+  const deleteDynamicGame = async (name: string) => {
+    try {
+      await deleteDoc(doc(db, 'dynamicGames', name));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `dynamicGames/${name}`);
+    }
+  };
+
   const addRaffleWinner = async (winner: Omit<DailyRaffleWinner, 'id'>) => {
     try {
       const id = 'w-' + Date.now();
@@ -1144,6 +1182,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       updateSiteConfig,
       dynamicGames,
       updateDynamicGame,
+      addDynamicGame,
+      deleteDynamicGame,
       // Raffle Winners Provider items
       raffleWinners,
       setRaffleWinners,
