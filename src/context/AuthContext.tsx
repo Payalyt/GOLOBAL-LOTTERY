@@ -552,19 +552,27 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
     },
     {
       id: 'pg-4',
-      name: 'USDT (TRC20)',
-      numberOrAddress: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
-      instructions: 'Send USDT (ERC20/TRC20) to our secure address: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e. Enter the TxHash for instant validation.',
+      name: 'Upay',
+      numberOrAddress: '+8801986259552',
+      instructions: 'Send money to our Upay personal wallet: +8801986259552. Enter your Upay TxID to authorize credit.',
       enabled: true,
       type: 'both'
     },
     {
       id: 'pg-5',
-      name: 'Dokan Pay',
-      numberOrAddress: 'API-Enabled',
-      instructions: 'Pay securely using bKash, Nagad, Rocket or Bank Transfer via Dokan Pay gateway.',
+      name: 'Bank',
+      numberOrAddress: 'Dutch-Bangla Bank: 123-456-7890',
+      instructions: 'Transfer funds to our DBBL Account: 123-456-7890. Enter bank transaction reference or name.',
       enabled: true,
-      type: 'deposit'
+      type: 'both'
+    },
+    {
+      id: 'pg-6',
+      name: 'USDT (TRC20)',
+      numberOrAddress: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
+      instructions: 'Send USDT (ERC20/TRC20) to our secure address: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e. Enter the TxHash for instant validation.',
+      enabled: true,
+      type: 'both'
     }
   ],
   grandPrizeWinners: [

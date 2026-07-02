@@ -242,9 +242,7 @@ export function Register() {
 
       // 3. Save profile document in Firestore (Ensuring success)
       try {
-        console.log("Saving profile to Firestore for:", emailLower);
         await setDoc(doc(db, 'users', emailLower), newProfile, { merge: true });
-        console.log("Firestore Profile saved successfully");
       } catch (fsErr: any) {
         console.error("CRITICAL: Firestore Profile saving failed: ", fsErr);
         // If Firestore fails, we should probably tell the user because login will fail later

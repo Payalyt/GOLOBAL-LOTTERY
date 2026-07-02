@@ -19,7 +19,7 @@ export function Cart() {
       setDiscount(subtotal * 0.5);
       setCouponSuccess(true);
     } else {
-      alert("Invalid coupon code! Try using GOLOBAL50 or sxl10 for a 50% sandbox discount.");
+      alert("Invalid coupon code! Please check the code and try again.");
       setCouponSuccess(false);
       setDiscount(0);
     }

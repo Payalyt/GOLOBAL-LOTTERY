@@ -6,7 +6,7 @@ import { Landmark, CreditCard, CheckCircle2, ShoppingBag, ShieldCheck, HelpCircl
 
 export function Checkout() {
   const { tickets, clearCart } = useCart();
-  const { user, buyTickets, updateUserBalance, isLoggedIn, siteConfig } = useAuth();
+  const { user, buyTickets, updateUserBalance, isLoggedIn, siteConfig, language } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -28,16 +28,6 @@ export function Checkout() {
   const [completed, setCompleted] = useState(false);
   const [receiptId, setReceiptId] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleSimulateTopup = () => {
-    if (user) {
-      updateUserBalance(user.email, 500.00);
-      alert("🎉 Sandbox Top-Up Alert! Gratefully added $500 to your playable balance!");
-    } else {
-      alert("Please log in first before checking out.");
-      navigate('/login');
-    }
-  };
 
   const handlePay = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +58,11 @@ export function Checkout() {
       const currentUserBalance = user.balance;
       if (currentUserBalance < totalAmount) {
         setIsProcessing(false);
-        alert(`Insufficient balance. Please deposit funds via Dashboard. Short of $${(totalAmount - currentUserBalance).toFixed(2)}`);
+        if (confirm(language === 'en' 
+          ? `Insufficient balance. You are short of $${(totalAmount - currentUserBalance).toFixed(2)}. Would you like to go to the Deposit page?` 
+          : `আপনার ব্যালেন্স পর্যাপ্ত নয়। আপনার আরও $${(totalAmount - currentUserBalance).toFixed(2)} প্রয়োজন। আপনি কি ডিপোজিট পেজে যেতে চান?`)) {
+          navigate('/dashboard?tab=Add Credit');
+        }
         return;
       }
 
@@ -205,22 +199,6 @@ export function Checkout() {
                 </div>
               )}
             </div>
-            
-            {/* Quick Sandbox Action */}
-            {isLoggedIn && user && user.balance < totalAmount && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 space-y-2">
-                <p className="font-black">💡 Sandbox Simulation Assist:</p>
-                <p className="text-[11px] leading-relaxed">
-                  Need more credits? Click below to immediately load a simulated <b>$500</b> into your Account Balance for checkout matches.
-                </p>
-                <button 
-                  onClick={handleSimulateTopup}
-                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-2 px-3 rounded uppercase tracking-wider"
-                >
-                  🔋 Instant Free $500 Credit
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Payment Fields Left Column */}
@@ -375,10 +353,6 @@ export function Checkout() {
                       />
                     </div>
                   </div>
-
-                  <div className="bg-amber-50 rounded-xl p-4 border border-amber-200 text-xs text-amber-900 mt-2">
-                    💡 <b>Sandbox hint:</b> For card payments, we suggest switching back to the "Golobal Wallet" tab where you can play with real welcome rewards ($200) or simulated top-ups.
-                  </div>
                 </div>
               )}
 
@@ -387,7 +361,7 @@ export function Checkout() {
                   <div className="bg-[#fcf3f7] border border-[#e2136e]/20 rounded-xl p-5 space-y-4">
                     <div className="flex items-center gap-2 font-black text-[#e2136e] text-base">
                       <span className="bg-[#e2136e] text-white font-extrabold text-[10px] uppercase px-2 py-0.5 rounded leading-none mr-1">bKash Pay</span>
-                      Official bKash Sandbox Wallet
+                      Official bKash Payment Gateway
                     </div>
                     
                     <div className="text-xs text-zinc-650 space-y-2 leading-relaxed">
@@ -452,7 +426,7 @@ export function Checkout() {
                   <div className="bg-[#fef4f0] border border-[#f25220]/20 rounded-xl p-5 space-y-4">
                     <div className="flex items-center gap-2 font-black text-[#f25220] text-base">
                       <span className="bg-[#f25220] text-white font-extrabold text-[10px] uppercase px-2 py-0.5 rounded leading-none mr-1">Nagad Pay</span>
-                      Official Nagad Sandbox Wallet
+                      Official Nagad Payment Gateway
                     </div>
                     
                     <div className="text-xs text-zinc-650 space-y-2 leading-relaxed">

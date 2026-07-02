@@ -326,7 +326,7 @@ export function Footer() {
                       <ul className="list-disc pl-5 space-y-1.5 text-zinc-300">
                         <li>We do not sell, trade, or expose your mobile number, wallet address, or emails to third-party advertisers.</li>
                         <li>Your session metadata is fully encrypted using TLS 1.3 standards.</li>
-                        <li>Your local state coordinates (including shopping cart and balance) are kept securely in browser-bound sandbox environments.</li>
+                        <li>Your session data (including shopping cart and balance) is managed securely within encrypted local storage environments.</li>
                       </ul>
                     </div>
                   )}

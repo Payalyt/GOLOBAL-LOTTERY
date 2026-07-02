@@ -171,7 +171,14 @@ export function Dashboard() {
   }, [searchParams, user, addApprovedDeposit, setSearchParams]);
 
   // Active tabs state
-  const [activeTab, setActiveTab] = useState<string>('Personal Details');
+  const [activeTab, setActiveTab] = useState<string>(() => searchParams.get('tab') || 'Personal Details');
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Persistence of custom fields using localStorage so it survives reload
   const [gender, setGender] = useState<string>(() => localStorage.getItem('db_gender') || 'Male');
@@ -221,19 +228,32 @@ export function Dashboard() {
   
   const [commissionDepositAmount, setCommissionDepositAmount] = useState('8500');
 
-  // Agent System state variables
-  const [selectedDepositMethod, setSelectedDepositMethod] = useState<'card' | 'agent' | 'crypto' | 'dokan'>('dokan');
+  // Manual payment gateway states
+  const [depositGatewayName, setDepositGatewayName] = useState<'bKash' | 'Nagad' | 'Rocket' | 'Upay' | 'Bank'>('bKash');
+  const [depositPhoneOrAccount, setDepositPhoneOrAccount] = useState('');
+  const [depositTrxId, setDepositTrxId] = useState('');
+
+  const [withdrawGatewayName, setWithdrawGatewayName] = useState<'bKash' | 'Nagad' | 'Rocket' | 'Upay' | 'Bank'>('bKash');
+  const [withdrawPhoneOrAccount, setWithdrawPhoneOrAccount] = useState('');
+  const [withdrawAmountInput, setWithdrawAmountInput] = useState('');
+  const [withdrawAccountName, setWithdrawAccountName] = useState('');
+  const [withdrawBankName, setWithdrawBankName] = useState('');
+  const [withdrawBranch, setWithdrawBranch] = useState('');
+
+  const [commissionGatewayName, setCommissionGatewayName] = useState<'bKash' | 'Nagad' | 'Rocket' | 'Upay' | 'Bank'>('bKash');
+  const [commissionPhoneOrAccount, setCommissionPhoneOrAccount] = useState('');
+  const [commissionTrxId, setCommissionTrxId] = useState('');
+
+  // Legacy variables kept or adapted to prevent compilation errors
+  const [selectedDepositMethod, setSelectedDepositMethod] = useState<'manual_gateway' | 'card' | 'agent' | 'crypto'>('manual_gateway');
+  const [selectedCommissionMethod, setSelectedCommissionMethod] = useState<'manual_gateway' | 'card' | 'agent'>('manual_gateway');
+  const [selectedWithdrawMethod, setSelectedWithdrawMethod] = useState<'manual_gateway' | 'bank' | 'agent'>('manual_gateway');
   const [isProcessingDokan, setIsProcessingDokan] = useState(false);
-  const [selectedCommissionMethod, setSelectedCommissionMethod] = useState<'card' | 'agent' | 'gateway'>('card');
-  const [selectedWithdrawMethod, setSelectedWithdrawMethod] = useState<'bank' | 'agent' | 'gateway'>('bank');
   const [selectedGatewayId, setSelectedGatewayId] = useState<string | null>(null);
-  
   const [agentDepositReference, setAgentDepositReference] = useState('');
   const [agentDepositChannel, setAgentDepositChannel] = useState<string>('WhatsApp');
-  
   const [agentCommissionReference, setAgentCommissionReference] = useState('');
   const [agentCommissionChannel, setAgentCommissionChannel] = useState<string>('WhatsApp');
-  
   const [agentWithdrawReference, setAgentWithdrawReference] = useState('');
   const [agentWithdrawChannel, setAgentWithdrawChannel] = useState<string>('WhatsApp');
 
@@ -451,7 +471,7 @@ export function Dashboard() {
     setActiveTab('Transactions');
   };
 
-  const handleDokanPaySubmit = async (e: React.FormEvent) => {
+  const handleManualDepositSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     const amt = parseFloat(depositAmount);
@@ -460,33 +480,148 @@ export function Dashboard() {
       return;
     }
 
-    setIsProcessingDokan(true);
-    try {
-      const response = await fetch('/api/payment/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: amt,
-          orderId: `DP-${Date.now()}`,
-          customerName: user.name,
-          customerEmail: user.email,
-          customerPhone: user.phone
-        })
-      });
+    const gatewayName = depositGatewayName;
+    const matched = (siteConfig.paymentGateways || []).find(g => 
+      g.enabled && g.name.toLowerCase().replace(/\s/g, '').includes(gatewayName.toLowerCase())
+    );
 
-      const data = await response.json();
-      if (data.payment_url) {
-        // Redirect to Dokan Pay payment page
-        window.location.href = data.payment_url;
-      } else {
-        throw new Error(data.error || 'Failed to create payment session');
-      }
-    } catch (err: any) {
-      console.error("Dokan Pay error:", err);
-      alert(`❌ Failed to initiate Dokan Pay payment: ${err.message || "Please check your Credentials and try again."}`);
-    } finally {
-      setIsProcessingDokan(false);
+    const minAmt = matched ? matched.minAmount : 10;
+    if (amt < minAmt) {
+      alert(`Minimum deposit amount for ${gatewayName} is $${minAmt.toFixed(2)}`);
+      return;
     }
+
+    if (!depositPhoneOrAccount) {
+      alert("Please enter your Phone or Account Number.");
+      return;
+    }
+    if (!depositTrxId) {
+      alert("Please enter your Transaction ID (TrxID).");
+      return;
+    }
+
+    if (addDepositRequest) {
+      await addDepositRequest({
+        email: user.email,
+        amount: amt,
+        gateway: gatewayName,
+        transactionId: depositTrxId,
+        details: `Sender Number: ${depositPhoneOrAccount}`
+      });
+      alert(`🎉 Manual Deposit request of $${amt.toFixed(2)} via ${gatewayName} submitted successfully! It will be verified by our Admin team and added to your balance shortly.`);
+      setDepositAmount('100');
+      setDepositPhoneOrAccount('');
+      setDepositTrxId('');
+      setActiveTab('Transactions');
+    }
+  };
+
+  const handleManualCommissionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    const amt = parseFloat(commissionDepositAmount);
+    if (isNaN(amt) || amt <= 0) {
+      alert("Please specify a valid commission deposit amount.");
+      return;
+    }
+
+    const gatewayName = commissionGatewayName;
+    const matched = (siteConfig.paymentGateways || []).find(g => 
+      g.enabled && g.name.toLowerCase().replace(/\s/g, '').includes(gatewayName.toLowerCase())
+    );
+
+    const minAmt = matched ? matched.minAmount : 10;
+    if (amt < minAmt) {
+      alert(`Minimum commission deposit amount for ${gatewayName} is $${minAmt.toFixed(2)}`);
+      return;
+    }
+
+    if (!commissionPhoneOrAccount) {
+      alert("Please enter your Phone or Account Number.");
+      return;
+    }
+    if (!commissionTrxId) {
+      alert("Please enter your Transaction ID (TrxID).");
+      return;
+    }
+
+    if (addDepositRequest) {
+      await addDepositRequest({
+        email: user.email,
+        amount: amt,
+        gateway: `${gatewayName} (Commission)`,
+        transactionId: commissionTrxId,
+        details: `Sender Number: ${commissionPhoneOrAccount}. Commission Deposit.`
+      });
+      alert(`🎉 Commission Deposit request of $${amt.toFixed(2)} via ${gatewayName} submitted successfully! It will be verified by our Admin team and credited to your Commission Balance once approved.`);
+      setCommissionDepositAmount('100');
+      setCommissionPhoneOrAccount('');
+      setCommissionTrxId('');
+      setActiveTab('Transactions');
+    }
+  };
+
+  const handleManualWithdrawalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    const amt = parseFloat(withdrawAmountInput);
+    if (isNaN(amt) || amt <= 0) {
+      alert("Please specify a valid withdrawal amount.");
+      return;
+    }
+
+    const gatewayName = withdrawGatewayName;
+    const matched = (siteConfig.paymentGateways || []).find(g => 
+      g.enabled && g.name.toLowerCase().replace(/\s/g, '').includes(gatewayName.toLowerCase())
+    );
+
+    const minWd = matched ? matched.minAmount : (siteConfig.minWithdrawalAmount ?? 10);
+    if (amt < minWd) {
+      alert(`Minimum withdrawal amount for ${gatewayName} is $${minWd.toFixed(2)}`);
+      return;
+    }
+
+    const currentBal = user.balance || 0;
+    if (currentBal < amt) {
+      alert("Insufficient wallet balance for this withdrawal.");
+      return;
+    }
+
+    const govFeePct = siteConfig.governmentFeePct ?? 10;
+    const commissionNeeded = amt * (govFeePct / 100);
+    const currentComm = user.commissionBalance || 0;
+    if (currentComm < commissionNeeded) {
+      alert(`⚠️ Insufficient Commission Balance! You need $${commissionNeeded.toFixed(2)} (${govFeePct}% of $${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have $${currentComm.toFixed(2)}.`);
+      return;
+    }
+
+    if (!withdrawPhoneOrAccount) {
+      alert("Please enter your Recipient Phone or Account Number.");
+      return;
+    }
+
+    const nextBalance = parseFloat((currentBal - amt).toFixed(2));
+    const nextCommission = parseFloat((currentComm - commissionNeeded).toFixed(2));
+    await updateUserProfileFields(user.email, { balance: nextBalance, commissionBalance: nextCommission });
+
+    if (addWithdrawalRequest) {
+      await addWithdrawalRequest({
+        email: user.email,
+        amount: amt,
+        bankName: gatewayName === 'Bank' ? `Bank (${withdrawBankName}, Branch: ${withdrawBranch})` : gatewayName,
+        iban: withdrawPhoneOrAccount,
+        accountName: withdrawAccountName || user.name,
+        commissionDeducted: commissionNeeded
+      });
+    }
+
+    alert(`🎉 Manual Withdrawal request of $${amt.toFixed(2)} via ${gatewayName} submitted successfully! ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+    setWithdrawAmountInput('');
+    setWithdrawPhoneOrAccount('');
+    setWithdrawAccountName('');
+    setWithdrawBankName('');
+    setWithdrawBranch('');
+    setActiveTab('Transactions');
   };
 
   const handleAgentCommissionSubmit = (e: React.FormEvent) => {
@@ -1278,589 +1413,849 @@ export function Dashboard() {
             {/* TAB 2: Add Credit */}
             {activeTab === 'Add Credit' && (
               <div className="space-y-6">
-                <div className="bg-[#F8F9FA] border border-zinc-200/50 rounded-2xl p-6 sm:p-8">
-                  <h3 className="text-sm font-black text-zinc-900 uppercase tracking-widest mb-6">
-                    Add Credit Gateway
+                <div className="bg-white border border-zinc-200/85 rounded-3xl p-6 sm:p-8 shadow-sm text-left">
+                  <h3 className="text-lg font-black text-zinc-950 uppercase tracking-widest mb-6 border-b pb-4 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-[#E52535]" /> 
+                    {language === 'en' ? 'Deposit Funds' : 'ডিপোজিট করুন'}
                   </h3>
 
-                  <form onSubmit={handlePaymentSubmit} className="space-y-6">
-                    <div>
-                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
-                        Select Top-Up Amount ($)
-                      </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                        {['20', '50', '100', '250', '500'].map((val) => (
-                          <button
-                            key={val}
-                            type="button"
-                            onClick={() => setDepositAmount(val)}
-                            className={`py-3.5 text-center font-bold text-xs rounded-xl border transition-all ${
-                              depositAmount === val
-                                ? 'bg-[#0F0D24] border-[#0F0D24] text-white shadow'
-                                : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
-                            }`}
-                          >
-                            ${val}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
-                        Or enter custom amount ($)
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={depositAmount}
-                        onChange={(e) => setDepositAmount(e.target.value)}
-                        className="w-full bg-white border border-zinc-350 p-3 rounded-xl text-sm font-semibold outline-none focus:border-zinc-900 text-zinc-900"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2 mt-4">
-                        Select Top-Up Method
-                      </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedDepositMethod('dokan')}
-                          className={`py-3 text-center font-bold text-[10px] rounded-xl border transition-all uppercase tracking-wider ${
-                            selectedDepositMethod === 'dokan'
-                              ? 'bg-[#E52535] border-[#E52535] text-white shadow'
-                              : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
-                          }`}
-                        >
-                          ⚡ Dokan Pay
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedDepositMethod('card')}
-                          className={`py-3 text-center font-bold text-[10px] rounded-xl border transition-all uppercase tracking-wider ${
-                            selectedDepositMethod === 'card'
-                              ? 'bg-[#0F0D24] border-[#0F0D24] text-white shadow'
-                              : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
-                          }`}
-                        >
-                          💳 Manual Pay
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedDepositMethod('agent')}
-                          className={`py-3 text-center font-bold text-[10px] rounded-xl border transition-all uppercase tracking-wider ${
-                            selectedDepositMethod === 'agent'
-                              ? 'bg-[#0F0D24] border-[#0F0D24] text-white shadow'
-                              : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
-                          }`}
-                        >
-                          👥 Local Agent
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedDepositMethod('crypto')}
-                          className={`py-3 text-center font-bold text-[10px] rounded-xl border transition-all uppercase tracking-wider ${
-                            selectedDepositMethod === 'crypto'
-                              ? 'bg-[#0F0D24] border-[#0F0D24] text-white shadow'
-                              : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
-                          }`}
-                        >
-                          🪙 Crypto Pay
-                        </button>
-                      </div>
-                    </div>
-
-                    {selectedDepositMethod === 'dokan' ? (
-                      <div className="animate-fade-in space-y-6">
-                        <div className="bg-emerald-50 border border-emerald-200 p-6 rounded-2xl">
-                          <div className="flex items-start gap-4">
-                            <div className="bg-emerald-100 p-3 rounded-xl">
-                              <Sparkles className="w-6 h-6 text-emerald-600" />
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-black text-emerald-900 uppercase tracking-widest mb-1">Dokan Pay Automated Gateway</h4>
-                              <p className="text-xs text-emerald-700 font-medium leading-relaxed">
-                                {language === 'en' 
-                                  ? 'Pay instantly using bKash, Nagad, Rocket, or Bank Transfer. Your credit will be added automatically upon successful payment.'
-                                  : 'বিকাশ, নগদ, রকেট বা ব্যাংক ট্রান্সফারের মাধ্যমে তাৎক্ষণিক পেমেন্ট করুন। পেমেন্ট সফল হলে আপনার ব্যালেন্স স্বয়ংক্রিয়ভাবে আপডেট হবে।'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={handleDokanPaySubmit}
-                          disabled={isProcessingDokan}
-                          className="w-full bg-[#E52535] hover:bg-red-700 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                          {isProcessingDokan ? (
-                            <>
-                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                              Processing...
-                            </>
-                          ) : (
-                            <>PROCEED TO SECURE PAYMENT</>
-                          )}
-                        </button>
-                        
-                        <div className="bg-white border border-gray-100 p-5 rounded-2xl shadow-xs">
-                          <p className="text-[11px] font-bold text-gray-400 text-center uppercase tracking-wider mb-3">Supported Automated Methods</p>
-                          <div className="flex flex-wrap items-center justify-center gap-4 px-4">
-                            <div className="bg-[#E2125A]/5 px-3 py-1.5 rounded-lg flex items-center justify-center border border-[#E2125A]/10 h-8">
-                              <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Bkash_logo.png" alt="bKash" className="h-5 object-contain" />
-                            </div>
-                            <div className="bg-[#F26422]/5 px-3 py-1.5 rounded-lg flex items-center justify-center border border-[#F26422]/10 h-8">
-                              <img src="https://upload.wikimedia.org/wikipedia/commons/f/fe/Nagad_Logo.svg" alt="Nagad" className="h-5 object-contain" />
-                            </div>
-                            <div className="bg-[#FF5F00]/5 px-3 py-1.5 rounded-lg flex items-center justify-center border border-[#FF5F00]/10 h-8">
-                              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Mastercard-logo.png/800px-Mastercard-logo.png" alt="Mastercard" className="h-5 object-contain" />
-                            </div>
-                            <div className="bg-[#8C3494]/5 px-3 py-1.5 rounded-lg flex items-center justify-center font-bold text-[#8C3494] text-[10px] sm:text-xs gap-1 border border-[#8C3494]/10 h-8">
-                              🟣 Rocket
-                            </div>
-                            <div className="bg-[#1C2C80]/5 px-3 py-1.5 rounded-lg flex items-center justify-center font-bold text-[#1C2C80] text-[10px] sm:text-xs gap-1 border border-[#1C2C80]/10 h-8">
-                              🏦 Bank
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (selectedDepositMethod === 'card' || selectedDepositMethod === 'crypto') ? (
-                      <div className="animate-fade-in space-y-5">
-                        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
-                          <h4 className="text-[10px] font-black text-emerald-900 uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> Secure Payment Gateways
-                          </h4>
-                          <p className="text-[11px] text-emerald-700 font-medium leading-relaxed">
-                            {language === 'en' 
-                              ? 'Follow the instructions for your selected gateway below. After sending funds, enter your Transaction ID (TrxID) for instant credit approval.' 
-                              : 'আপনার পছন্দের গেটওয়ে সিলেক্ট করে নির্দেশনা অনুযায়ী টাকা পাঠান। পাঠানোর পর ট্রানজেকশন আইডি (TrxID) ইনপুট দিয়ে সাবমিট করুন।'}
-                          </p>
-                        </div>
-
-                        <div className="space-y-4">
-                          {(siteConfig.paymentGateways || [])
-                            .filter(g => g.enabled && (g.type === 'deposit' || g.type === 'both'))
-                            .filter(g => selectedDepositMethod === 'crypto' ? (g.name.includes('USDT') || g.name.includes('Crypto')) : (!g.name.includes('USDT') && !g.name.includes('Crypto')))
-                            .map((gateway) => (
-                              <div key={gateway.id} className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm">
-                                <div className="flex justify-between items-start mb-4">
-                                  <div>
-                                    <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block mb-0.5">Payment Method</span>
-                                    <h5 className="font-black text-zinc-950 uppercase text-sm">{gateway.name}</h5>
-                                  </div>
-                                  <div className="text-right">
-                                    <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest border border-zinc-200 dark:border-zinc-700">
-                                      MIN: ${gateway.minAmount || 10}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-dashed border-zinc-300 dark:border-zinc-700 p-4 rounded-xl text-center mb-4">
-                                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Send Funds To:</span>
-                                  <p className="font-mono text-lg font-black text-zinc-900 dark:text-zinc-100 break-all select-all">{gateway.numberOrAddress}</p>
-                                </div>
-
-                                <div className="space-y-4">
-                                  <div className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium bg-zinc-50/50 dark:bg-zinc-900/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800 italic">
-                                    " {gateway.instructions} "
-                                  </div>
-
-                                  <div className="flex gap-2">
-                                    <input 
-                                      type="text"
-                                      placeholder="Transaction ID / TrxID"
-                                      className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 dark:focus:border-zinc-700 font-mono dark:text-white"
-                                      id={`dep-trx-${gateway.id}`}
-                                    />
-                                    <button 
-                                      type="button"
-                                      onClick={() => {
-                                        const input = document.getElementById(`dep-trx-${gateway.id}`) as HTMLInputElement;
-                                        if (!input?.value) return alert("Please enter Transaction ID");
-                                        setAgentDepositReference(input.value);
-                                        setAgentDepositChannel(gateway.name as any);
-                                        handleAgentDepositSubmit();
-                                      }}
-                                      className="bg-[#E52535] hover:bg-red-700 text-white font-black text-[10px] px-5 rounded-xl uppercase tracking-widest transition-all shadow-sm"
-                                    >
-                                      Submit
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-6">
-                        {/* Agent Info Instructions Card */}
-                        <div className="bg-[#EBF5FF] border border-blue-200 p-4 rounded-xl text-blue-900 text-xs leading-relaxed">
-                          <p className="font-bold uppercase tracking-wider mb-1 text-blue-950 flex items-center gap-1">
-                            ℹ️ CONNECT WITH OUR AUTHORIZED LOCAL AGENTS
-                          </p>
-                          <p>{siteConfig.agentInstructions || 'You can deposit, withdraw or pay commission directly through our authorized local agents via WhatsApp, IMO or Telegram. Click any agent button below to initiate an instant chat. After transferring the money, please provide the details below.'}</p>
-                        </div>
-
-                        {/* Social Agents Contact buttons row */}
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
-                            1. Select Agent Social Platform to Chat:
-                          </label>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <button
-                              type="button"
-                              onClick={(e) => handleAgentClick('WhatsApp', e)}
-                              className="flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all active:scale-[0.98]"
-                            >
-                              <svg className="w-5 h-5 text-white fill-current shrink-0" viewBox="0 0 24 24">
-                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.262 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.42 9.864-9.858.002-2.634-1.023-5.11-2.885-6.974C16.526 1.809 14.048.784 11.41.784c-5.439 0-9.865 4.42-9.869 9.858-.002 1.718.452 3.393 1.312 4.881L1.87 21.082l5.777-1.513c-1.428.877-2.228 1.341-1.002.585zM17.47 16.924c-.322-.162-1.905-.94-2.202-1.047-.297-.108-.514-.162-.73.162-.217.324-.838 1.048-1.027 1.265-.19.217-.378.243-.7.08-.323-.162-1.36-.5-2.593-1.6c-.96-.855-1.608-1.91-1.796-2.23-.19-.323-.02-.497.14-.658.146-.145.324-.378.486-.567.163-.189.216-.324.324-.54.109-.217.054-.405-.027-.567-.08-.162-.73-1.756-1-2.404-.263-.633-.53-.548-.73-.558-.189-.01-.405-.01-.622-.01-.216 0-.568.08-.865.405-.297.324-1.135 1.108-1.135 2.703 0 1.594 1.162 3.134 1.324 3.35.162.216 2.287 3.493 5.54 4.896.774.333 1.38.532 1.85.682.778.247 1.487.212 2.047.129.624-.093 1.905-.779 2.176-1.495.27-.716.27-1.33.19-1.46-.082-.13-.298-.21-.62-.372z" />
-                              </svg>
-                              WHATSAPP AGENT
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => handleAgentClick('IMO', e)}
-                              className="flex items-center justify-center gap-2.5 bg-[#00A0E9] hover:bg-[#008ccd] text-white py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all active:scale-[0.98]"
-                            >
-                              <span className="w-5 h-5 bg-white text-[#00A0E9] rounded-full text-[9px] font-black font-sans shrink-0 flex items-center justify-center border border-white leading-none">
-                                imo
-                              </span>
-                              IMO AGENT
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => handleAgentClick('Telegram', e)}
-                              className="flex items-center justify-center gap-2.5 bg-[#0088cc] hover:bg-[#0077b3] text-white py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all active:scale-[0.98]"
-                            >
-                              <svg className="w-5 h-5 text-white fill-current shrink-0" viewBox="0 0 24 24">
-                                <path d="M11.944 0C5.344 0 0 5.344 0 12c0 6.656 5.344 12 11.944 12 6.656 0 12-5.344 12-12 0-6.656-5.344-12-12-12zm5.813 8.219l-1.938 9.156c-.144.644-.525.8-.144.8l-2.956-2.181-1.425 1.375c-.156.156-.287.287-.587.287l.213-3.012 5.488-4.962c.238-.212-.05-.331-.369-.119L9.25 14.1l-2.919-.912c-.637-.2-1.25-.3-1.25-.8 0-.469.744-.7 1.25-.881l11.394-4.394c.525-.187 1.012-.081 1.012.306 0 .156-.025.331-.081.419z" />
-                              </svg>
-                              TELEGRAM AGENT
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Submission details block */}
-                        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-inner">
-                          <p className="text-xs font-bold uppercase tracking-widest text-zinc-800 dark:text-zinc-200 border-b border-zinc-100 dark:border-zinc-800 pb-2">
-                            2. Submit Agent Transaction Details for Approval
-                          </p>
-                          
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
-                                Connected Agent Channel
-                              </label>
-                              <select
-                                value={agentDepositChannel}
-                                onChange={(e) => setAgentDepositChannel(e.target.value as any)}
-                                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 dark:focus:border-zinc-600 text-zinc-900 dark:text-zinc-100"
-                              >
-                                <option value="WhatsApp">WhatsApp Agent</option>
-                                <option value="IMO">IMO Agent</option>
-                                <option value="Telegram">Telegram Agent</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
-                                Transaction ID / Sender Contact (imo/wa/tg)
-                              </label>
-                              <input
-                                type="text"
-                                placeholder=""
-                                value={agentDepositReference}
-                                onChange={(e) => setAgentDepositReference(e.target.value)}
-                                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 dark:focus:border-zinc-600 font-mono text-zinc-900 dark:text-zinc-100"
-                                required={selectedDepositMethod === 'agent'}
-                              />
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={handleAgentDepositSubmit}
-                            className="w-full bg-[#0F0D24] hover:bg-zinc-800 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-md transition-all active:scale-95 mt-2"
-                          >
-                            SUBMIT AGENT DEPOSIT REQUEST
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* TAB: Add Commission */}
-            {activeTab === 'Bank Withdraw' && (
-              <div className="space-y-6">
-                <div className="bg-[#F8F9FA] border border-zinc-200/50 rounded-2xl p-6 sm:p-8">
-                  <h3 className="text-xl font-black text-zinc-900 tracking-tight mb-2">Request Bank Withdrawal</h3>
-                  <p className="text-sm text-zinc-500 font-medium mb-6">Withdraw your available balance directly to your bank account. Note: A {siteConfig.governmentFeePct ?? 10}% government commission fee applies and will be deducted from your Commission Balance.</p>
-                  
-                  <div className="mb-4">
+                  {/* Method Selector Tabs */}
+                  <div className="mb-6">
                     <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
-                      Select Withdrawal Method
+                      {language === 'en' ? 'Select Deposit Method' : 'ডিপোজিট পদ্ধতি সিলেক্ট করুন'}
                     </label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-2">
                       <button
                         type="button"
-                        onClick={() => setSelectedWithdrawMethod('bank')}
-                        className={`py-3 text-center font-bold text-[10px] rounded-xl border transition-all uppercase tracking-wider ${
-                          selectedWithdrawMethod === 'bank'
-                            ? 'bg-[#0F0D24] border-[#0F0D24] text-white shadow'
-                            : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
+                        onClick={() => setSelectedDepositMethod('manual_gateway')}
+                        className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
+                          selectedDepositMethod === 'manual_gateway'
+                            ? 'bg-[#E52535] border-[#E52535] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
                         }`}
                       >
-                        🏦 Bank Wire
+                        🏦 {language === 'en' ? 'Manual Pay' : 'ম্যানুয়াল পে'}
                       </button>
                       <button
                         type="button"
-                        onClick={() => setSelectedWithdrawMethod('agent')}
-                        className={`py-3 text-center font-bold text-[10px] rounded-xl border transition-all uppercase tracking-wider ${
-                          selectedWithdrawMethod === 'agent'
-                            ? 'bg-[#0F0D24] border-[#0F0D24] text-white shadow'
-                            : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
+                        onClick={() => setSelectedDepositMethod('agent')}
+                        className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
+                          selectedDepositMethod === 'agent'
+                            ? 'bg-[#E52535] border-[#E52535] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
                         }`}
                       >
-                        👥 Local Agent
+                        👥 {language === 'en' ? 'Local Agent' : 'লোকাল এজেন্ট'}
                       </button>
                       <button
                         type="button"
-                        onClick={() => setSelectedWithdrawMethod('gateway')}
-                        className={`py-3 text-center font-bold text-[10px] rounded-xl border transition-all uppercase tracking-wider ${
-                          selectedWithdrawMethod === 'gateway'
-                            ? 'bg-[#0F0D24] border-[#0F0D24] text-white shadow'
-                            : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
+                        onClick={() => setSelectedDepositMethod('crypto')}
+                        className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
+                          selectedDepositMethod === 'crypto'
+                            ? 'bg-[#E52535] border-[#E52535] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
                         }`}
                       >
-                        💳 Local Wallet
+                        🪙 {language === 'en' ? 'Crypto USDT' : 'ক্রিপ্টো USDT'}
                       </button>
                     </div>
                   </div>
-                  
-                  {selectedWithdrawMethod === 'gateway' ? (
-                    <div className="animate-fade-in space-y-6">
-                      <div className="grid grid-cols-1 gap-4">
-                        {(siteConfig.paymentGateways || []).filter(g => g.enabled && (g.type === 'withdrawal' || g.type === 'both')).map((gateway) => (
-                          <div key={gateway.id} className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
-                            <div className="flex justify-between items-center mb-4">
-                              <h5 className="font-black text-zinc-950 uppercase text-sm">{gateway.name} Withdrawal</h5>
-                              <span className="text-[9px] font-black bg-zinc-100 px-2 py-1 rounded text-zinc-500 uppercase tracking-widest">Local Payout</span>
+
+                  {/* FORM CONTENT BASED ON SELECTED METHOD */}
+                  {selectedDepositMethod === 'manual_gateway' && (
+                    <form onSubmit={handleManualDepositSubmit} className="space-y-6">
+                      {/* Amount Presets */}
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
+                          {language === 'en' ? 'Select Deposit Amount ($)' : 'ডিপোজিট পরিমাণ সিলেক্ট করুন ($)'}
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                          {['20', '50', '100', '250', '500'].map((val) => (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => setDepositAmount(val)}
+                              className={`py-3.5 text-center font-bold text-xs rounded-xl border transition-all ${
+                                depositAmount === val
+                                  ? 'bg-[#E52535] border-[#E52535] text-white shadow-md'
+                                  : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                              }`}
+                            >
+                              ${val}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Custom Amount */}
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
+                          {language === 'en' ? 'Or enter custom amount ($)' : 'অথবা কাস্টম পরিমাণ লিখুন ($)'}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={depositAmount}
+                          onChange={(e) => setDepositAmount(e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-sm font-semibold outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all"
+                          required
+                        />
+                      </div>
+
+                      {/* Selector Box for Nagad, bKash, Rocket, Upay, Bank */}
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
+                          {language === 'en' ? 'Select Payment Method' : 'পেমেন্ট মাধ্যম সিলেক্ট করুন'}
+                        </label>
+                        <select
+                          value={depositGatewayName}
+                          onChange={(e) => setDepositGatewayName(e.target.value as any)}
+                          className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-sm font-semibold outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all cursor-pointer"
+                        >
+                          <option value="bKash">bKash / বিকাশ</option>
+                          <option value="Nagad">Nagad / নগদ</option>
+                          <option value="Rocket">Rocket / রকেট</option>
+                          <option value="Upay">Upay / উপায়</option>
+                          <option value="Bank">Bank / ব্যাংক</option>
+                        </select>
+                      </div>
+
+                      {/* Matching dynamic gateway details */}
+                      {(() => {
+                        const matched = (siteConfig.paymentGateways || []).find(g => 
+                          g.enabled && g.name.toLowerCase().replace(/\s/g, '').includes(depositGatewayName.toLowerCase())
+                        );
+
+                        if (!matched) {
+                          return (
+                            <div className="bg-amber-50 border border-amber-200 p-5 rounded-2xl">
+                              <p className="text-xs text-amber-800 font-semibold leading-relaxed">
+                                ⚠️ {depositGatewayName} {language === 'en' 
+                                  ? 'gateway is currently not active in the system. Please configure it in Admin -> Gateways, or choose another active gateway.' 
+                                  : 'গেটওয়েটি বর্তমানে সিস্টেমে সক্রিয় নেই। এডমিন প্যানেল থেকে সক্রিয় করুন অথবা অন্য একটি সচল গেটওয়ে নির্বাচন করুন।'}
+                              </p>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="animate-fade-in space-y-5 bg-zinc-50 border border-zinc-200/60 p-5 rounded-2xl">
+                            <div className="flex justify-between items-center pb-2 border-b border-zinc-200">
+                              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                                {language === 'en' ? 'Payment Details' : 'পেমেন্ট বিস্তারিত'}
+                              </span>
+                              <span className="bg-zinc-200/80 text-zinc-700 text-[9px] font-bold px-2 py-0.5 rounded-lg border border-zinc-300">
+                                Min Amount: ${matched.minAmount || 10}
+                              </span>
                             </div>
 
-                            <form 
-                              onSubmit={(e) => {
-                                e.preventDefault();
-                                const amount = (e.target as any).amount.value;
-                                const wallet = (e.target as any).wallet.value;
-                                if (parseFloat(amount) < (gateway.minAmount || 10)) return alert(`Minimum withdrawal for ${gateway.name} is $${gateway.minAmount || 10}`);
-                                if (!wallet) return alert(`Please enter your ${gateway.name} account number`);
-                                setBankWithdrawAmount(amount);
-                                setBankWithdrawIban(wallet);
-                                setBankWithdrawName(gateway.name);
-                                handleBankWithdrawSubmit(e);
-                              }}
-                              className="space-y-4"
-                            >
-                              <div>
-                                <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">Amount to Withdraw ($)</label>
-                                <input 
-                                  name="amount"
-                                  type="number" 
-                                  className="w-full bg-zinc-50 border border-zinc-200 p-3 rounded-xl text-lg font-bold outline-none focus:border-zinc-950 transition-colors text-zinc-900"
-                                  placeholder="0.00"
-                                  required
-                                  min={gateway.minAmount || 10}
-                                />
-                              </div>
-                              <div>
-                                <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">Your {gateway.name} Number / Address</label>
-                                <input 
-                                  name="wallet"
-                                  type="text" 
-                                  className="w-full bg-zinc-50 border border-zinc-200 p-3 rounded-xl text-sm font-mono outline-none focus:border-zinc-950 transition-colors text-zinc-900"
-                                  placeholder="Enter your receiving wallet details"
-                                  required
-                                />
-                              </div>
+                            <div className="bg-white border border-zinc-200/80 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                              <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest block mb-1">
+                                {depositGatewayName === 'Bank' ? 'Bank Account Details:' : 'Send Money to Number:'}
+                              </span>
+                              <p className="font-mono text-base sm:text-lg font-black text-zinc-950 select-all break-all mb-2">
+                                {matched.numberOrAddress}
+                              </p>
                               <button
-                                type="submit"
-                                className="w-full bg-zinc-900 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest py-4 rounded-xl shadow-md transition-all active:scale-95"
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(matched.numberOrAddress);
+                                  alert("Copied to clipboard!");
+                                }}
+                                className="text-[9px] font-black tracking-widest uppercase bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-lg"
                               >
-                                Request {gateway.name} Withdrawal
+                                COPY / কপি করুন
                               </button>
-                            </form>
+                            </div>
+
+                            <div className="text-xs text-zinc-600 font-medium italic bg-white border border-zinc-150 p-4 rounded-xl">
+                              <p className="font-bold text-zinc-700 not-italic mb-1 uppercase tracking-wider text-[9px]">Instructions:</p>
+                              "{matched.instructions}"
+                            </div>
+
+                            {/* Inputs: User Phone, TrxID */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                              <div>
+                                <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                                  {depositGatewayName === 'Bank' ? 'Your Bank Account Number / Name' : 'Your Sender Mobile Number'} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder={depositGatewayName === 'Bank' ? 'Account No' : 'e.g. 01712345678'}
+                                  value={depositPhoneOrAccount}
+                                  onChange={(e) => setDepositPhoneOrAccount(e.target.value)}
+                                  className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                                  {language === 'en' ? 'Transaction ID / TrxID' : 'ট্রানজেকশন আইডি / TrxID'} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. TRX8291039"
+                                  value={depositTrxId}
+                                  onChange={(e) => setDepositTrxId(e.target.value)}
+                                  className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900 font-mono"
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            <button
+                              type="submit"
+                              className="w-full bg-[#E52535] hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                            >
+                              {language === 'en' ? 'SUBMIT DEPOSIT FOR VERIFICATION' : 'ডিপোজিট রিকোয়েস্ট পাঠান'}
+                            </button>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : selectedWithdrawMethod === 'bank' ? (
-                    <form onSubmit={handleBankWithdrawSubmit} className="space-y-5 bg-white p-6 rounded-2xl border border-zinc-200/60 shadow-sm">
-                      <div>
-                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">Withdrawal Amount ($)</label>
-                        <input 
-                          type="number" 
-                          value={bankWithdrawAmount}
-                          onChange={(e) => setBankWithdrawAmount(e.target.value)}
-                          className="w-full bg-zinc-50 border border-zinc-200 p-3 rounded-xl text-lg font-bold outline-none focus:border-zinc-900 transition-colors text-zinc-900"
-                          placeholder=""
-                          required={selectedWithdrawMethod === 'bank'}
-                          min="81967.21"
-                          step="0.01"
-                        />
-                        <p className="text-[10px] text-zinc-400 font-medium mt-1">Minimum withdrawal amount: $81,967.21</p>
-                      </div>
+                        );
+                      })()}
+                    </form>
+                  )}
 
+                  {selectedDepositMethod === 'agent' && (
+                    <form onSubmit={handleAgentDepositSubmit} className="space-y-6">
+                      {/* Amount Input */}
                       <div>
-                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">Bank Name</label>
-                        <input 
-                          type="text" 
-                          value={bankWithdrawName}
-                          onChange={(e) => setBankWithdrawName(e.target.value)}
-                          className="w-full bg-zinc-50 border border-zinc-200 p-3 rounded-xl text-sm font-semibold outline-none focus:border-zinc-900 transition-colors text-zinc-900"
-                          placeholder=""
-                          required={selectedWithdrawMethod === 'bank'}
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
+                          {language === 'en' ? 'Enter Deposit Amount ($)' : 'ডিপোজিট পরিমাণ লিখুন ($)'}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={depositAmount}
+                          onChange={(e) => setDepositAmount(e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-sm font-semibold outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all"
+                          required
                         />
                       </div>
 
+                      {/* Agent Channels */}
                       <div>
-                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">Account Number</label>
-                        <input 
-                          type="text" 
-                          value={bankWithdrawIban}
-                          onChange={(e) => setBankWithdrawIban(e.target.value)}
-                          className="w-full bg-zinc-50 border border-zinc-200 p-3 rounded-xl text-sm font-mono outline-none focus:border-zinc-900 transition-colors tracking-widest text-zinc-900"
-                          placeholder=""
-                          required={selectedWithdrawMethod === 'bank'}
-                        />
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
+                          {language === 'en' ? '1. Connect with Local Agent via App:' : '১. লোকাল এজেন্টের সাথে যোগাযোগ করুন:'}
+                        </label>
+                        <div className="grid grid-cols-3 gap-3">
+                          {[
+                            { name: 'WhatsApp', color: 'bg-emerald-600', icon: '💬' },
+                            { name: 'IMO', color: 'bg-blue-600', icon: '📞' },
+                            { name: 'Telegram', color: 'bg-sky-500', icon: '✈️' }
+                          ].map((ch) => (
+                            <button
+                              key={ch.name}
+                              type="button"
+                              onClick={(e) => {
+                                setAgentDepositChannel(ch.name);
+                                handleAgentClick(ch.name as any, e);
+                              }}
+                              className={`py-3.5 text-center font-bold text-xs rounded-xl text-white ${ch.color} shadow-sm hover:opacity-90 active:scale-95 transition-all flex flex-col items-center justify-center gap-1`}
+                            >
+                              <span>{ch.icon}</span>
+                              <span className="text-[10px]">{ch.name} Agent</span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">Branch Name</label>
-                        <input 
-                          type="text" 
-                          value={bankWithdrawBranch}
-                          onChange={(e) => setBankWithdrawBranch(e.target.value)}
-                          className="w-full bg-zinc-50 border border-zinc-200 p-3 rounded-xl text-sm font-semibold outline-none focus:border-zinc-900 transition-colors text-zinc-900"
-                          placeholder=""
-                          required={selectedWithdrawMethod === 'bank'}
-                        />
+                      <div className="bg-zinc-50 border border-zinc-200 p-4 rounded-2xl space-y-4">
+                        <p className="text-xs text-zinc-600 font-medium italic">
+                          {language === 'en' 
+                            ? 'Click any channel above to directly chat with our authorized local agent, obtain payment details, send your payment, then enter the Sender Contact or reference below to verify.' 
+                            : 'ওপরের যেকোনো মাধ্যমে আমাদের অনুমোদিত লোকাল এজেন্টের সাথে চ্যাট করুন, পেমেন্ট নাম্বার নিয়ে টাকা পাঠান, এবং নিচে আপনার কন্টাক্ট আইডি বা রেফারেন্স লিখে সাবমিট করুন।'}
+                        </p>
+
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                            {language === 'en' ? 'Connected Agent Channel' : 'কানেক্টেড এজেন্ট চ্যানেল'}
+                          </label>
+                          <select
+                            value={agentDepositChannel}
+                            onChange={(e) => setAgentDepositChannel(e.target.value)}
+                            className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900"
+                          >
+                            <option value="WhatsApp">WhatsApp Agent</option>
+                            <option value="IMO">IMO Agent</option>
+                            <option value="Telegram">Telegram Agent</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                            {language === 'en' ? 'Sender Phone / IMO ID / Username' : 'প্রেরক ফোন নাম্বার / ইমো আইডি / ইউজারনেম'} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. IMO-017XXXXXXXX or Telegram @username"
+                            value={agentDepositReference}
+                            onChange={(e) => setAgentDepositReference(e.target.value)}
+                            className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 font-mono"
+                            required
+                          />
+                        </div>
                       </div>
 
                       <button
                         type="submit"
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-md transition-all active:scale-95 mt-4"
+                        className="w-full bg-zinc-950 hover:bg-zinc-900 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
                       >
-                        CONFIRM WITHDRAWAL
+                        {language === 'en' ? 'SUBMIT AGENT DEPOSIT REQUEST' : 'এজেন্ট ডিপোজিট রিকোয়েস্ট পাঠান'}
                       </button>
                     </form>
-                  ) : (
-                    <form onSubmit={handleAgentWithdrawSubmit} className="space-y-5 bg-white p-6 rounded-2xl border border-zinc-200/60 shadow-sm">
-                      {/* Agent Info Instructions Card */}
-                      <div className="bg-[#EBF5FF] border border-blue-200 p-4 rounded-xl text-blue-900 text-xs leading-relaxed">
-                        <p className="font-bold uppercase tracking-wider mb-1 text-blue-950 flex items-center gap-1">
-                          ℹ️ CASH OUT VIA AUTHORIZED LOCAL AGENTS
-                        </p>
-                        <p>{siteConfig.agentInstructions || 'You can deposit, withdraw or pay commission directly through our authorized local agents via WhatsApp, IMO or Telegram. Click any agent button below to initiate an instant chat. After transferring the money, please provide the details below.'}</p>
-                      </div>
+                  )}
 
-                      {/* Social Agents Contact buttons row */}
+                  {selectedDepositMethod === 'crypto' && (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!user) return;
+                        const amt = parseFloat(depositAmount);
+                        if (isNaN(amt) || amt <= 0) {
+                          alert("Please specify a valid deposit amount.");
+                          return;
+                        }
+                        if (!depositTrxId) {
+                          alert("Please enter USDT Transaction Hash (TxHash).");
+                          return;
+                        }
+                        if (addDepositRequest) {
+                          addDepositRequest({
+                            email: user.email,
+                            amount: amt,
+                            gateway: 'USDT (TRC20)',
+                            transactionId: depositTrxId,
+                            details: `Sender Address: ${depositPhoneOrAccount || 'Not Specified'}`
+                          });
+                          alert(`🎉 Crypto Deposit request of $${amt.toFixed(2)} submitted successfully! It will be verified by our Admin team shortly.`);
+                          setDepositAmount('100');
+                          setDepositPhoneOrAccount('');
+                          setDepositTrxId('');
+                          setActiveTab('Transactions');
+                        }
+                      }}
+                      className="space-y-6"
+                    >
+                      {/* Amount Input */}
                       <div>
-                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
-                          1. Click below to contact an Authorized Agent:
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
+                          {language === 'en' ? 'Enter USDT Deposit Amount ($)' : 'USDT ডিপোজিট পরিমাণ লিখুন ($)'}
                         </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <button
-                            type="button"
-                            onClick={(e) => handleAgentClick('WhatsApp', e)}
-                            className="flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all active:scale-[0.98]"
-                          >
-                            <svg className="w-5 h-5 text-white fill-current shrink-0" viewBox="0 0 24 24">
-                              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.262 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.42 9.864-9.858.002-2.634-1.023-5.11-2.885-6.974C16.526 1.809 14.048.784 11.41.784c-5.439 0-9.865 4.42-9.869 9.858-.002 1.718.452 3.393 1.312 4.881L1.87 21.082l5.777-1.513c-1.428.877-2.228 1.341-1.002.585zM17.47 16.924c-.322-.162-1.905-.94-2.202-1.047-.297-.108-.514-.162-.73.162-.217.324-.838 1.048-1.027 1.265-.19.217-.378.243-.7.08-.323-.162-1.36-.5-2.593-1.6c-.96-.855-1.608-1.91-1.796-2.23-.19-.323-.02-.497.14-.658.146-.145.324-.378.486-.567.163-.189.216-.324.324-.54.109-.217.054-.405-.027-.567-.08-.162-.73-1.756-1-2.404-.263-.633-.53-.548-.73-.558-.189-.01-.405-.01-.622-.01-.216 0-.568.08-.865.405-.297.324-1.135 1.108-1.135 2.703 0 1.594 1.162 3.134 1.324 3.35.162.216 2.287 3.493 5.54 4.896.774.333 1.38.532 1.85.682.778.247 1.487.212 2.047.129.624-.093 1.905-.779 2.176-1.495.27-.716.27-1.33.19-1.46-.082-.13-.298-.21-.62-.372z" />
-                            </svg>
-                            WHATSAPP AGENT
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => handleAgentClick('IMO', e)}
-                            className="flex items-center justify-center gap-2.5 bg-[#00A0E9] hover:bg-[#008ccd] text-white py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all active:scale-[0.98]"
-                          >
-                            <span className="w-5 h-5 bg-white text-[#00A0E9] rounded-full text-[9px] font-black font-sans shrink-0 flex items-center justify-center border border-white leading-none">
-                              imo
-                            </span>
-                            IMO AGENT
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => handleAgentClick('Telegram', e)}
-                            className="flex items-center justify-center gap-2.5 bg-[#0088cc] hover:bg-[#0077b3] text-white py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all active:scale-[0.98]"
-                          >
-                            <svg className="w-5 h-5 text-white fill-current shrink-0" viewBox="0 0 24 24">
-                              <path d="M11.944 0C5.344 0 0 5.344 0 12c0 6.656 5.344 12 11.944 12 6.656 0 12-5.344 12-12 0-6.656-5.344-12-12-12zm5.813 8.219l-1.938 9.156c-.144.644-.525.8-.144.8l-2.956-2.181-1.425 1.375c-.156.156-.287.287-.587.287l.213-3.012 5.488-4.962c.238-.212-.05-.331-.369-.119L9.25 14.1l-2.919-.912c-.637-.2-1.25-.3-1.25-.8 0-.469.744-.7 1.25-.881l11.394-4.394c.525-.187 1.012-.081 1.012.306 0 .156-.025.331-.081.419z" />
-                            </svg>
-                            TELEGRAM AGENT
-                          </button>
-                        </div>
+                        <input
+                          type="number"
+                          min="1"
+                          value={depositAmount}
+                          onChange={(e) => setDepositAmount(e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-sm font-semibold outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all"
+                          required
+                        />
                       </div>
 
-                      {/* Withdrawal form items */}
-                      <div className="space-y-4 pt-2">
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">Withdrawal Amount ($)</label>
-                          <input 
-                            type="number" 
-                            value={bankWithdrawAmount}
-                            onChange={(e) => setBankWithdrawAmount(e.target.value)}
-                            className="w-full bg-zinc-50 border border-zinc-200 p-3 rounded-xl text-lg font-bold outline-none focus:border-zinc-900 transition-colors text-zinc-900"
-                            placeholder=""
-                            required={selectedWithdrawMethod === 'agent'}
-                            min="81967.21"
-                            step="0.01"
-                          />
-                          <p className="text-[10px] text-zinc-400 font-medium mt-1">Minimum withdrawal amount: $81,967.21</p>
+                      {/* Crypto details */}
+                      <div className="animate-fade-in space-y-5 bg-zinc-50 border border-zinc-200/60 p-5 rounded-2xl">
+                        <div className="bg-white border border-zinc-200/80 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                          <span className="text-[9px] font-black text-[#E52535] uppercase tracking-widest block mb-1">
+                            USDT (TRC20) Wallet Address:
+                          </span>
+                          <p className="font-mono text-xs sm:text-sm font-black text-zinc-950 select-all break-all mb-2">
+                            0x742d35Cc6634C0532925a3b844Bc454e4438f44e
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText('0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
+                              alert("USDT Address Copied!");
+                            }}
+                            className="text-[9px] font-black tracking-widest uppercase bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-lg"
+                          >
+                            COPY ADDRESS / কপি করুন
+                          </button>
                         </div>
 
+                        <div className="text-xs text-zinc-600 font-medium italic bg-white border border-zinc-150 p-4 rounded-xl">
+                          <p className="font-bold text-zinc-700 not-italic mb-1 uppercase tracking-wider text-[9px]">Instructions:</p>
+                          "Send USDT (TRC20) to our secure address above. Enter your Sender Wallet Address and Transaction Hash (TxHash/TxID) below for instant audit & verification."
+                        </div>
+
+                        {/* Inputs: User Wallet, TxHash */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
-                              Agent Channel Connected
-                            </label>
-                            <select
-                              value={agentWithdrawChannel}
-                              onChange={(e) => setAgentWithdrawChannel(e.target.value as any)}
-                              className="w-full bg-zinc-50 border border-zinc-200 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-900 text-zinc-900"
-                            >
-                              <option value="WhatsApp">WhatsApp Agent</option>
-                              <option value="IMO">IMO Agent</option>
-                              <option value="Telegram">Telegram Agent</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
-                              Your Social Account Username / Number
+                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                              {language === 'en' ? 'Your Sender Wallet Address' : 'আপনার প্রেরক ওয়ালেট অ্যাড্রেস'}
                             </label>
                             <input
                               type="text"
-                              placeholder=""
-                              value={agentWithdrawReference}
-                              onChange={(e) => setAgentWithdrawReference(e.target.value)}
-                              className="w-full bg-zinc-50 border border-zinc-200 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-900 font-mono text-zinc-900"
-                              required={selectedWithdrawMethod === 'agent'}
+                              placeholder="e.g. T9yD14NjX..."
+                              value={depositPhoneOrAccount}
+                              onChange={(e) => setDepositPhoneOrAccount(e.target.value)}
+                              className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                              {language === 'en' ? 'Transaction Hash (TxID) *' : 'ট্রানজেকশন হ্যাশ (TxID) *'} <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. f8319a27b9c9d..."
+                              value={depositTrxId}
+                              onChange={(e) => setDepositTrxId(e.target.value)}
+                              className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 font-mono"
+                              required
                             />
                           </div>
                         </div>
 
                         <button
                           type="submit"
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-md transition-all active:scale-95 mt-4"
+                          className="w-full bg-[#E52535] hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
                         >
-                          SUBMIT AGENT WITHDRAWAL REQUEST
+                          {language === 'en' ? 'SUBMIT CRYPTO DEPOSIT FOR VERIFICATION' : 'ক্রিপ্টো ডিপোজিট রিকোয়েস্ট পাঠান'}
                         </button>
                       </div>
+                    </form>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB: Bank Withdraw */}
+            {activeTab === 'Bank Withdraw' && (
+              <div className="space-y-6">
+                <div className="bg-white border border-zinc-200/85 rounded-3xl p-6 sm:p-8 shadow-sm text-left">
+                  <h3 className="text-lg font-black text-zinc-950 uppercase tracking-widest mb-2 flex items-center gap-2 border-b pb-4">
+                    <span className="text-[#E52535]">🏦</span> 
+                    {language === 'en' ? 'Withdraw Funds' : 'উইথড্র করুন'}
+                  </h3>
+                  
+                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-xs text-amber-900 leading-relaxed mb-6">
+                    <p className="font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5 text-amber-950">
+                      ⚠️ {language === 'en' ? 'Commission Fee Requirement' : 'কমিশন ফি নোটিশ'}
+                    </p>
+                    <p>
+                      {language === 'en' 
+                        ? `A ${siteConfig.governmentFeePct ?? 10}% government commission fee applies. This fee will be deducted from your Commission Balance (Available Commission Balance: $${(user?.commissionBalance || 0).toFixed(2)}).`
+                        : `আপনার উইথড্র পরিমাণের ওপর ${siteConfig.governmentFeePct ?? 10}% সরকারি কমিশন ফি প্রযোজ্য হবে। এই ফি-টি আপনার কমিশন ব্যালেন্স থেকে কাটা হবে (আপনার বর্তমান কমিশন ব্যালেন্স: $${(user?.commissionBalance || 0).toFixed(2)})।`}
+                    </p>
+                  </div>
+
+                  {/* Withdrawal Method Selection */}
+                  <div className="mb-6">
+                    <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
+                      {language === 'en' ? 'Select Withdrawal Channel' : 'উইথড্র পদ্ধতি সিলেক্ট করুন'}
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedWithdrawMethod('manual_gateway')}
+                        className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
+                          selectedWithdrawMethod === 'manual_gateway'
+                            ? 'bg-[#E52535] border-[#E52535] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                        }`}
+                      >
+                        🏦 {language === 'en' ? 'Manual Pay' : 'ম্যানুয়াল উইথড্র'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedWithdrawMethod('agent')}
+                        className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
+                          selectedWithdrawMethod === 'agent'
+                            ? 'bg-[#E52535] border-[#E52535] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                        }`}
+                      >
+                        👥 {language === 'en' ? 'Local Agent' : 'লোকাল এজেন্ট'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedWithdrawMethod('bank')} // using 'bank' as key for crypto withdraw to keep schema compatible or define custom flow
+                        className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
+                          selectedWithdrawMethod === 'bank'
+                            ? 'bg-[#E52535] border-[#E52535] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                        }`}
+                      >
+                        🪙 {language === 'en' ? 'Crypto USDT' : 'ক্রিপ্টো USDT'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {selectedWithdrawMethod === 'manual_gateway' && (
+                    <form onSubmit={handleManualWithdrawalSubmit} className="space-y-6">
+                      {/* Amount Input */}
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
+                          {language === 'en' ? 'Enter Withdrawal Amount ($)' : 'উইথড্র পরিমাণ লিখুন ($)'}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="any"
+                          value={withdrawAmountInput}
+                          onChange={(e) => setWithdrawAmountInput(e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-lg font-black outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all"
+                          placeholder="0.00"
+                          required
+                        />
+                        <p className="text-[10px] text-zinc-400 mt-1 font-semibold">
+                          {language === 'en' 
+                            ? `Minimum withdrawal amount: $${(siteConfig.minWithdrawalAmount ?? 10).toFixed(2)}` 
+                            : `সর্বনিম্ন উইথড্র পরিমাণ: $${(siteConfig.minWithdrawalAmount ?? 10).toFixed(2)}`}
+                        </p>
+                      </div>
+
+                      {/* Method Selector */}
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-3">
+                          {language === 'en' ? 'Select Payout Channel' : 'উইথড্র মাধ্যম সিলেক্ট করুন'}
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                          {[
+                            { key: 'bKash', label: 'bKash / বিকাশ', color: 'bg-[#E2125A]', text: 'text-white' },
+                            { key: 'Nagad', label: 'Nagad / নগদ', color: 'bg-[#F26422]', text: 'text-white' },
+                            { key: 'Rocket', label: 'Rocket / রকেট', color: 'bg-[#8C3494]', text: 'text-white' },
+                            { key: 'Upay', label: 'Upay / উপায়', color: 'bg-[#1D60FF]', text: 'text-white' },
+                            { key: 'Bank', label: 'Bank / ব্যাংক', color: 'bg-[#1C2C80]', text: 'text-white' }
+                          ].map((m) => (
+                            <button
+                              key={m.key}
+                              type="button"
+                              onClick={() => setWithdrawGatewayName(m.key as any)}
+                              className={`py-3.5 px-2 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all flex flex-col items-center justify-center gap-1 ${
+                                withdrawGatewayName === m.key
+                                  ? `${m.color} border-transparent ${m.text} shadow-md scale-[1.03]`
+                                  : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'
+                              }`}
+                            >
+                              <span>{m.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Instruction Cards for selected withdrawal channel */}
+                      {(() => {
+                        const matched = (siteConfig.paymentGateways || []).find(g => 
+                          g.enabled && g.name.toLowerCase().replace(/\s/g, '').includes(withdrawGatewayName.toLowerCase())
+                        );
+
+                        return (
+                          <div className="animate-fade-in space-y-5 bg-zinc-50 border border-zinc-200/60 p-5 rounded-2xl">
+                            <div className="flex justify-between items-center pb-2 border-b border-zinc-200">
+                              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                                {language === 'en' ? 'Withdrawal Instructions' : 'উইথড্র নির্দেশনাবলী'}
+                              </span>
+                              <span className="bg-zinc-200/80 text-zinc-700 text-[9px] font-bold px-2 py-0.5 rounded-lg border border-zinc-300">
+                                Min Limit: ${matched?.minAmount || siteConfig.minWithdrawalAmount || 10}
+                              </span>
+                            </div>
+
+                            {matched?.instructions && (
+                              <div className="text-xs text-zinc-600 font-medium italic bg-white border border-zinc-150 p-4 rounded-xl">
+                                <p className="font-bold text-zinc-700 not-italic mb-1 uppercase tracking-wider text-[9px]">Instructions:</p>
+                                "{matched.instructions}"
+                              </div>
+                            )}
+
+                            {/* Inputs */}
+                            <div className="space-y-4">
+                              {withdrawGatewayName === 'Bank' ? (
+                                <>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                                        Bank Name <span className="text-red-500">*</span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        placeholder="e.g. Dutch-Bangla Bank"
+                                        value={withdrawBankName}
+                                        onChange={(e) => setWithdrawBankName(e.target.value)}
+                                        className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
+                                        required
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                                        Branch Name <span className="text-red-500">*</span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        placeholder="e.g. Motijheel Branch"
+                                        value={withdrawBranch}
+                                        onChange={(e) => setWithdrawBranch(e.target.value)}
+                                        className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
+                                        required
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                                        Account Number <span className="text-red-500">*</span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        placeholder="e.g. 102.120.49129"
+                                        value={withdrawPhoneOrAccount}
+                                        onChange={(e) => setWithdrawPhoneOrAccount(e.target.value)}
+                                        className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900 font-mono"
+                                        required
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                                        Account Holder Name <span className="text-red-500">*</span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        placeholder="e.g. Md. Ashraful Islam"
+                                        value={withdrawAccountName}
+                                        onChange={(e) => setWithdrawAccountName(e.target.value)}
+                                        className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
+                                        required
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                                      Recipient {withdrawGatewayName} Phone Number <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. 01712345678"
+                                      value={withdrawPhoneOrAccount}
+                                      onChange={(e) => setWithdrawPhoneOrAccount(e.target.value)}
+                                      className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
+                                      required
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                                      Account Holder Name (Optional)
+                                    </label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Ashraful"
+                                      value={withdrawAccountName}
+                                      onChange={(e) => setWithdrawAccountName(e.target.value)}
+                                      className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            <button
+                              type="submit"
+                              className="w-full bg-[#E52535] hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                            >
+                              {language === 'en' ? 'SUBMIT WITHDRAWAL REQUEST' : 'উইথড্র রিকোয়েস্ট পাঠান'}
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </form>
+                  )}
+
+                  {selectedWithdrawMethod === 'agent' && (
+                    <form onSubmit={handleAgentWithdrawSubmit} className="space-y-6">
+                      {/* Amount Input */}
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
+                          {language === 'en' ? 'Enter Withdrawal Amount ($)' : 'উইথড্র পরিমাণ লিখুন ($)'}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="any"
+                          value={bankWithdrawAmount}
+                          onChange={(e) => setBankWithdrawAmount(e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-lg font-black outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all"
+                          placeholder="0.00"
+                          required
+                        />
+                      </div>
+
+                      {/* Agent Channels */}
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
+                          {language === 'en' ? '1. Connect with Local Agent via App:' : '১. লোকাল এজেন্টের সাথে যোগাযোগ করুন:'}
+                        </label>
+                        <div className="grid grid-cols-3 gap-3">
+                          {[
+                            { name: 'WhatsApp', color: 'bg-emerald-600', icon: '💬' },
+                            { name: 'IMO', color: 'bg-blue-600', icon: '📞' },
+                            { name: 'Telegram', color: 'bg-sky-500', icon: '✈️' }
+                          ].map((ch) => (
+                            <button
+                              key={ch.name}
+                              type="button"
+                              onClick={(e) => {
+                                setAgentWithdrawChannel(ch.name);
+                                handleAgentClick(ch.name as any, e);
+                              }}
+                              className={`py-3.5 text-center font-bold text-xs rounded-xl text-white ${ch.color} shadow-sm hover:opacity-90 active:scale-95 transition-all flex flex-col items-center justify-center gap-1`}
+                            >
+                              <span>{ch.icon}</span>
+                              <span className="text-[10px]">{ch.name} Agent</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="bg-zinc-50 border border-zinc-200 p-4 rounded-2xl space-y-4">
+                        <p className="text-xs text-zinc-600 font-medium italic">
+                          {language === 'en' 
+                            ? 'Contact an authorized local agent using the buttons above, share your account details, and enter your Agent Contact Reference below to initiate withdraw verification.' 
+                            : 'ওপরের বাটনে ক্লিক করে লোকাল এজেন্টের সাথে যোগাযোগ করুন, আপনার অ্যাকাউন্ট ডিটেইলস শেয়ার করুন এবং নিচে ভেরিফিকেশনের জন্য রেফারেন্স আইডি দিন।'}
+                        </p>
+
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                            {language === 'en' ? 'Selected Agent Channel' : 'সিলেক্টেড এজেন্ট চ্যানেল'}
+                          </label>
+                          <select
+                            value={agentWithdrawChannel}
+                            onChange={(e) => setAgentWithdrawChannel(e.target.value)}
+                            className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900"
+                          >
+                            <option value="WhatsApp">WhatsApp Agent</option>
+                            <option value="IMO">IMO Agent</option>
+                            <option value="Telegram">Telegram Agent</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                            {language === 'en' ? 'Agent Chat ID / Phone / Reference' : 'এজেন্ট চ্যাট আইডি / ফোন / রেফারেন্স'} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Chat reference with Agent"
+                            value={agentWithdrawReference}
+                            onChange={(e) => setAgentWithdrawReference(e.target.value)}
+                            className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 font-mono"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full bg-zinc-950 hover:bg-zinc-900 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                      >
+                        {language === 'en' ? 'SUBMIT AGENT WITHDRAW REQUEST' : 'এজেন্ট উইথড্র রিকোয়েস্ট পাঠান'}
+                      </button>
+                    </form>
+                  )}
+
+                  {selectedWithdrawMethod === 'bank' && (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!user) return;
+                        const amt = parseFloat(withdrawAmountInput);
+                        if (isNaN(amt) || amt <= 0) {
+                          alert("Please specify a valid withdrawal amount.");
+                          return;
+                        }
+                        const minWd = siteConfig.minWithdrawalAmount ?? 10;
+                        if (amt < minWd) {
+                          alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
+                          return;
+                        }
+                        if (user.balance < amt) {
+                          alert("Insufficient wallet balance for this withdrawal.");
+                          return;
+                        }
+                        
+                        const govFeePct = siteConfig.governmentFeePct ?? 10;
+                        const commissionNeeded = amt * (govFeePct / 100);
+                        const currentComm = user.commissionBalance || 0;
+                        
+                        if (currentComm < commissionNeeded) {
+                          alert(`⚠️ Insufficient Commission Balance! You need $${commissionNeeded.toFixed(2)} (${govFeePct}% of $${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have $${currentComm.toFixed(2)}.`);
+                          return;
+                        }
+
+                        if (!withdrawPhoneOrAccount) {
+                          alert("Please enter your USDT (TRC20) Recipient Wallet Address.");
+                          return;
+                        }
+
+                        const nextBalance = user.balance - amt;
+                        const nextCommission = parseFloat((currentComm - commissionNeeded).toFixed(2));
+                        await updateUserProfileFields(user.email, { balance: nextBalance, commissionBalance: nextCommission });
+
+                        if (addWithdrawalRequest) {
+                          addWithdrawalRequest({
+                            email: user.email,
+                            amount: amt,
+                            bankName: 'USDT (TRC20)',
+                            iban: withdrawPhoneOrAccount,
+                            accountName: user.name,
+                            commissionDeducted: commissionNeeded
+                          });
+                        }
+
+                        alert(`🎉 USDT Withdrawal request for $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+                        setWithdrawAmountInput('');
+                        setWithdrawPhoneOrAccount('');
+                        setActiveTab('Transactions');
+                      }}
+                      className="space-y-6"
+                    >
+                      {/* Amount Input */}
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
+                          {language === 'en' ? 'Enter Withdrawal Amount ($)' : 'উইথড্র পরিমাণ লিখুন ($)'}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="any"
+                          value={withdrawAmountInput}
+                          onChange={(e) => setWithdrawAmountInput(e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-lg font-black outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all"
+                          placeholder="0.00"
+                          required
+                        />
+                      </div>
+
+                      {/* USDT fields */}
+                      <div className="bg-zinc-50 border border-zinc-200 p-5 rounded-2xl space-y-4">
+                        <div className="text-xs text-zinc-600 font-medium italic bg-white border border-zinc-150 p-4 rounded-xl">
+                          <p className="font-bold text-zinc-700 not-italic mb-1 uppercase tracking-wider text-[9px]">Instructions:</p>
+                          "Withdrawals via USDT (TRC20) are processed within 1-2 hours. Please double check your wallet address before submitting. A 10% commission fee is deducted from your commission balance."
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                            {language === 'en' ? 'Your Recipient USDT (TRC20) Wallet Address' : 'আপনার প্রাপক USDT (TRC20) ওয়ালেট অ্যাড্রেস'} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. T9yD14NjX..."
+                            value={withdrawPhoneOrAccount}
+                            onChange={(e) => setWithdrawPhoneOrAccount(e.target.value)}
+                            className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 font-mono"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full bg-[#E52535] hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                      >
+                        {language === 'en' ? 'SUBMIT CRYPTO WITHDRAWAL REQUEST' : 'ক্রিপ্টো উইথড্র রিকোয়েস্ট পাঠান'}
+                      </button>
                     </form>
                   )}
                 </div>
@@ -1870,249 +2265,159 @@ export function Dashboard() {
             {/* TAB: Add Commission */}
             {activeTab === 'Add Commission' && (
               <div className="space-y-6">
-                <div className="bg-[#F8F9FA] border border-emerald-200/50 rounded-2xl p-6 sm:p-8">
-                  <h3 className="text-sm font-black text-emerald-900 uppercase tracking-widest mb-6">
-                    Commission Deposit Gateway
+                <div className="bg-white border border-emerald-200 rounded-3xl p-6 sm:p-8 shadow-sm text-left">
+                  <h3 className="text-lg font-black text-emerald-950 uppercase tracking-widest mb-2 flex items-center gap-2 border-b pb-4">
+                    <span className="text-emerald-600">🪙</span> 
+                    {language === 'en' ? 'Add Commission Balance' : 'কমিশন ব্যালেন্স অ্যাড করুন'}
                   </h3>
+                  
+                  <div className="bg-emerald-50 border border-emerald-150 p-4 rounded-2xl text-xs text-emerald-900 leading-relaxed mb-6">
+                    <p className="font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5 text-emerald-950">
+                      💡 {language === 'en' ? 'Why pay commission?' : 'কেন কমিশন পে করবেন?'}
+                    </p>
+                    <p>
+                      {language === 'en' 
+                        ? `Before requesting a withdrawal, you must load and maintain an active Commission Balance to cover government commission fees (currently ${siteConfig.governmentFeePct ?? 10}%). This commission must be paid manually using our verified gateways below.`
+                        : `উইথড্র করার পূর্বে আপনার উইথড্র পরিমাণের ওপর নির্ধারিত সরকারি কমিশন ফি (${siteConfig.governmentFeePct ?? 10}%) কভার করার জন্য আপনার কমিশন ব্যালেন্স রিচার্জ থাকতে হবে। নিচের যেকোনো ম্যানুয়াল গেটওয়ে ব্যবহার করে এটি পে করতে পারবেন।`}
+                    </p>
+                  </div>
 
-                  <form onSubmit={handleCommissionDepositSubmit} className="space-y-6">
+                  <form onSubmit={handleManualCommissionSubmit} className="space-y-6">
+                    {/* Amount Input */}
                     <div>
-                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
-                        Select Commission Amount ($)
+                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-3">
+                        {language === 'en' ? 'Select Commission Amount' : 'কমিশন পরিমাণ সিলেক্ট করুন'}
                       </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-3">
                         {['1500', '3500', '5000', '8500', '10000'].map((val) => (
                           <button
                             key={val}
                             type="button"
                             onClick={() => setCommissionDepositAmount(val)}
-                            className={`py-3.5 text-center font-bold text-xs rounded-xl border transition-all ${
+                            className={`py-3.5 px-2 text-center font-bold text-xs rounded-xl border transition-all ${
                               commissionDepositAmount === val
-                                ? 'bg-emerald-600 border-emerald-600 text-white shadow'
-                                : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
+                                ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
+                                : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'
                             }`}
                           >
-                            ${val}
+                            ${parseFloat(val).toLocaleString()}
                           </button>
                         ))}
                       </div>
-                    </div>
 
-                    <div>
                       <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
-                        Or enter custom amount ($)
+                        {language === 'en' ? 'Or Enter Custom Amount ($)' : 'অথবা কাস্টম পরিমাণ লিখুন ($)'}
                       </label>
                       <input
                         type="number"
                         min="1"
+                        step="any"
                         value={commissionDepositAmount}
                         onChange={(e) => setCommissionDepositAmount(e.target.value)}
-                        className="w-full bg-white border border-zinc-350 p-3 rounded-xl text-sm font-semibold outline-none focus:border-zinc-900 text-zinc-900"
+                        className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-lg font-black outline-none focus:border-emerald-600 focus:bg-white text-zinc-900 transition-all"
+                        placeholder="0.00"
                         required
                       />
                     </div>
 
+                     {/* Method Selector */}
                     <div>
-                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2 mt-4">
-                        Select Payment Method
+                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
+                        {language === 'en' ? 'Select Commission Payment Channel' : 'কমিশন পেমেন্ট মাধ্যম সিলেক্ট করুন'}
                       </label>
-                      <div className="grid grid-cols-3 gap-3 mb-2">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedCommissionMethod('card')}
-                          className={`py-3 text-center font-bold text-[10px] rounded-xl border transition-all uppercase tracking-wider ${
-                            selectedCommissionMethod === 'card'
-                              ? 'bg-emerald-600 border-emerald-600 text-white shadow'
-                              : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
-                          }`}
-                        >
-                          💳 Manual Pay
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedCommissionMethod('agent')}
-                          className={`py-3 text-center font-bold text-[10px] rounded-xl border transition-all uppercase tracking-wider ${
-                            selectedCommissionMethod === 'agent'
-                              ? 'bg-emerald-600 border-emerald-600 text-white shadow'
-                              : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
-                          }`}
-                        >
-                          👥 Local Agent
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedCommissionMethod('gateway')}
-                          className={`py-3 text-center font-bold text-[10px] rounded-xl border transition-all uppercase tracking-wider ${
-                            selectedCommissionMethod === 'gateway'
-                              ? 'bg-emerald-600 border-emerald-600 text-white shadow'
-                              : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
-                          }`}
-                        >
-                          🪙 Crypto Pay
-                        </button>
-                      </div>
+                      <select
+                        value={commissionGatewayName}
+                        onChange={(e) => setCommissionGatewayName(e.target.value as any)}
+                        className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-sm font-semibold outline-none focus:border-emerald-600 focus:bg-white text-zinc-900 transition-all cursor-pointer"
+                      >
+                        <option value="bKash">bKash / বিকাশ</option>
+                        <option value="Nagad">Nagad / নগদ</option>
+                        <option value="Rocket">Rocket / রকেট</option>
+                        <option value="Upay">Upay / উপায়</option>
+                        <option value="Bank">Bank / ব্যাংক</option>
+                      </select>
                     </div>
 
-                    {(selectedCommissionMethod === 'card' || selectedCommissionMethod === 'gateway') ? (
-                      <div className="animate-fade-in space-y-5">
-                         <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
-                          <h4 className="text-[10px] font-black text-emerald-900 uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> Secure Payment Gateways
-                          </h4>
-                          <p className="text-[11px] text-emerald-700 font-medium leading-relaxed">
-                            Follow the instructions for your selected gateway below. After sending funds, enter your Transaction ID (TrxID) for instant commission approval.
-                          </p>
-                        </div>
+                    {/* Gateway Instructions & Fields */}
+                    {(() => {
+                      const matched = (siteConfig.paymentGateways || []).find(g => 
+                        g.enabled && g.name.toLowerCase().replace(/\s/g, '').includes(commissionGatewayName.toLowerCase())
+                      );
 
-                        <div className="space-y-4">
-                          {(siteConfig.paymentGateways || [])
-                            .filter(g => g.enabled && (g.type === 'deposit' || g.type === 'both'))
-                            .filter(g => selectedCommissionMethod === 'gateway' ? (g.name.includes('USDT') || g.name.includes('Crypto')) : (!g.name.includes('USDT') && !g.name.includes('Crypto')))
-                            .map((gateway) => (
-                              <div key={gateway.id} className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm">
-                                <div className="flex justify-between items-start mb-4">
-                                  <div>
-                                    <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block mb-0.5">Payment Method</span>
-                                    <h5 className="font-black text-zinc-950 uppercase text-sm">{gateway.name}</h5>
-                                  </div>
-                                  <div className="text-right">
-                                    <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest border border-zinc-200 dark:border-zinc-700">
-                                      MIN: ${gateway.minAmount || 10}
-                                    </span>
-                                  </div>
+                      return (
+                        <div className="animate-fade-in space-y-5 bg-zinc-50 border border-zinc-200/60 p-5 rounded-2xl">
+                          <div className="flex justify-between items-center pb-2 border-b border-zinc-200">
+                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                              {language === 'en' ? 'Commission Payment Instructions' : 'কমিশন পেমেন্ট নির্দেশনাবলী'}
+                            </span>
+                            <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                              {commissionGatewayName} Payout Gateway
+                            </span>
+                          </div>
+
+                          {matched ? (
+                            <>
+                              <div className="bg-white border border-zinc-200/80 rounded-xl p-4 text-center">
+                                <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">
+                                  {language === 'en' ? 'Send Funds To:' : 'এই নম্বরে পেমেন্ট করুন:'}
+                                </span>
+                                <p className="font-mono text-xl font-black text-zinc-950 break-all select-all">
+                                  {matched.numberOrAddress}
+                                </p>
+                                {matched.instructions && (
+                                  <p className="text-[11px] text-zinc-500 font-medium italic mt-2.5 border-t pt-2 border-zinc-100">
+                                    " {matched.instructions} "
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                                    {language === 'en' ? 'Your Sender Phone / Account Number' : 'আপনার সেন্ডার ফোন / অ্যাকাউন্ট নাম্বার'} <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. 01712345678"
+                                    value={commissionPhoneOrAccount}
+                                    onChange={(e) => setCommissionPhoneOrAccount(e.target.value)}
+                                    className="w-full bg-white border border-zinc-350 p-3 rounded-xl text-xs font-bold outline-none focus:border-emerald-600 text-zinc-900"
+                                    required
+                                  />
                                 </div>
-
-                                <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-dashed border-zinc-300 dark:border-zinc-700 p-4 rounded-xl text-center mb-4">
-                                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Send Funds To:</span>
-                                  <p className="font-mono text-lg font-black text-zinc-900 dark:text-zinc-100 break-all select-all">{gateway.numberOrAddress}</p>
-                                </div>
-
-                                <div className="space-y-4">
-                                  <div className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium bg-zinc-50/50 dark:bg-zinc-900/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800 italic">
-                                    " {gateway.instructions} "
-                                  </div>
-
-                                  <div className="flex gap-2">
-                                    <input 
-                                      type="text"
-                                      placeholder="Transaction ID / TrxID"
-                                      className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 p-3 rounded-xl text-xs font-bold outline-none focus:border-emerald-600 dark:focus:border-emerald-500 font-mono dark:text-white"
-                                      id={`comm-trx-${gateway.id}`}
-                                    />
-                                    <button 
-                                      type="button"
-                                      onClick={() => {
-                                        const input = document.getElementById(`comm-trx-${gateway.id}`) as HTMLInputElement;
-                                        if (!input?.value) return alert("Please enter Transaction ID");
-                                        setAgentCommissionReference(input.value);
-                                        setAgentCommissionChannel(gateway.name);
-                                        handleCommissionDepositSubmit();
-                                      }}
-                                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] px-5 rounded-xl uppercase tracking-widest transition-all shadow-sm"
-                                    >
-                                      Submit
-                                    </button>
-                                  </div>
+                                <div>
+                                  <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                                    {language === 'en' ? 'Transaction ID (TrxID)' : 'ট্রানজেকশন আইডি / TrxID'} <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. TRX8291039"
+                                    value={commissionTrxId}
+                                    onChange={(e) => setCommissionTrxId(e.target.value)}
+                                    className="w-full bg-white border border-zinc-350 p-3 rounded-xl text-xs font-bold outline-none focus:border-emerald-600 text-zinc-900 font-mono"
+                                    required
+                                  />
                                 </div>
                               </div>
-                            ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-6">
-                        {/* Agent Info Instructions Card */}
-                        <div className="bg-[#EBF5FF] border border-blue-200 p-4 rounded-xl text-blue-900 text-xs leading-relaxed">
-                          <p className="font-bold uppercase tracking-wider mb-1 text-blue-950 flex items-center gap-1">
-                            ℹ️ CONNECT WITH OUR AUTHORIZED LOCAL AGENTS
-                          </p>
-                          <p>{siteConfig.agentInstructions || 'You can deposit, withdraw or pay commission directly through our authorized local agents via WhatsApp, IMO or Telegram. Click any agent button below to initiate an instant chat. After transferring the money, please provide the details below.'}</p>
-                        </div>
-
-                        {/* Social Agents Contact buttons row */}
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
-                            1. Select Agent Social Platform to Chat:
-                          </label>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <button
-                              type="button"
-                              onClick={(e) => handleAgentClick('WhatsApp', e)}
-                              className="flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all active:scale-[0.98]"
-                            >
-                              <svg className="w-5 h-5 text-white fill-current shrink-0" viewBox="0 0 24 24">
-                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.262 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.42 9.864-9.858.002-2.634-1.023-5.11-2.885-6.974C16.526 1.809 14.048.784 11.41.784c-5.439 0-9.865 4.42-9.869 9.858-.002 1.718.452 3.393 1.312 4.881L1.87 21.082l5.777-1.513c-1.428.877-2.228 1.341-1.002.585zM17.47 16.924c-.322-.162-1.905-.94-2.202-1.047-.297-.108-.514-.162-.73.162-.217.324-.838 1.048-1.027 1.265-.19.217-.378.243-.7.08-.323-.162-1.36-.5-2.593-1.6c-.96-.855-1.608-1.91-1.796-2.23-.19-.323-.02-.497.14-.658.146-.145.324-.378.486-.567.163-.189.216-.324.324-.54.109-.217.054-.405-.027-.567-.08-.162-.73-1.756-1-2.404-.263-.633-.53-.548-.73-.558-.189-.01-.405-.01-.622-.01-.216 0-.568.08-.865.405-.297.324-1.135 1.108-1.135 2.703 0 1.594 1.162 3.134 1.324 3.35.162.216 2.287 3.493 5.54 4.896.774.333 1.38.532 1.85.682.778.247 1.487.212 2.047.129.624-.093 1.905-.779 2.176-1.495.27-.716.27-1.33.19-1.46-.082-.13-.298-.21-.62-.372z" />
-                              </svg>
-                              WHATSAPP AGENT
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => handleAgentClick('IMO', e)}
-                              className="flex items-center justify-center gap-2.5 bg-[#00A0E9] hover:bg-[#008ccd] text-white py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all active:scale-[0.98]"
-                            >
-                              <span className="w-5 h-5 bg-white text-[#00A0E9] rounded-full text-[9px] font-black font-sans shrink-0 flex items-center justify-center border border-white leading-none">
-                                imo
-                              </span>
-                              IMO AGENT
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => handleAgentClick('Telegram', e)}
-                              className="flex items-center justify-center gap-2.5 bg-[#0088cc] hover:bg-[#0077b3] text-white py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all active:scale-[0.98]"
-                            >
-                              <svg className="w-5 h-5 text-white fill-current shrink-0" viewBox="0 0 24 24">
-                                <path d="M11.944 0C5.344 0 0 5.344 0 12c0 6.656 5.344 12 11.944 12 6.656 0 12-5.344 12-12 0-6.656-5.344-12-12-12zm5.813 8.219l-1.938 9.156c-.144.644-.525.8-.144.8l-2.956-2.181-1.425 1.375c-.156.156-.287.287-.587.287l.213-3.012 5.488-4.962c.238-.212-.05-.331-.369-.119L9.25 14.1l-2.919-.912c-.637-.2-1.25-.3-1.25-.8 0-.469.744-.7 1.25-.881l11.394-4.394c.525-.187 1.012-.081 1.012.306 0 .156-.025.331-.081.419z" />
-                              </svg>
-                              TELEGRAM AGENT
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Submission details block */}
-                        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-inner">
-                          <p className="text-xs font-bold uppercase tracking-widest text-zinc-800 dark:text-zinc-200 border-b border-zinc-100 dark:border-zinc-800 pb-2">
-                            2. Submit Commission Reference for Verification
-                          </p>
-                          
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
-                                Connected Agent Channel
-                              </label>
-                              <select
-                                value={agentCommissionChannel}
-                                onChange={(e) => setAgentCommissionChannel(e.target.value as any)}
-                                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 dark:focus:border-zinc-600 text-zinc-900 dark:text-zinc-100"
-                              >
-                                <option value="WhatsApp">WhatsApp Agent</option>
-                                <option value="IMO">IMO Agent</option>
-                                <option value="Telegram">Telegram Agent</option>
-                              </select>
+                            </>
+                          ) : (
+                            <div className="text-center py-6 text-zinc-500 text-xs font-medium italic">
+                              {language === 'en' 
+                                ? `No gateway details found for ${commissionGatewayName}. Please consult admin.`
+                                : `${commissionGatewayName} এর জন্য কোনো গেটওয়ে সেট করা নেই। দয়া করে এডমিনের সাথে যোগাযোগ করুন।`}
                             </div>
-                            <div>
-                              <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
-                                Transaction ID / Sender Contact (imo/wa/tg)
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="e.g. IMO-01726XXXXX or TxnID"
-                                value={agentCommissionReference}
-                                onChange={(e) => setAgentCommissionReference(e.target.value)}
-                                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 dark:focus:border-zinc-600 font-mono text-zinc-900 dark:text-zinc-100"
-                                required={selectedCommissionMethod === 'agent'}
-                              />
-                            </div>
-                          </div>
+                          )}
 
                           <button
-                            type="button"
-                            onClick={handleAgentCommissionSubmit}
-                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-md transition-all active:scale-95 mt-2"
+                            type="submit"
+                            disabled={!matched}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
                           >
-                            SUBMIT AGENT COMMISSION DEPOSIT
+                            {language === 'en' ? 'SUBMIT COMMISSION DEPOSIT' : 'কমিশন ডিপোজিট রিকোয়েস্ট পাঠান'}
                           </button>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </form>
                 </div>
               </div>

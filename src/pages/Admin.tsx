@@ -1075,8 +1075,8 @@ export function Admin() {
       date: '18/06/2026'
     },
     {
-      title: '50% Welcome Multiplier Sandbox Special',
-      summary: 'Use the simulated code EMIRATES50 on checkout to play your preferred numbers for half off.',
+      title: '50% Welcome Multiplier Special',
+      summary: 'Use the official code EMIRATES50 on checkout to play your preferred numbers for half off.',
       isPromo: true,
       date: '18/06/2026'
     }

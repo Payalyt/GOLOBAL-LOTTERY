@@ -133,7 +133,6 @@ export function Login() {
              await createUserWithEmailAndPassword(auth, formattedEmail, password);
              authRecovered = true;
              authSucceeded = true;
-             console.log("Admin account auto-created in Firebase Auth!");
              
              const userRef = doc(db, 'users', formattedEmail);
              const userSnap = await getDoc(userRef);
@@ -195,7 +194,6 @@ export function Login() {
         if (!authSucceeded) {
           try {
             await createUserWithEmailAndPassword(auth, formattedEmail, password);
-            console.log("Admin account created in Firebase Auth via fallback");
           } catch (createAuthErr: any) {
             console.warn("Could not create Admin Auth account (it might already exist but failed sign-in):", createAuthErr);
             // If it already exists, we still have the local profile to proceed, 
@@ -218,7 +216,7 @@ export function Login() {
 
       // If fallback succeeded, log user/admin in
       if (loggedInProfile) {
-        console.log("Logged in successfully");
+        // Logged in successfully
       } else {
         // If no fallback profile matched:
         if (!authSucceeded) {
