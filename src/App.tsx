@@ -14,6 +14,7 @@ import { Results } from './pages/Results';
 import { Winners } from './pages/Winners';
 import { Admin } from './pages/Admin';
 import { RaffleDetail } from './pages/RaffleDetail';
+import { DokanCheckout } from './pages/DokanCheckout';
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/results/:id" element={<Results />} />
         <Route path="/winners" element={<Winners />} />
         <Route path="/winners/:id" element={<Winners />} />
+        <Route path="/dokan-checkout" element={<DokanCheckout />} />
       </Routes>
     </Layout>
   );

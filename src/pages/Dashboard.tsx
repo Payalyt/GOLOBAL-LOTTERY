@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { t } from '../utils/translations';
 import { 
   User, 
@@ -30,9 +30,10 @@ import {
 } from 'lucide-react';
 
 export function Dashboard() {
-  const { user, setUser, isLoggedIn, tickets, updateUserBalance, updateUserProfileFields, withdrawalRequests = [], addWithdrawalRequest, addDepositRequest, depositRequests = [], siteConfig, language, theme } = useAuth();
+  const { user, setUser, isLoggedIn, tickets, updateUserBalance, updateUserProfileFields, withdrawalRequests = [], addWithdrawalRequest, addDepositRequest, addApprovedDeposit, depositRequests = [], siteConfig, language, theme } = useAuth();
   const { tickets: cartTickets } = useCart();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Track previous requests for notifications
   const prevDepositsRef = useRef(depositRequests);
@@ -85,6 +86,51 @@ export function Dashboard() {
     prevWithdrawalsRef.current = withdrawalRequests;
   }, [depositRequests, withdrawalRequests, user]);
 
+  useEffect(() => {
+    if (!user) return;
+    const paymentStatus = searchParams.get('payment');
+    const paymentAmountStr = searchParams.get('amount');
+    const paymentOrderId = searchParams.get('order_id') || 'auto-' + Date.now();
+
+    if (paymentStatus === 'success' && paymentAmountStr) {
+      const amount = parseFloat(paymentAmountStr);
+      if (!isNaN(amount) && amount > 0) {
+        addApprovedDeposit({
+          email: user.email,
+          amount,
+          gateway: 'Dokan Pay',
+          details: `Automatic Payment approved. Order ID: ${paymentOrderId}`,
+          phone: user.phone || 'N/A'
+        });
+
+        const successMsg = `⚡ Dokan Pay payment successful! Added $${amount} to your account automatically!`;
+        const newNotif = { id: Date.now().toString(), message: successMsg, type: 'success' as const };
+        setNotifications(prev => [...prev, newNotif]);
+        
+        setTimeout(() => {
+          setNotifications(prev => prev.filter(n => n.id !== newNotif.id));
+        }, 12000);
+      }
+      
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('payment');
+      newParams.delete('amount');
+      newParams.delete('order_id');
+      setSearchParams(newParams);
+    } else if (paymentStatus === 'cancel') {
+      const cancelMsg = `❌ Dokan Pay payment cancelled or failed. Please try again.`;
+      const newNotif = { id: Date.now().toString(), message: cancelMsg, type: 'error' as const };
+      setNotifications(prev => [...prev, newNotif]);
+      
+      setTimeout(() => {
+        setNotifications(prev => prev.filter(n => n.id !== newNotif.id));
+      }, 8000);
+
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('payment');
+      setSearchParams(newParams);
+    }
+  }, [searchParams, user, addApprovedDeposit, setSearchParams]);
 
   // Active tabs state
   const [activeTab, setActiveTab] = useState<string>('Personal Details');

@@ -387,6 +387,7 @@ interface AuthContextType {
   depositRequests: DepositRequest[];
   setDepositRequests: React.Dispatch<React.SetStateAction<DepositRequest[]>>;
   addDepositRequest: (req: Omit<DepositRequest, 'id' | 'date' | 'status'>) => void;
+  addApprovedDeposit: (req: Omit<DepositRequest, 'id' | 'date' | 'status'>) => void;
   updateDepositStatus: (id: string, status: 'Approved' | 'Rejected') => void;
   // Theme management
   theme: 'light' | 'dark';
@@ -737,6 +738,7 @@ const AuthContext = createContext<AuthContextType>({
   depositRequests: [],
   setDepositRequests: () => {},
   addDepositRequest: () => {},
+  addApprovedDeposit: () => {},
   updateDepositStatus: () => {},
   theme: 'dark',
   toggleTheme: () => {},
@@ -783,12 +785,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [depositRequests, setDepositRequests] = useState<DepositRequest[]>([]);
+
+  const intelligentMergeConfig = (defaultConfig: SiteThemeConfig, data: Partial<SiteThemeConfig>): SiteThemeConfig => {
+    const merged = { ...defaultConfig, ...data };
+    if (data.paymentGateways && Array.isArray(data.paymentGateways)) {
+      const defaultGateways = defaultConfig.paymentGateways || [];
+      const mergedGateways = [...defaultGateways];
+      data.paymentGateways.forEach((g: any) => {
+        const idx = mergedGateways.findIndex(dg => dg.id === g.id);
+        if (idx > -1) {
+          mergedGateways[idx] = { ...mergedGateways[idx], ...g };
+        } else {
+          mergedGateways.push(g);
+        }
+      });
+      merged.paymentGateways = mergedGateways;
+    }
+    return merged;
+  };
+
   const [siteConfig, setSiteConfig] = useState<SiteThemeConfig>(() => {
     try {
       const saved = localStorage.getItem('siteConfig');
       if (saved) {
         const parsed = JSON.parse(saved);
-        return { ...DEFAULT_SITE_CONFIG, ...parsed };
+        return intelligentMergeConfig(DEFAULT_SITE_CONFIG, parsed);
       }
     } catch (e) {
       console.warn("Could not load siteConfig from localStorage:", e);
@@ -1158,7 +1179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubSite = onSnapshot(doc(db, 'siteConfigs', 'default'), (snap) => {
       if (snap.exists()) {
         const data = snap.data() as Partial<SiteThemeConfig>;
-        const merged = { ...DEFAULT_SITE_CONFIG, ...data };
+        const merged = intelligentMergeConfig(DEFAULT_SITE_CONFIG, data);
         setSiteConfig(merged);
         try {
           localStorage.setItem('siteConfig', JSON.stringify(merged));
@@ -1708,6 +1729,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const addApprovedDeposit = async (req: Omit<DepositRequest, 'id' | 'date' | 'status'>) => {
+    try {
+      const id = 'DEP-' + Math.floor(1000 + Math.random() * 9000);
+      const newReq: DepositRequest = {
+        ...req,
+        id,
+        date: new Date().toLocaleDateString('en-GB'),
+        status: 'Approved'
+      };
+      await setDoc(doc(db, 'depositRequests', id), newReq);
+      await updateUserBalance(req.email, req.amount);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'depositRequests');
+    }
+  };
+
   const updateDepositStatus = async (id: string, status: 'Approved' | 'Rejected') => {
     try {
       const reqRef = doc(db, 'depositRequests', id);
@@ -1783,6 +1820,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       depositRequests,
       setDepositRequests,
       addDepositRequest,
+      addApprovedDeposit,
       updateDepositStatus,
       // Theme management
       theme,

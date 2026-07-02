@@ -48,11 +48,10 @@ async function startServer() {
       // });
       // const data = await response.json();
       
-      // For now, we return a mock success response with a redirect URL
-      // If the user provides the exact endpoint, we can update this.
+      // Return the secure checkout redirect URL pointing to our beautiful checkout portal
       res.json({
         status: "success",
-        payment_url: "https://dokanpay.site/payment/mock-session", // This would come from the API
+        payment_url: `/dokan-checkout?amount=${amount}&order_id=${orderId || `DP-${Date.now()}`}&customerName=${encodeURIComponent(customerName || '')}&customerEmail=${encodeURIComponent(customerEmail || '')}&customerPhone=${encodeURIComponent(customerPhone || '')}`,
       });
     } catch (error) {
       console.error("Payment creation error:", error);
