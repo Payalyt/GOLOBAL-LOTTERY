@@ -91,45 +91,83 @@ export function Dashboard() {
     const paymentStatus = searchParams.get('payment');
     const paymentAmountStr = searchParams.get('amount');
     const paymentOrderId = searchParams.get('order_id') || 'auto-' + Date.now();
+    const transactionId = searchParams.get('transaction_id') || searchParams.get('txID') || searchParams.get('trx_id');
 
-    if (paymentStatus === 'success' && paymentAmountStr) {
-      const amount = parseFloat(paymentAmountStr);
-      if (!isNaN(amount) && amount > 0) {
-        addApprovedDeposit({
-          email: user.email,
-          amount,
-          gateway: 'Dokan Pay',
-          details: `Automatic Payment approved. Order ID: ${paymentOrderId}`,
-          phone: user.phone || 'N/A'
-        });
+    const runVerificationAndDeposit = async () => {
+      if (paymentStatus === 'success' && paymentAmountStr) {
+        const amount = parseFloat(paymentAmountStr);
+        if (isNaN(amount) || amount <= 0) return;
 
-        const successMsg = `⚡ Dokan Pay payment successful! Added $${amount} to your account automatically!`;
-        const newNotif = { id: Date.now().toString(), message: successMsg, type: 'success' as const };
+        let isVerified = true;
+        let finalDetails = `Automatic Payment approved. Order ID: ${paymentOrderId}`;
+
+        if (transactionId) {
+          try {
+            console.log("Verifying Dokan Pay transaction:", transactionId);
+            const res = await fetch('/api/payment/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ transactionId })
+            });
+            const data = await res.json();
+            
+            if (data.status === "1" || data.message === "success" || data.status === 1 || data.success) {
+              isVerified = true;
+              finalDetails = `Dokan Pay Verified. TxID: ${transactionId}. Order ID: ${paymentOrderId}`;
+              console.log("Transaction successfully verified!", data);
+            } else {
+              isVerified = false;
+              console.warn("Dokan Pay verification failed:", data);
+              alert(`⚠️ Dokan Pay verification failed for TxID ${transactionId}: ${data.message || 'Invalid transaction'}`);
+            }
+          } catch (err) {
+            console.error("Failed to verify transaction securely:", err);
+            isVerified = true; 
+          }
+        }
+
+        if (isVerified) {
+          addApprovedDeposit({
+            email: user.email,
+            amount,
+            gateway: 'Dokan Pay',
+            details: finalDetails,
+            phone: user.phone || 'N/A'
+          });
+
+          const successMsg = `⚡ Dokan Pay payment successful! Added $${amount} to your account automatically!`;
+          const newNotif = { id: Date.now().toString(), message: successMsg, type: 'success' as const };
+          setNotifications(prev => [...prev, newNotif]);
+          
+          setTimeout(() => {
+            setNotifications(prev => prev.filter(n => n.id !== newNotif.id));
+          }, 12000);
+        }
+        
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('payment');
+        newParams.delete('amount');
+        newParams.delete('order_id');
+        newParams.delete('transaction_id');
+        newParams.delete('txID');
+        newParams.delete('trx_id');
+        setSearchParams(newParams);
+      } else if (paymentStatus === 'cancel') {
+        const cancelMsg = `❌ Dokan Pay payment cancelled or failed. Please try again.`;
+        const newNotif = { id: Date.now().toString(), message: cancelMsg, type: 'error' as const };
         setNotifications(prev => [...prev, newNotif]);
         
         setTimeout(() => {
           setNotifications(prev => prev.filter(n => n.id !== newNotif.id));
-        }, 12000);
-      }
-      
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete('payment');
-      newParams.delete('amount');
-      newParams.delete('order_id');
-      setSearchParams(newParams);
-    } else if (paymentStatus === 'cancel') {
-      const cancelMsg = `❌ Dokan Pay payment cancelled or failed. Please try again.`;
-      const newNotif = { id: Date.now().toString(), message: cancelMsg, type: 'error' as const };
-      setNotifications(prev => [...prev, newNotif]);
-      
-      setTimeout(() => {
-        setNotifications(prev => prev.filter(n => n.id !== newNotif.id));
-      }, 8000);
+        }, 8000);
 
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete('payment');
-      setSearchParams(newParams);
-    }
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('payment');
+        setSearchParams(newParams);
+      }
+    };
+
+    runVerificationAndDeposit();
   }, [searchParams, user, addApprovedDeposit, setSearchParams]);
 
   // Active tabs state
