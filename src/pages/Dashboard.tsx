@@ -443,9 +443,9 @@ export function Dashboard() {
       } else {
         throw new Error(data.error || 'Failed to create payment session');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Dokan Pay error:", err);
-      alert("❌ Failed to initiate Dokan Pay payment. Please try again or use another method.");
+      alert(`❌ Failed to initiate Dokan Pay payment: ${err.message || "Please check your Credentials and try again."}`);
     } finally {
       setIsProcessingDokan(false);
     }
