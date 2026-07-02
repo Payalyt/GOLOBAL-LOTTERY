@@ -1409,16 +1409,19 @@ export function Dashboard() {
                         <div className="bg-white border border-gray-100 p-5 rounded-2xl shadow-xs">
                           <p className="text-[11px] font-bold text-gray-400 text-center uppercase tracking-wider mb-3">Supported Automated Methods</p>
                           <div className="flex flex-wrap items-center justify-center gap-4 px-4">
-                            <div className="bg-[#E2125A]/5 px-3 py-1.5 rounded-lg flex items-center justify-center border border-[#E2125A]/10">
+                            <div className="bg-[#E2125A]/5 px-3 py-1.5 rounded-lg flex items-center justify-center border border-[#E2125A]/10 h-8">
                               <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Bkash_logo.png" alt="bKash" className="h-5 object-contain" />
                             </div>
-                            <div className="bg-[#F26422]/5 px-3 py-1.5 rounded-lg flex items-center justify-center border border-[#F26422]/10">
+                            <div className="bg-[#F26422]/5 px-3 py-1.5 rounded-lg flex items-center justify-center border border-[#F26422]/10 h-8">
                               <img src="https://upload.wikimedia.org/wikipedia/commons/f/fe/Nagad_Logo.svg" alt="Nagad" className="h-5 object-contain" />
                             </div>
-                            <div className="bg-[#8C3494]/5 px-3 py-1.5 rounded-lg flex items-center justify-center font-bold text-[#8C3494] text-xs gap-1 border border-[#8C3494]/10">
+                            <div className="bg-[#FF5F00]/5 px-3 py-1.5 rounded-lg flex items-center justify-center border border-[#FF5F00]/10 h-8">
+                              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Mastercard-logo.png/800px-Mastercard-logo.png" alt="Mastercard" className="h-5 object-contain" />
+                            </div>
+                            <div className="bg-[#8C3494]/5 px-3 py-1.5 rounded-lg flex items-center justify-center font-bold text-[#8C3494] text-[10px] sm:text-xs gap-1 border border-[#8C3494]/10 h-8">
                               🟣 Rocket
                             </div>
-                            <div className="bg-[#1C2C80]/5 px-3 py-1.5 rounded-lg flex items-center justify-center font-bold text-[#1C2C80] text-xs gap-1 border border-[#1C2C80]/10">
+                            <div className="bg-[#1C2C80]/5 px-3 py-1.5 rounded-lg flex items-center justify-center font-bold text-[#1C2C80] text-[10px] sm:text-xs gap-1 border border-[#1C2C80]/10 h-8">
                               🏦 Bank
                             </div>
                           </div>
