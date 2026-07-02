@@ -1406,11 +1406,22 @@ export function Dashboard() {
                           )}
                         </button>
                         
-                        <div className="flex items-center justify-center gap-6 opacity-40 grayscale pointer-events-none px-4">
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/8/8b/Bkash_logo.png" alt="bKash" className="h-4 object-contain" />
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/e/e3/Nagad_logo.png" alt="Nagad" className="h-5 object-contain" />
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" className="h-3 object-contain" />
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" className="h-6 object-contain" />
+                        <div className="bg-white border border-gray-100 p-5 rounded-2xl shadow-xs">
+                          <p className="text-[11px] font-bold text-gray-400 text-center uppercase tracking-wider mb-3">Supported Automated Methods</p>
+                          <div className="flex flex-wrap items-center justify-center gap-4 px-4">
+                            <div className="bg-[#E2125A]/5 px-3 py-1.5 rounded-lg flex items-center justify-center border border-[#E2125A]/10">
+                              <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Bkash_logo.png" alt="bKash" className="h-5 object-contain" />
+                            </div>
+                            <div className="bg-[#F26422]/5 px-3 py-1.5 rounded-lg flex items-center justify-center border border-[#F26422]/10">
+                              <img src="https://upload.wikimedia.org/wikipedia/commons/f/fe/Nagad_Logo.svg" alt="Nagad" className="h-5 object-contain" />
+                            </div>
+                            <div className="bg-[#8C3494]/5 px-3 py-1.5 rounded-lg flex items-center justify-center font-bold text-[#8C3494] text-xs gap-1 border border-[#8C3494]/10">
+                              🟣 Rocket
+                            </div>
+                            <div className="bg-[#1C2C80]/5 px-3 py-1.5 rounded-lg flex items-center justify-center font-bold text-[#1C2C80] text-xs gap-1 border border-[#1C2C80]/10">
+                              🏦 Bank
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ) : (selectedDepositMethod === 'card' || selectedDepositMethod === 'crypto') ? (

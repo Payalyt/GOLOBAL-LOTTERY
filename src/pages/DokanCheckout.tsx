@@ -128,38 +128,44 @@ export function DokanCheckout() {
               <div className="grid grid-cols-2 gap-3 mb-6">
                 {/* bKash Button */}
                 <button
+                  type="button"
                   onClick={() => setMethod('bkash')}
-                  className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-200 ${getThemeBorder('bkash')}`}
+                  className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-200 cursor-pointer ${getThemeBorder('bkash')}`}
                 >
-                  <img src="/images/bkash.png" className="h-8 object-contain mb-2" alt="bKash" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Bkash_logo.png" className="h-8 object-contain mb-2" alt="bKash" />
                   <span className="font-extrabold text-[#E2125A]">bKash</span>
                   <span className="text-[10px] text-gray-400 mt-1">Instant Auto-Payment</span>
                 </button>
 
                 {/* Nagad Button */}
                 <button
+                  type="button"
                   onClick={() => setMethod('nagad')}
-                  className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-200 ${getThemeBorder('nagad')}`}
+                  className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-200 cursor-pointer ${getThemeBorder('nagad')}`}
                 >
-                  <img src="/images/nagad.png" className="h-8 object-contain mb-2" alt="Nagad" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/f/fe/Nagad_Logo.svg" className="h-8 object-contain mb-2" alt="Nagad" />
                   <span className="font-extrabold text-[#F26422]">Nagad</span>
                   <span className="text-[10px] text-gray-400 mt-1">Instant Auto-Payment</span>
                 </button>
 
                 {/* Rocket Button */}
                 <button
+                  type="button"
                   onClick={() => setMethod('rocket')}
-                  className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-200 ${getThemeBorder('rocket')}`}
+                  className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-200 cursor-pointer ${getThemeBorder('rocket')}`}
                 >
-                  <img src="/images/rocket.png" className="h-8 object-contain mb-2" alt="Rocket" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  <div className="w-10 h-10 bg-[#8C3494]/10 rounded-full flex items-center justify-center text-lg mb-1">
+                    🚀
+                  </div>
                   <span className="font-extrabold text-[#8C3494]">Rocket</span>
                   <span className="text-[10px] text-gray-400 mt-1">Instant Auto-Payment</span>
                 </button>
 
                 {/* Bank Transfer Button */}
                 <button
+                  type="button"
                   onClick={() => setMethod('bank')}
-                  className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-200 ${getThemeBorder('bank')}`}
+                  className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-200 cursor-pointer ${getThemeBorder('bank')}`}
                 >
                   <CreditCard className="w-8 h-8 text-[#1C2C80] mb-2" />
                   <span className="font-extrabold text-[#1C2C80]">Bank Transfer</span>
