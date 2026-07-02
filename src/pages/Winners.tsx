@@ -1,6 +1,7 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Play, ExternalLink, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { ArrowLeft, Play, ExternalLink, Sparkles, X, Gift, Search, Award } from 'lucide-react';
+import { useAuth, extractYoutubeId, getYoutubeThumbnail, getGameColor } from '../context/AuthContext';
 
 interface GrandWinner {
   name: string;
@@ -130,6 +131,94 @@ const videoWinners: VideoWinner[] = [
 ];
 
 export function Winners() {
+  const { id } = useParams<{ id?: string }>();
+  const { siteConfig, raffleWinners } = useAuth();
+  const [selectedVideo, setSelectedVideo] = useState<any | null>(null);
+  
+  // Tab states: 'grand' | 'live' | 'video'
+  const [activeTab, setActiveTab] = useState<'grand' | 'live' | 'video'>(() => {
+    if (id) {
+      const lower = id.toLowerCase();
+      if (lower === 'hall-of-fame' || lower === 'grand-prize') {
+        return 'grand';
+      }
+      return 'live';
+    }
+    return 'grand';
+  });
+
+  const normalizeGameParam = (param?: string): string => {
+    if (!param) return 'ALL';
+    const lower = param.toLowerCase();
+    if (lower === 'mega7') return 'MEGA7';
+    if (lower === 'wild5') return 'WILD5';
+    if (lower === 'easy6') return 'EASY6';
+    if (lower === 'fast5') return 'FAST5';
+    if (lower === 'lottery') return 'LOTTERY';
+    if (lower === 'scratch%20cards' || lower === 'scratch cards') return 'SCRATCH CARDS';
+    if (lower === 'sure1' || lower === 'sure 1') return 'SURE 1';
+    if (lower === 'sure2' || lower === 'sure 2') return 'SURE 2';
+    if (lower === 'sure3' || lower === 'sure 3') return 'SURE 3';
+    if (lower === 'pick1' || lower === 'pick 1') return 'PICK 1';
+    if (lower === 'pick2' || lower === 'pick 2') return 'PICK 2';
+    return 'ALL';
+  };
+
+  const [gameFilter, setGameFilter] = useState<string>(() => {
+    if (id) {
+      return normalizeGameParam(id);
+    }
+    return 'ALL';
+  });
+
+  const [searchQuery, setSearchQuery] = useState('');
+
+  React.useEffect(() => {
+    if (id) {
+      const lower = id.toLowerCase();
+      if (lower === 'hall-of-fame' || lower === 'grand-prize') {
+        setActiveTab('grand');
+      } else {
+        setActiveTab('live');
+        setGameFilter(normalizeGameParam(id));
+      }
+    }
+  }, [id]);
+
+  const availableGames = [
+    'ALL',
+    'MEGA7',
+    'WILD5',
+    'EASY6',
+    'FAST5',
+    'LOTTERY',
+    'SCRATCH CARDS',
+    'SURE 1',
+    'SURE 2',
+    'SURE 3',
+    'PICK 1',
+    'PICK 2'
+  ];
+
+  // Filter dynamic game winners
+  const filteredWinners = raffleWinners.filter((w) => {
+    const matchesGame = gameFilter === 'ALL' || w.game?.trim().toUpperCase() === gameFilter.toUpperCase();
+    const matchesSearch = !searchQuery || 
+      w.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      w.ticket?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      w.country?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesGame && matchesSearch;
+  });
+
+  // Calculate sum of prize payouts or total count
+  const totalPrizeCount = filteredWinners.length;
+  
+  // Custom video winners fallback
+  const dbVideoWinners = siteConfig?.videoWinners || [];
+  const activeVideoWinners = dbVideoWinners.length > 0
+    ? dbVideoWinners.filter(vw => vw.isActive !== false)
+    : videoWinners;
+
   return (
     <div id="winners-root-view" className="bg-[#FAF9FC] min-h-screen text-zinc-900 font-sans pb-16">
       
@@ -143,14 +232,16 @@ export function Winners() {
         <div className="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
         
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-wider select-none drop-shadow-md">
-          Grand Prize Winners
+          {activeTab === 'grand' && 'Grand Prize Hall'}
+          {activeTab === 'live' && 'Live Draw Winners'}
+          {activeTab === 'video' && 'Winners Living the Dream'}
         </h1>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         
         {/* Main Content Box wrapped with beautiful borders */}
-        <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-gray-150 space-y-12">
+        <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-gray-150 space-y-8">
           
           {/* Back breadcrumb container */}
           <div className="flex justify-between items-center pb-2 border-b border-gray-100">
@@ -165,202 +256,379 @@ export function Winners() {
             </div>
           </div>
 
-          {/* First Section: Winners List */}
-          <div className="space-y-8">
-            <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-black text-[#1E1B4B] tracking-tight shrink-0">
-                Winners
-              </h2>
-              {/* Thick divider accent line right-aligned */}
-              <div className="flex-1 h-[2px] bg-[#E2E8F0] self-center" />
-            </div>
-
-            {/* Winners Avatar Circles Grid (8 winners, 4 columns on large, etc) */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
-              {grandWinners.map((winner, idx) => (
-                <div 
-                  key={idx} 
-                  className="flex flex-col items-center text-center p-4 rounded-3xl hover:bg-zinc-50/50 hover:shadow-xs transition-all duration-200"
-                >
-                  
-                  {/* Container for Avatar Circle and bottom arc flag decoration */}
-                  <div className="relative w-32 h-32 rounded-full p-0.5 border-2 border-gray-200 shadow-sm shrink-0 bg-white group overflow-hidden">
-                    
-                    {/* Circle Image Wrapper */}
-                    <div className="w-full h-full rounded-full overflow-hidden relative">
-                      <img 
-                        src={winner.avatarUrl} 
-                        alt={winner.name} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        referrerPolicy="no-referrer"
-                      />
-                    </div>
-
-                    {/* Styled flag curves exactly matching the Emirate Draw visual */}
-                    <div className="absolute bottom-0 inset-x-0 h-[15px] flex overflow-hidden">
-                      {winner.flagTheme === 'india' && (
-                        <div className="w-full h-full flex flex-col justify-stretch">
-                          <div className="bg-[#FF9933] flex-1" />
-                          <div className="bg-white flex-1 flex justify-center items-center">
-                            <div className="w-[3px] h-[3px] rounded-full bg-[#000080]" />
-                          </div>
-                          <div className="bg-[#128807] flex-1" />
-                        </div>
-                      )}
-                      {winner.flagTheme === 'uae' && (
-                        <div className="w-full h-full flex relative">
-                          <div className="w-[11px] h-full bg-[#E52535] shrink-0" />
-                          <div className="flex-1 flex flex-col h-full">
-                            <div className="bg-[#128807] flex-1" />
-                            <div className="bg-white flex-1" />
-                            <div className="bg-black flex-1" />
-                          </div>
-                        </div>
-                      )}
-                      {winner.flagTheme === 'canada' && (
-                        <div className="w-full h-full flex justify-stretch">
-                          <div className="bg-[#FF0000] flex-1" />
-                          <div className="bg-white flex-1 flex justify-center items-center relative">
-                            <span className="text-[6px] text-[#FF0000] font-black -mt-0.5 select-none font-sans">🍁</span>
-                          </div>
-                          <div className="bg-[#FF0000] flex-1" />
-                        </div>
-                      )}
-                    </div>
-
-                  </div>
-
-                  {/* Draw Winner Badge overlaying */}
-                  <span className="inline-block px-3 py-1 bg-[#1E2E80] text-white text-[9px] font-black rounded-full select-none -translate-y-2 uppercase shadow-sm tracking-wider">
-                    Draw Winner
-                  </span>
-
-                  {/* Winner Content elements */}
-                  <h4 className="font-extrabold text-zinc-900 text-sm mt-1 mb-0.5 truncate max-w-[150px]">
-                    {winner.name}
-                  </h4>
-                  <p className="text-lg font-black text-[#1E1B4B] tracking-tight leading-none my-1">
-                    {winner.prize}
-                  </p>
-                  <p className="text-[10px] font-bold text-zinc-400 block tracking-wide">
-                    {winner.date}
-                  </p>
-
-                </div>
-              ))}
-            </div>
+          {/* Elegant Tabs Selection */}
+          <div className="flex flex-wrap items-center gap-2 p-1.5 bg-[#FAF9FC] border border-gray-150 rounded-2xl">
+            <button
+              onClick={() => setActiveTab('grand')}
+              className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 ${
+                activeTab === 'grand'
+                  ? 'bg-[#1E1B4B] text-white shadow-md scale-[1.02]'
+                  : 'text-[#475569] hover:bg-gray-100 hover:text-zinc-950'
+              }`}
+            >
+              👑 Grand Prize Hall
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('live');
+                setGameFilter('ALL');
+              }}
+              className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 ${
+                activeTab === 'live'
+                  ? 'bg-[#1E1B4B] text-white shadow-md scale-[1.02]'
+                  : 'text-[#475569] hover:bg-gray-100 hover:text-zinc-950'
+              }`}
+            >
+              🎫 Live Game Winners
+            </button>
+            <button
+              onClick={() => setActiveTab('video')}
+              className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 ${
+                activeTab === 'video'
+                  ? 'bg-[#1E1B4B] text-white shadow-md scale-[1.02]'
+                  : 'text-[#475569] hover:bg-gray-100 hover:text-zinc-950'
+              }`}
+            >
+              📹 Video Stories
+            </button>
           </div>
 
-          {/* Second Section: Winners Living the Dream (YouTube styled videos) */}
-          <div className="space-y-8 pt-4">
-            
-            <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-black text-[#1E1B4B] tracking-tight shrink-0">
-                Winners Living the Dream
-              </h2>
-              {/* Thick divider accent line right-aligned */}
-              <div className="flex-1 h-[2px] bg-[#E2E8F0] self-center" />
-            </div>
+          {/* TAB 1: Grand Prize Winners */}
+          {activeTab === 'grand' && (
+            <div className="space-y-8 animate-fade-in">
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-black text-[#1E1B4B] tracking-tight shrink-0">
+                  Hall of Fame
+                </h2>
+                <div className="flex-1 h-[2px] bg-[#E2E8F0] self-center" />
+              </div>
 
-            {/* Video Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {videoWinners.map((v, i) => (
-                <div 
-                  key={i} 
-                  className="bg-white rounded-2xl overflow-hidden border border-gray-150 shadow-sm flex flex-col hover:shadow-md transition-shadow group cursor-pointer"
-                >
-                  
-                  {/* Simulated interactive Embedded YouTube Container with hover controls */}
-                  <div className="relative aspect-video bg-black overflow-hidden select-none shrink-0 w-full">
-                    {/* Thumbnail Image */}
-                    <img 
-                      src={v.thumbnailUrl} 
-                      alt={v.title} 
-                      className="w-full h-full object-cover opacity-85 group-hover:opacity-75 transition-opacity"
-                    />
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
+                {grandWinners.map((winner, idx) => (
+                  <div 
+                    key={idx} 
+                    className="flex flex-col items-center text-center p-4 rounded-3xl hover:bg-zinc-50/50 hover:shadow-xs transition-all duration-200"
+                  >
+                    <div className="relative w-32 h-32 rounded-full p-0.5 border-2 border-gray-200 shadow-sm shrink-0 bg-white group overflow-hidden">
+                      <div className="w-full h-full rounded-full overflow-hidden relative">
+                        <img 
+                          src={winner.avatarUrl} 
+                          alt={winner.name} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
 
-                    {/* Dark gradient shadow elements (like YouTube player) */}
-                    <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/55 to-transparent p-3 text-white">
-                      <p className="text-xs font-semibold truncate max-w-[90%] tracking-wide text-white drop-shadow">
-                        {v.title}
-                      </p>
-                    </div>
-
-                    {/* Big red YouTube Logo Play trigger button */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-[52px] h-[36px] bg-red-650 bg-red-600 rounded-xl flex items-center justify-center shadow-md transform group-hover:scale-110 transition-all duration-200">
-                        {/* Play white triangle symbol */}
-                        <div className="w-0 h-0 border-t-[7px] border-t-transparent border-l-[11px] border-l-white border-b-[7px] border-b-transparent ml-1" />
+                      <div className="absolute bottom-0 inset-x-0 h-[15px] flex overflow-hidden">
+                        {winner.flagTheme === 'india' && (
+                          <div className="w-full h-full flex flex-col justify-stretch">
+                            <div className="bg-[#FF9933] flex-1" />
+                            <div className="bg-white flex-1 flex justify-center items-center">
+                              <div className="w-[3px] h-[3px] rounded-full bg-[#000080]" />
+                            </div>
+                            <div className="bg-[#128807] flex-1" />
+                          </div>
+                        )}
+                        {winner.flagTheme === 'uae' && (
+                          <div className="w-full h-full flex relative">
+                            <div className="w-[11px] h-full bg-[#E52535] shrink-0" />
+                            <div className="flex-1 flex flex-col h-full">
+                              <div className="bg-[#128807] flex-1" />
+                              <div className="bg-white flex-1" />
+                              <div className="bg-black flex-1" />
+                            </div>
+                          </div>
+                        )}
+                        {winner.flagTheme === 'canada' && (
+                          <div className="w-full h-full flex justify-stretch">
+                            <div className="bg-[#FF0000] flex-1" />
+                            <div className="bg-white flex-1 flex justify-center items-center relative">
+                              <span className="text-[6px] text-[#FF0000] font-black -mt-0.5 select-none font-sans">🍁</span>
+                            </div>
+                            <div className="bg-[#FF0000] flex-1" />
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Bottom strip overlay with YouTube play watermarks */}
-                    <div className="absolute inset-x-0 bottom-0 bg-black/40 backdrop-blur-3xs p-2 px-3 text-white flex items-center justify-between text-[10px]">
-                      <span className="font-semibold text-zinc-300 hover:text-white transition-colors flex items-center gap-1">
-                        <ExternalLink className="w-3.5 h-3.5" /> Watch on YouTube
-                      </span>
-                      <span className="font-mono text-zinc-400">Golobal Lottery</span>
-                    </div>
+                    <span className="inline-block px-3 py-1 bg-[#1E2E80] text-white text-[9px] font-black rounded-full select-none -translate-y-2 uppercase shadow-sm tracking-wider">
+                      Draw Winner
+                    </span>
 
+                    <h4 className="font-extrabold text-zinc-900 text-sm mt-1 mb-0.5 truncate max-w-[150px]">
+                      {winner.name}
+                    </h4>
+                    <p className="text-lg font-black text-[#1E1B4B] tracking-tight leading-none my-1">
+                      {winner.prize}
+                    </p>
+                    <p className="text-[10px] font-bold text-zinc-400 block tracking-wide">
+                      {winner.date}
+                    </p>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-                  {/* Lower metadata card content */}
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-3.5">
-                    
-                    <div className="space-y-2">
-                      {/* Red capsule draw badge */}
-                      <span className="inline-block px-2.5 py-0.5 bg-[#FFE4E6] text-[#E11D48] text-[9px] font-black rounded uppercase tracking-wider">
-                        Draw Winner
-                      </span>
-                      {/* Bold name */}
-                      <h4 className="font-extrabold text-zinc-950 text-base leading-snug">
-                        {v.name}
-                      </h4>
-                    </div>
-
-                    {/* Price structure styled exactly as "Won $Amount" */}
-                    <div className="space-y-1.5 pt-2 border-t border-gray-100">
-                      <p className="text-sm font-bold text-zinc-900 leading-none">
-                        <span className="text-[#0070BC] font-extrabold">Won</span> {v.prizeText}
-                      </p>
-                      <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wide">
-                        {v.date}
-                      </p>
-                    </div>
-
-                  </div>
-
+          {/* TAB 2: Live Draw & Game Winners */}
+          {activeTab === 'live' && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-black text-[#1E1B4B] tracking-tight flex items-center gap-2">
+                    🏆 Live Winners Ledger
+                  </h2>
+                  <p className="text-xs text-zinc-500 mt-0.5">Real-time certified declarations added instantly from the admin panel.</p>
                 </div>
-              ))}
+
+                {/* Live Search and filters */}
+                <div className="relative max-w-sm w-full">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <Search className="h-4 w-4 text-zinc-400" />
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search by name, ticket or country..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-zinc-50 border border-gray-150 rounded-xl pl-9 pr-4 py-2.5 text-xs text-zinc-800 placeholder-zinc-450 focus:outline-none focus:border-[#1E1B4B] transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-zinc-600 text-xs font-bold"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Game Pills Filter Selector */}
+              <div className="flex items-center gap-2 overflow-x-auto py-2 no-scrollbar border-b border-gray-100 pb-4">
+                {availableGames.map((game) => {
+                  const isSelected = gameFilter.toUpperCase() === game.toUpperCase();
+                  const pillColor = game === 'ALL' ? 'bg-[#1E1B4B] text-white' : getGameColor(game);
+
+                  return (
+                    <button
+                      key={game}
+                      onClick={() => setGameFilter(game)}
+                      className={`shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-150 flex items-center gap-1.5 border ${
+                        isSelected 
+                          ? `${pillColor} border-transparent shadow-sm scale-105` 
+                          : 'bg-zinc-50 text-zinc-500 hover:bg-gray-100 hover:text-zinc-900 border-gray-200'
+                      }`}
+                    >
+                      {game === 'ALL' ? '🌟 All Winners' : game}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Stats Bar */}
+              <div className="flex items-center justify-between text-xs font-bold text-zinc-500 px-1">
+                <span>Showing {totalPrizeCount} certified winners</span>
+                <span className="flex items-center gap-1 text-emerald-600">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> 100% Secure & Verified
+                </span>
+              </div>
+
+              {/* Winners Grid */}
+              {filteredWinners.length === 0 ? (
+                <div className="text-center py-16 bg-[#FAF9FC] rounded-3xl border border-dashed border-gray-200">
+                  <Gift className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                  <h3 className="text-sm font-black text-zinc-700 uppercase tracking-wider">No Winners Found</h3>
+                  <p className="text-xs text-zinc-400 mt-1">Try changing your filters or add new entries from the admin panel!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {filteredWinners.map((w, index) => (
+                    <div 
+                      key={w.id || index}
+                      className="bg-white rounded-2xl p-5 border border-gray-150 hover:shadow-md transition-shadow relative overflow-hidden flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center gap-3">
+                          {/* Avatar */}
+                          <div className="relative shrink-0">
+                            {w.imageUrl ? (
+                              <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-200 shadow-xs">
+                                <img src={w.imageUrl} alt={w.name} className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-black text-sm shadow-xs ${w.avatarBg || 'bg-gradient-to-tr from-emerald-500 to-teal-600'}`}>
+                                {w.initials || w.name.substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="absolute -top-1 -right-1 bg-amber-400 border border-white text-[9px] p-0.5 rounded-full shadow-xs">🏆</span>
+                          </div>
+                          
+                          <div className="leading-tight min-w-0 flex-1">
+                            <h4 className="font-extrabold text-zinc-900 text-sm truncate">{w.name}</h4>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-xs">{w.flag}</span>
+                              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider truncate">{w.country}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Game tag */}
+                        <div className="mt-4">
+                          <span className={`inline-block px-2.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shadow-2xs ${getGameColor(w.game)}`}>
+                            {w.game}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Ticket and Prize */}
+                      <div className="mt-5 pt-3 border-t border-gray-100 flex items-center justify-between">
+                        <div>
+                          <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block">Ticket Code</span>
+                          <span className="text-xs font-mono font-black text-zinc-850 uppercase tracking-widest">{w.ticket}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[9px] text-emerald-600 font-extrabold uppercase tracking-wider block">Won Amount</span>
+                          <span className="text-base font-black text-emerald-600 tracking-tight leading-none mt-0.5 block">{w.prize}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+          )}
 
-            {/* Pagination Controls styled exactly as < [01] 02 > */}
-            <div className="flex justify-center items-center gap-2 pt-6">
-              <button 
-                className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 active:scale-95 text-zinc-400 hover:text-zinc-700 transition-all duration-150 disabled:opacity-40" 
-                disabled
-              >
-                &lt;
-              </button>
-              
-              <button className="w-8 h-8 rounded-full bg-zinc-950 text-[#FFEB4A] font-bold text-xs flex items-center justify-center shadow-md select-none">
-                01
-              </button>
+          {/* TAB 3: Video Stories */}
+          {activeTab === 'video' && (
+            <div className="space-y-8 animate-fade-in">
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-black text-[#1E1B4B] tracking-tight shrink-0">
+                  Winners Living the Dream
+                </h2>
+                <div className="flex-1 h-[2px] bg-[#E2E8F0] self-center" />
+              </div>
 
-              <button className="w-8 h-8 rounded-full border border-gray-200 text-zinc-500 hover:text-zinc-950 font-bold text-xs flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all select-none">
-                02
-              </button>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {activeVideoWinners.map((v, i) => (
+                  <div 
+                    key={i} 
+                    onClick={() => setSelectedVideo(v)}
+                    className="bg-white rounded-2xl overflow-hidden border border-gray-150 shadow-sm flex flex-col hover:shadow-md transition-shadow group cursor-pointer"
+                  >
+                    <div className="relative aspect-video bg-black overflow-hidden select-none shrink-0 w-full">
+                      <img 
+                        src={v.thumbnailUrl || getYoutubeThumbnail(v.youtubeId)} 
+                        alt={v.title} 
+                        className="w-full h-full object-cover opacity-85 group-hover:opacity-75 transition-opacity"
+                      />
 
-              <button className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 active:scale-95 text-zinc-500 hover:text-zinc-950 transition-all duration-150">
-                &gt;
-              </button>
+                      <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/55 to-transparent p-3 text-white">
+                        <p className="text-xs font-semibold truncate max-w-[90%] tracking-wide text-white drop-shadow">
+                          {v.title}
+                        </p>
+                      </div>
+
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-[52px] h-[36px] bg-red-650 bg-red-600 rounded-xl flex items-center justify-center shadow-md transform group-hover:scale-110 transition-all duration-200">
+                          <div className="w-0 h-0 border-t-[7px] border-t-transparent border-l-[11px] border-l-white border-b-[7px] border-b-transparent ml-1" />
+                        </div>
+                      </div>
+
+                      <div className="absolute inset-x-0 bottom-0 bg-black/40 backdrop-blur-3xs p-2 px-3 text-white flex items-center justify-between text-[10px]">
+                        <span className="font-semibold text-zinc-300 hover:text-white transition-colors flex items-center gap-1">
+                          <ExternalLink className="w-3.5 h-3.5" /> Watch on YouTube
+                        </span>
+                        <span className="font-mono text-zinc-400">Golobal Lottery</span>
+                      </div>
+                    </div>
+
+                    <div className="p-5 flex-1 flex flex-col justify-between space-y-3.5">
+                      <div className="space-y-2">
+                        <span className="inline-block px-2.5 py-0.5 bg-[#FFE4E6] text-[#E11D48] text-[9px] font-black rounded uppercase tracking-wider">
+                          Draw Winner
+                        </span>
+                        <h4 className="font-extrabold text-zinc-950 text-base leading-snug">
+                          {v.name}
+                        </h4>
+                      </div>
+
+                      <div className="space-y-1.5 pt-2 border-t border-gray-100">
+                        <p className="text-sm font-bold text-zinc-900 leading-none">
+                          <span className="text-[#0070BC] font-extrabold">Won</span> {v.prizeText}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wide">
+                          {v.date}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="flex justify-center items-center gap-2 pt-6">
+                <button 
+                  className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 active:scale-95 text-zinc-400 hover:text-zinc-700 transition-all duration-150" 
+                  disabled
+                >
+                  &lt;
+                </button>
+                <button className="w-8 h-8 rounded-full bg-zinc-950 text-[#FFEB4A] font-bold text-xs flex items-center justify-center shadow-md select-none">
+                  01
+                </button>
+                <button className="w-8 h-8 rounded-full border border-gray-200 text-zinc-500 hover:text-zinc-950 font-bold text-xs flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all select-none">
+                  02
+                </button>
+                <button className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 active:scale-95 text-zinc-500 hover:text-zinc-950 transition-all duration-150">
+                  &gt;
+                </button>
+              </div>
             </div>
-
-          </div>
+          )}
 
         </div>
 
       </div>
+
+      {/* YouTube Video Modal Popup */}
+      {selectedVideo && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 transition-all duration-300"
+          onClick={() => setSelectedVideo(null)}
+        >
+          <div 
+            className="bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden max-w-3xl w-full relative shadow-2xl scale-100 transform transition-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setSelectedVideo(null)}
+              className="absolute top-4 right-4 bg-black/60 hover:bg-black text-white p-2 rounded-full border border-zinc-800 transition z-10 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="aspect-video w-full">
+              <iframe 
+                src={`https://www.youtube.com/embed/${extractYoutubeId(selectedVideo.youtubeId)}?autoplay=1`} 
+                title={selectedVideo.title}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                allowFullScreen
+                className="w-full h-full"
+              ></iframe>
+            </div>
+            <div className="p-5 border-t border-zinc-900 bg-zinc-900">
+              <span className="inline-block px-2.5 py-0.5 bg-red-950 text-red-400 text-[9px] font-black rounded uppercase tracking-wider mb-2">
+                Winner Story
+              </span>
+              <h3 className="text-white text-base font-extrabold">{selectedVideo.title}</h3>
+              <p className="text-zinc-400 text-xs mt-1">
+                Winner: <span className="text-white font-bold">{selectedVideo.name}</span> • Prize: <span className="text-[#0070BC] font-black">{selectedVideo.prizeText}</span> • {selectedVideo.date}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -392,7 +392,7 @@ export function Checkout() {
                     
                     <div className="text-xs text-zinc-650 space-y-2 leading-relaxed">
                       <p>
-                        To finalize payment, please Send Money or Cash Out exactly <b className="font-mono text-gray-900 text-sm font-black">${totalAmount.toFixed(2)}</b> (Approx. <b className="font-mono font-black">{(totalAmount * 117).toFixed(0)} BDT</b>) to the Admin bKash Account Number:
+                        To finalize payment, please Send Money or Cash Out exactly <b className="font-mono text-gray-900 text-sm font-black">${totalAmount.toFixed(2)}</b> (Approx. <b className="font-mono font-black">{(totalAmount * (siteConfig.usdExchangeRate ?? 117)).toFixed(0)} BDT</b>) to the Admin bKash Account Number:
                       </p>
                       
                       {/* Copyable MFS Account box */}
@@ -422,24 +422,24 @@ export function Checkout() {
                   {/* Verification Input forms */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-650">Your bKash Number (Sender)</label>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">Your bKash Number (Sender)</label>
                       <input 
                         type="text" 
                         placeholder="" 
                         value={mfsSenderNumber} 
                         onChange={(e) => setMfsSenderNumber(e.target.value)}
-                        className="bg-white border text-gray-950 border-gray-300 rounded-xl mt-1.5 px-3 py-2.5 w-full focus:outline-none focus:ring-1 focus:ring-[#e2136e] text-sm"
+                        className="bg-white border text-gray-900 border-gray-300 rounded-xl mt-1.5 px-3 py-2.5 w-full focus:outline-none focus:ring-1 focus:ring-[#e2136e] text-sm"
                         required={paymentMethod === 'bkash'}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-650">bKash Transaction ID (TrxID)</label>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">bKash Transaction ID (TrxID)</label>
                       <input 
                         type="text" 
                         placeholder="" 
                         value={mfsTxId} 
                         onChange={(e) => setMfsTxId(e.target.value)}
-                        className="bg-white border text-gray-950 border-gray-300 rounded-xl mt-1.5 px-3 py-2.5 w-full focus:outline-none focus:ring-1 focus:ring-[#e2136e] font-mono tracking-wider uppercase text-sm"
+                        className="bg-white border text-gray-900 border-gray-300 rounded-xl mt-1.5 px-3 py-2.5 w-full focus:outline-none focus:ring-1 focus:ring-[#e2136e] font-mono tracking-wider uppercase text-sm"
                         required={paymentMethod === 'bkash'}
                       />
                     </div>
@@ -457,7 +457,7 @@ export function Checkout() {
                     
                     <div className="text-xs text-zinc-650 space-y-2 leading-relaxed">
                       <p>
-                        To finalize payment, please Send Money or Cash Out exactly <b className="font-mono text-gray-900 text-sm font-black">${totalAmount.toFixed(2)}</b> (Approx. <b className="font-mono font-black">{(totalAmount * 117).toFixed(0)} BDT</b>) to the Admin Nagad Account Number:
+                        To finalize payment, please Send Money or Cash Out exactly <b className="font-mono text-gray-900 text-sm font-black">${totalAmount.toFixed(2)}</b> (Approx. <b className="font-mono font-black">{(totalAmount * (siteConfig.usdExchangeRate ?? 117)).toFixed(0)} BDT</b>) to the Admin Nagad Account Number:
                       </p>
                       
                       {/* Copyable MFS Account box */}
@@ -487,24 +487,24 @@ export function Checkout() {
                   {/* Verification Input forms */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-655">Your Nagad Number (Sender)</label>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">Your Nagad Number (Sender)</label>
                       <input 
                         type="text" 
                         placeholder="" 
                         value={mfsSenderNumber} 
                         onChange={(e) => setMfsSenderNumber(e.target.value)}
-                        className="bg-white border text-gray-950 border-gray-300 rounded-xl mt-1.5 px-3 py-2.5 w-full focus:outline-none focus:ring-1 focus:ring-[#f25220] text-sm"
+                        className="bg-white border text-gray-900 border-gray-300 rounded-xl mt-1.5 px-3 py-2.5 w-full focus:outline-none focus:ring-1 focus:ring-[#f25220] text-sm"
                         required={paymentMethod === 'nagad'}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-655">Nagad 8-digit TxID / Token </label>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">Nagad 8-digit TxID / Token </label>
                       <input 
                         type="text" 
                         placeholder="" 
                         value={mfsTxId} 
                         onChange={(e) => setMfsTxId(e.target.value)}
-                        className="bg-white border text-gray-950 border-gray-300 rounded-xl mt-1.5 px-3 py-2.5 w-full focus:outline-none focus:ring-1 focus:ring-[#f25220] font-mono tracking-wider uppercase text-sm"
+                        className="bg-white border text-gray-900 border-gray-300 rounded-xl mt-1.5 px-3 py-2.5 w-full focus:outline-none focus:ring-1 focus:ring-[#f25220] font-mono tracking-wider uppercase text-sm"
                         required={paymentMethod === 'nagad'}
                       />
                     </div>

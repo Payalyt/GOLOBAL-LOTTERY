@@ -122,65 +122,63 @@ export function Hero() {
         )}
 
         {/* LEFT CONTENT: Banner Description & Headers */}
-        <div className="relative w-full md:w-[65%] flex flex-col justify-center items-start text-left z-10 space-y-4">
-          <div className="flex items-center gap-2">
-            <span 
-              className="text-white text-[9px] font-black tracking-widest px-3 py-1 rounded-md uppercase flex items-center gap-1 shadow-md border border-white/10"
-              style={{ backgroundColor: siteConfig.primaryHex }}
-            >
-              <Sparkles className="w-3 h-3 text-yellow-300 animate-pulse" />
-              {language === 'en' ? 'EXCLUSIVE CAMPAIGN' : 'বিশেষ ক্যাম্পেইন'}
-            </span>
-            {activeBanners.length > 1 && (
-              <span className="bg-black/60 text-zinc-400 border border-zinc-800 text-[8.5px] font-mono px-2 py-0.5 rounded-full font-bold">
-                SLIDE {currentSlide + 1} OF {activeBanners.length}
-              </span>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <h2 
-              className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight alfa-slab-one-regular drop-shadow-md uppercase"
-              style={{ color: textColor }}
-            >
-              {banner.title}
-            </h2>
-            {banner.subtitle && (
-              <p 
-                className="text-[12px] sm:text-base md:text-lg font-medium max-w-xl leading-relaxed drop-shadow opacity-90"
-                style={{ color: textColor }}
+        {((banner.title && banner.title.trim()) || (banner.subtitle && banner.subtitle.trim())) ? (
+          <div className="relative w-full md:w-[65%] flex flex-col justify-center items-start text-left z-10 space-y-4">
+            <div className="flex items-center gap-2">
+              <span 
+                className="text-white text-[9px] font-black tracking-widest px-3 py-1 rounded-md uppercase flex items-center gap-1 shadow-md border border-white/10"
+                style={{ backgroundColor: siteConfig.primaryHex }}
               >
-                {banner.subtitle}
-              </p>
+                <Sparkles className="w-3 h-3 text-yellow-300 animate-pulse" />
+                {language === 'en' ? 'EXCLUSIVE CAMPAIGN' : 'বিশেষ ক্যাম্পেইন'}
+              </span>
+              {activeBanners.length > 1 && (
+                <span className="bg-black/60 text-zinc-400 border border-zinc-800 text-[8.5px] font-mono px-2 py-0.5 rounded-full font-bold">
+                  SLIDE {currentSlide + 1} OF {activeBanners.length}
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              {banner.title && banner.title.trim() && (
+                <h2 
+                  className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight alfa-slab-one-regular drop-shadow-md uppercase"
+                  style={{ color: textColor }}
+                >
+                  {banner.title}
+                </h2>
+              )}
+              {banner.subtitle && banner.subtitle.trim() && (
+                <p 
+                  className="text-[12px] sm:text-base md:text-lg font-medium max-w-xl leading-relaxed drop-shadow opacity-90"
+                  style={{ color: textColor }}
+                >
+                  {banner.subtitle}
+                </p>
+              )}
+            </div>
+
+            {banner.buttonText && banner.buttonText.trim() && (
+              <div className="pt-4">
+                <button 
+                  type="button"
+                  onClick={() => navigate(banner.linkUrl || '/dashboard')}
+                  className="w-full sm:w-auto hover:opacity-95 font-black text-xs uppercase px-10 py-4 rounded-xl tracking-widest transition-all duration-300 hover:scale-[1.04] active:scale-[0.98] cursor-pointer shadow-lg flex items-center justify-center gap-2 border border-black/10"
+                  style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
+                >
+                  {banner.buttonText}
+                  <ArrowRight className="w-4 h-4 stroke-[3]" style={{ color: buttonTextColor }} />
+                </button>
+              </div>
             )}
           </div>
-
-          <div className="pt-4">
-            <button 
-              type="button"
-              onClick={() => navigate(banner.linkUrl || '/dashboard')}
-              className="w-full sm:w-auto hover:opacity-95 font-black text-xs uppercase px-10 py-4 rounded-xl tracking-widest transition-all duration-300 hover:scale-[1.04] active:scale-[0.98] cursor-pointer shadow-lg flex items-center justify-center gap-2 border border-black/10"
-              style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
-            >
-              {banner.buttonText || (language === 'en' ? "EXPLORE NOW" : "খেলুন এখনই")}
-              <ArrowRight className="w-4 h-4 stroke-[3]" style={{ color: buttonTextColor }} />
-            </button>
-          </div>
-        </div>
-
-        {/* RIGHT SIDE: Decorative Glassmorphism card framing the image detail or showing empty spacing */}
-        {resolvedImageUrl && (
-          <div className="relative w-full md:w-[30%] flex justify-center md:justify-end items-center mt-8 md:mt-0 z-10">
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#FFD700]/10 to-transparent rounded-[24px] blur-xl pointer-events-none" />
-            <div className="bg-black/45 backdrop-blur-md p-2 rounded-[28px] border border-white/10 shadow-2xl overflow-hidden max-w-[240px] transform hover:rotate-2 transition-transform duration-500 hidden md:block">
-              <img 
-                src={resolvedImageUrl} 
-                alt={banner.title} 
-                className="w-full h-[200px] object-cover rounded-[20px] shadow-inner"
-                referrerPolicy="no-referrer"
-              />
+        ) : (
+          /* Show slide indicator only if there are multiple slides and no text content */
+          activeBanners.length > 1 && (
+            <div className="absolute top-6 left-6 bg-black/60 text-zinc-400 border border-zinc-800 text-[8.5px] font-mono px-2 py-1 rounded-full font-bold z-10">
+              SLIDE {currentSlide + 1} OF {activeBanners.length}
             </div>
-          </div>
+          )
         )}
 
         {/* BOTTOM DOTS NAVIGATION */}

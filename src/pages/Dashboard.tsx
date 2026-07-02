@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -33,6 +33,58 @@ export function Dashboard() {
   const { user, setUser, isLoggedIn, tickets, updateUserBalance, updateUserProfileFields, withdrawalRequests = [], addWithdrawalRequest, addDepositRequest, depositRequests = [], siteConfig, language, theme } = useAuth();
   const { tickets: cartTickets } = useCart();
   const navigate = useNavigate();
+
+  // Track previous requests for notifications
+  const prevDepositsRef = useRef(depositRequests);
+  const prevWithdrawalsRef = useRef(withdrawalRequests);
+  const [notifications, setNotifications] = useState<{id: string, message: string, type: 'success' | 'error'}[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Check for newly approved/rejected deposits
+    depositRequests.forEach(req => {
+      const prev = prevDepositsRef.current.find(p => p.id === req.id);
+      if (prev && prev.status === 'Pending' && req.status !== 'Pending' && req.email.toLowerCase() === user.email.toLowerCase()) {
+        const type = req.status === 'Approved' ? 'success' : 'error';
+        const isComm = req.gateway.toLowerCase().includes('commission') || req.details?.toLowerCase().includes('commission');
+        const msg = req.status === 'Approved' 
+          ? `🎉 Your ${isComm ? 'Commission ' : ''}Deposit of $${req.amount} has been Approved!`
+          : `❌ Your ${isComm ? 'Commission ' : ''}Deposit of $${req.amount} was Rejected.`;
+        
+        const newNotif = { id: Date.now().toString() + Math.random(), message: msg, type };
+        setNotifications(prev => [...prev, newNotif]);
+        
+        // Auto-remove notification after 8 seconds
+        setTimeout(() => {
+          setNotifications(prev => prev.filter(n => n.id !== newNotif.id));
+        }, 8000);
+      }
+    });
+
+    // Check for newly approved/rejected withdrawals
+    withdrawalRequests.forEach(req => {
+      const prev = prevWithdrawalsRef.current.find(p => p.id === req.id);
+      if (prev && prev.status === 'Pending' && req.status !== 'Pending' && req.email.toLowerCase() === user.email.toLowerCase()) {
+        const type = req.status === 'Approved' ? 'success' : 'error';
+        const msg = req.status === 'Approved' 
+          ? `🎉 Your Withdrawal of $${req.amount} has been Approved and transferred to your bank!`
+          : `❌ Your Withdrawal of $${req.amount} was Rejected and funds have been returned to your balance.`;
+        
+        const newNotif = { id: Date.now().toString() + Math.random(), message: msg, type };
+        setNotifications(prev => [...prev, newNotif]);
+        
+        // Auto-remove notification after 8 seconds
+        setTimeout(() => {
+          setNotifications(prev => prev.filter(n => n.id !== newNotif.id));
+        }, 8000);
+      }
+    });
+
+    prevDepositsRef.current = depositRequests;
+    prevWithdrawalsRef.current = withdrawalRequests;
+  }, [depositRequests, withdrawalRequests, user]);
+
 
   // Active tabs state
   const [activeTab, setActiveTab] = useState<string>('Personal Details');
@@ -86,7 +138,8 @@ export function Dashboard() {
   const [commissionDepositAmount, setCommissionDepositAmount] = useState('8500');
 
   // Agent System state variables
-  const [selectedDepositMethod, setSelectedDepositMethod] = useState<'card' | 'agent' | 'crypto'>('card');
+  const [selectedDepositMethod, setSelectedDepositMethod] = useState<'card' | 'agent' | 'crypto' | 'dokan'>('dokan');
+  const [isProcessingDokan, setIsProcessingDokan] = useState(false);
   const [selectedCommissionMethod, setSelectedCommissionMethod] = useState<'card' | 'agent' | 'gateway'>('card');
   const [selectedWithdrawMethod, setSelectedWithdrawMethod] = useState<'bank' | 'agent' | 'gateway'>('bank');
   const [selectedGatewayId, setSelectedGatewayId] = useState<string | null>(null);
@@ -247,33 +300,50 @@ export function Dashboard() {
   // Add credit trigger
   const handlePaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     const amt = parseFloat(depositAmount);
     if (isNaN(amt) || amt <= 0) {
       alert("Please specify a valid deposit amount.");
       return;
     }
-    updateUserBalance(user.email, amt);
-    alert(`🎉 Success! $${amt.toFixed(2)} credited securely using card ending in ${cardNumber.slice(-4) || '4312'}.`);
+    if (addDepositRequest) {
+      addDepositRequest({
+        email: user.email,
+        amount: amt,
+        gateway: 'Credit/Debit Card',
+        transactionId: 'CARD-DEP-' + Math.floor(100000 + Math.random() * 900000),
+        details: `Card ending in ${cardNumber.slice(-4) || '4312'}`
+      });
+    }
+    alert(`🎉 Deposit request for $${amt.toFixed(2)} submitted successfully! It will be credited once approved by an Admin.`);
     setCardNumber('');
     setCvv('');
     setExpiry('');
-    setActiveTab('Personal Details');
+    setActiveTab('Transactions');
   };
 
   const handleCommissionDepositSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
+    if (!user) return;
     const amt = parseFloat(commissionDepositAmount);
     if (isNaN(amt) || amt <= 0) {
       alert("Please specify a valid commission deposit amount.");
       return;
     }
-    const nextCommission = (user.commissionBalance || 0) + amt;
-    updateUserProfileFields(user.email, { commissionBalance: nextCommission });
-    alert(`🎉 Success! $${amt.toFixed(2)} added to Commission Balance securely using card ending in ${cardNumber.slice(-4) || '4312'}.`);
+    if (addDepositRequest) {
+      addDepositRequest({
+        email: user.email,
+        amount: amt,
+        gateway: 'Credit/Debit Card (Commission)',
+        transactionId: 'CARD-COM-' + Math.floor(100000 + Math.random() * 900000),
+        details: `Commission paid via Card ending in ${cardNumber.slice(-4) || '4312'}`
+      });
+    }
+    alert(`🎉 Commission Deposit request for $${amt.toFixed(2)} submitted successfully! It will be added to your Commission Balance once approved by an Admin.`);
     setCardNumber('');
     setCvv('');
     setExpiry('');
-    setActiveTab('Bank Withdraw');
+    setActiveTab('Transactions');
   };
 
   const handleAgentDepositSubmit = (e?: React.FormEvent) => {
@@ -297,6 +367,44 @@ export function Dashboard() {
     setActiveTab('Transactions');
   };
 
+  const handleDokanPaySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    const amt = parseFloat(depositAmount);
+    if (isNaN(amt) || amt <= 0) {
+      alert("Please specify a valid deposit amount.");
+      return;
+    }
+
+    setIsProcessingDokan(true);
+    try {
+      const response = await fetch('/api/payment/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: amt,
+          orderId: `DP-${Date.now()}`,
+          customerName: user.name,
+          customerEmail: user.email,
+          customerPhone: user.phone
+        })
+      });
+
+      const data = await response.json();
+      if (data.payment_url) {
+        // Redirect to Dokan Pay payment page
+        window.location.href = data.payment_url;
+      } else {
+        throw new Error(data.error || 'Failed to create payment session');
+      }
+    } catch (err) {
+      console.error("Dokan Pay error:", err);
+      alert("❌ Failed to initiate Dokan Pay payment. Please try again or use another method.");
+    } finally {
+      setIsProcessingDokan(false);
+    }
+  };
+
   const handleAgentCommissionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -305,8 +413,6 @@ export function Dashboard() {
       alert("Please specify a valid commission amount.");
       return;
     }
-    const nextCommission = (user.commissionBalance || 0) + amt;
-    updateUserProfileFields(user.email, { commissionBalance: nextCommission });
     if (addDepositRequest) {
       addDepositRequest({
         email: user.email,
@@ -316,31 +422,42 @@ export function Dashboard() {
         details: 'Commission paid via Authorized Local Agent'
       });
     }
-    alert(`🎉 Success! Agent Commission Payment of $${amt.toFixed(2)} submitted. Your Commission Balance has been updated immediately for testing convenience.`);
+    alert(`🎉 Success! Agent Commission Payment request for $${amt.toFixed(2)} submitted. It will be added to your Commission Balance once approved by an Admin.`);
     setAgentCommissionReference('');
-    setActiveTab('Bank Withdraw');
+    setActiveTab('Transactions');
   };
 
   const handleAgentWithdrawSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     const amt = parseFloat(bankWithdrawAmount);
+    
+    const govFeePct = siteConfig.governmentFeePct ?? 10;
+    const minWd = siteConfig.minWithdrawalAmount ?? 10;
+    const maxWd = siteConfig.maxWithdrawalAmount ?? 100000000;
+
     if (isNaN(amt) || amt <= 0) {
       alert("Please specify a valid withdrawal amount.");
       return;
     }
-    if (amt < 81967.21) {
-      alert("Minimum withdrawal amount is $81,967.21");
+    if (amt < minWd) {
+      alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
+      return;
+    }
+    if (amt > maxWd) {
+      alert(`Maximum withdrawal amount is $${maxWd.toFixed(2)}`);
       return;
     }
     if (user.balance < amt) {
       alert("Insufficient wallet balance for this withdrawal.");
       return;
     }
-    const commissionNeeded = amt * 0.10;
+    
+    const commissionNeeded = amt * (govFeePct / 100);
     const currentComm = user.commissionBalance || 0;
+    
     if (currentComm < commissionNeeded) {
-      alert(`⚠️ Insufficient Commission Balance! You need $${commissionNeeded.toFixed(2)} (10% of $${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have $${currentComm.toFixed(2)}.`);
+      alert(`⚠️ Insufficient Commission Balance! You need $${commissionNeeded.toFixed(2)} (${govFeePct}% of $${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have $${currentComm.toFixed(2)}.`);
       return;
     }
 
@@ -350,14 +467,16 @@ export function Dashboard() {
 
     if (addWithdrawalRequest) {
       addWithdrawalRequest({
+        email: user.email,
         amount: amt,
         bankName: `Agent (${agentWithdrawChannel})`,
         iban: agentWithdrawReference || 'Agent Contact ID',
-        accountName: user.name
+        accountName: user.name,
+        commissionDeducted: commissionNeeded
       });
     }
 
-    alert(`🎉 Agent Withdrawal request for $${amt.toFixed(2)} submitted successfully! 10% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+    alert(`🎉 Agent Withdrawal request for $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
     setBankWithdrawAmount('');
     setAgentWithdrawReference('');
     setActiveTab('Transactions');
@@ -367,13 +486,22 @@ export function Dashboard() {
     e?.preventDefault();
     const amt = parseFloat(bankWithdrawAmount);
     
+    const govFeePct = siteConfig.governmentFeePct ?? 10;
+    const minWd = siteConfig.minWithdrawalAmount ?? 10;
+    const maxWd = siteConfig.maxWithdrawalAmount ?? 100000000;
+
     if (isNaN(amt) || amt <= 0) {
       alert("Please specify a valid withdrawal amount.");
       return;
     }
     
-    if (amt < 81967.21) {
-      alert("Minimum withdrawal amount is $81,967.21");
+    if (amt < minWd) {
+      alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
+      return;
+    }
+    
+    if (amt > maxWd) {
+      alert(`Maximum withdrawal amount is $${maxWd.toFixed(2)}`);
       return;
     }
 
@@ -382,11 +510,11 @@ export function Dashboard() {
       return;
     }
 
-    const commissionNeeded = amt * 0.10;
+    const commissionNeeded = amt * (govFeePct / 100);
     const currentCommission = user.commissionBalance || 0;
 
     if (currentCommission < commissionNeeded) {
-      alert(`Insufficient Commission Balance.\n\nGovernment regulations require a 10% commission ($${commissionNeeded.toFixed(2)}) to be paid beforehand. Please deposit the required commission amount to proceed.`);
+      alert(`Insufficient Commission Balance.\n\nGovernment regulations require a ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) to be paid beforehand. Please deposit the required commission amount to proceed.`);
       return;
     }
 
@@ -401,11 +529,12 @@ export function Dashboard() {
         amount: amt,
         bankName: `${bankWithdrawName} (Branch: ${bankWithdrawBranch})`,
         iban: bankWithdrawIban,
-        accountName: user.name
+        accountName: user.name,
+        commissionDeducted: commissionNeeded
       });
     }
 
-    alert(`🎉 Withdrawal request for $${amt.toFixed(2)} submitted successfully! 10% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+    alert(`🎉 Withdrawal request for $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
     setBankWithdrawAmount('');
     setBankWithdrawName('');
     setBankWithdrawIban('');
@@ -432,8 +561,32 @@ export function Dashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto my-12 px-4 sm:px-6 lg:px-8 text-zinc-900 dark:text-zinc-100 font-sans">
+    <div className="max-w-7xl mx-auto my-12 px-4 sm:px-6 lg:px-8 text-zinc-900 dark:text-zinc-100 font-sans relative">
       
+      {/* Notifications Toast */}
+      {notifications.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 w-full max-w-sm">
+          {notifications.map(n => (
+            <div 
+              key={n.id} 
+              className={`p-4 rounded-xl shadow-lg border text-sm font-bold flex items-start gap-3 backdrop-blur-md animate-in slide-in-from-right-8 fade-in ${
+                n.type === 'success' 
+                  ? 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400' 
+                  : 'bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400'
+              }`}
+            >
+              <div className="flex-1 leading-snug">{n.message}</div>
+              <button 
+                onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))}
+                className="opacity-50 hover:opacity-100 transition-opacity"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Container holding My Account with exact card layout */}
       <div className="bg-white dark:bg-zinc-950 border border-[#E5E5EB] dark:border-zinc-850 rounded-[32px] shadow-sm p-6 sm:p-10 select-none">
         
@@ -1087,7 +1240,18 @@ export function Dashboard() {
                       <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2 mt-4">
                         Select Top-Up Method
                       </label>
-                      <div className="grid grid-cols-3 gap-2.5 mb-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDepositMethod('dokan')}
+                          className={`py-3 text-center font-bold text-[10px] rounded-xl border transition-all uppercase tracking-wider ${
+                            selectedDepositMethod === 'dokan'
+                              ? 'bg-[#E52535] border-[#E52535] text-white shadow'
+                              : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
+                          }`}
+                        >
+                          ⚡ Dokan Pay
+                        </button>
                         <button
                           type="button"
                           onClick={() => setSelectedDepositMethod('card')}
@@ -1124,7 +1288,48 @@ export function Dashboard() {
                       </div>
                     </div>
 
-                    {(selectedDepositMethod === 'card' || selectedDepositMethod === 'crypto') ? (
+                    {selectedDepositMethod === 'dokan' ? (
+                      <div className="animate-fade-in space-y-6">
+                        <div className="bg-emerald-50 border border-emerald-200 p-6 rounded-2xl">
+                          <div className="flex items-start gap-4">
+                            <div className="bg-emerald-100 p-3 rounded-xl">
+                              <Sparkles className="w-6 h-6 text-emerald-600" />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-black text-emerald-900 uppercase tracking-widest mb-1">Dokan Pay Automated Gateway</h4>
+                              <p className="text-xs text-emerald-700 font-medium leading-relaxed">
+                                {language === 'en' 
+                                  ? 'Pay instantly using bKash, Nagad, Rocket, or Bank Transfer. Your credit will be added automatically upon successful payment.'
+                                  : 'বিকাশ, নগদ, রকেট বা ব্যাংক ট্রান্সফারের মাধ্যমে তাৎক্ষণিক পেমেন্ট করুন। পেমেন্ট সফল হলে আপনার ব্যালেন্স স্বয়ংক্রিয়ভাবে আপডেট হবে।'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleDokanPaySubmit}
+                          disabled={isProcessingDokan}
+                          className="w-full bg-[#E52535] hover:bg-red-700 text-white font-black text-sm uppercase tracking-widest py-5 rounded-2xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isProcessingDokan ? (
+                            <>
+                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>PROCEED TO SECURE PAYMENT</>
+                          )}
+                        </button>
+                        
+                        <div className="flex items-center justify-center gap-6 opacity-40 grayscale pointer-events-none px-4">
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/8/8b/Bkash_logo.png" alt="bKash" className="h-4 object-contain" />
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/e/e3/Nagad_logo.png" alt="Nagad" className="h-5 object-contain" />
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" className="h-3 object-contain" />
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" className="h-6 object-contain" />
+                        </div>
+                      </div>
+                    ) : (selectedDepositMethod === 'card' || selectedDepositMethod === 'crypto') ? (
                       <div className="animate-fade-in space-y-5">
                         <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
                           <h4 className="text-[10px] font-black text-emerald-900 uppercase tracking-widest mb-1 flex items-center gap-1.5">
@@ -1149,19 +1354,19 @@ export function Dashboard() {
                                     <h5 className="font-black text-zinc-950 uppercase text-sm">{gateway.name}</h5>
                                   </div>
                                   <div className="text-right">
-                                    <span className="bg-zinc-100 text-zinc-600 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest border border-zinc-200">
+                                    <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest border border-zinc-200 dark:border-zinc-700">
                                       MIN: ${gateway.minAmount || 10}
                                     </span>
                                   </div>
                                 </div>
 
-                                <div className="bg-zinc-50 border border-dashed border-zinc-300 p-4 rounded-xl text-center mb-4">
+                                <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-dashed border-zinc-300 dark:border-zinc-700 p-4 rounded-xl text-center mb-4">
                                   <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Send Funds To:</span>
-                                  <p className="font-mono text-lg font-black text-zinc-900 break-all select-all">{gateway.numberOrAddress}</p>
+                                  <p className="font-mono text-lg font-black text-zinc-900 dark:text-zinc-100 break-all select-all">{gateway.numberOrAddress}</p>
                                 </div>
 
                                 <div className="space-y-4">
-                                  <div className="text-[11px] text-zinc-600 font-medium bg-zinc-50/50 p-3 rounded-lg border border-zinc-100 italic">
+                                  <div className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium bg-zinc-50/50 dark:bg-zinc-900/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800 italic">
                                     " {gateway.instructions} "
                                   </div>
 
@@ -1169,7 +1374,7 @@ export function Dashboard() {
                                     <input 
                                       type="text"
                                       placeholder="Transaction ID / TrxID"
-                                      className="flex-1 bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 font-mono"
+                                      className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 dark:focus:border-zinc-700 font-mono dark:text-white"
                                       id={`dep-trx-${gateway.id}`}
                                     />
                                     <button 
@@ -1241,8 +1446,8 @@ export function Dashboard() {
                         </div>
 
                         {/* Submission details block */}
-                        <div className="bg-white border border-zinc-200 p-5 rounded-2xl space-y-4 shadow-inner">
-                          <p className="text-xs font-bold uppercase tracking-widest text-zinc-800 border-b border-zinc-100 pb-2">
+                        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-inner">
+                          <p className="text-xs font-bold uppercase tracking-widest text-zinc-800 dark:text-zinc-200 border-b border-zinc-100 dark:border-zinc-800 pb-2">
                             2. Submit Agent Transaction Details for Approval
                           </p>
                           
@@ -1254,7 +1459,7 @@ export function Dashboard() {
                               <select
                                 value={agentDepositChannel}
                                 onChange={(e) => setAgentDepositChannel(e.target.value as any)}
-                                className="w-full bg-zinc-50 border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
+                                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 dark:focus:border-zinc-600 text-zinc-900 dark:text-zinc-100"
                               >
                                 <option value="WhatsApp">WhatsApp Agent</option>
                                 <option value="IMO">IMO Agent</option>
@@ -1270,7 +1475,7 @@ export function Dashboard() {
                                 placeholder=""
                                 value={agentDepositReference}
                                 onChange={(e) => setAgentDepositReference(e.target.value)}
-                                className="w-full bg-zinc-50 border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 font-mono text-zinc-900"
+                                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 dark:focus:border-zinc-600 font-mono text-zinc-900 dark:text-zinc-100"
                                 required={selectedDepositMethod === 'agent'}
                               />
                             </div>
@@ -1296,7 +1501,7 @@ export function Dashboard() {
               <div className="space-y-6">
                 <div className="bg-[#F8F9FA] border border-zinc-200/50 rounded-2xl p-6 sm:p-8">
                   <h3 className="text-xl font-black text-zinc-900 tracking-tight mb-2">Request Bank Withdrawal</h3>
-                  <p className="text-sm text-zinc-500 font-medium mb-6">Withdraw your available balance directly to your bank account. Note: A 10% government commission fee applies and will be deducted from your Commission Balance.</p>
+                  <p className="text-sm text-zinc-500 font-medium mb-6">Withdraw your available balance directly to your bank account. Note: A {siteConfig.governmentFeePct ?? 10}% government commission fee applies and will be deducted from your Commission Balance.</p>
                   
                   <div className="mb-4">
                     <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
@@ -1673,19 +1878,19 @@ export function Dashboard() {
                                     <h5 className="font-black text-zinc-950 uppercase text-sm">{gateway.name}</h5>
                                   </div>
                                   <div className="text-right">
-                                    <span className="bg-zinc-100 text-zinc-600 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest border border-zinc-200">
+                                    <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest border border-zinc-200 dark:border-zinc-700">
                                       MIN: ${gateway.minAmount || 10}
                                     </span>
                                   </div>
                                 </div>
 
-                                <div className="bg-zinc-50 border border-dashed border-zinc-300 p-4 rounded-xl text-center mb-4">
+                                <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-dashed border-zinc-300 dark:border-zinc-700 p-4 rounded-xl text-center mb-4">
                                   <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Send Funds To:</span>
-                                  <p className="font-mono text-lg font-black text-zinc-900 break-all select-all">{gateway.numberOrAddress}</p>
+                                  <p className="font-mono text-lg font-black text-zinc-900 dark:text-zinc-100 break-all select-all">{gateway.numberOrAddress}</p>
                                 </div>
 
                                 <div className="space-y-4">
-                                  <div className="text-[11px] text-zinc-600 font-medium bg-zinc-50/50 p-3 rounded-lg border border-zinc-100 italic">
+                                  <div className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium bg-zinc-50/50 dark:bg-zinc-900/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800 italic">
                                     " {gateway.instructions} "
                                   </div>
 
@@ -1693,7 +1898,7 @@ export function Dashboard() {
                                     <input 
                                       type="text"
                                       placeholder="Transaction ID / TrxID"
-                                      className="flex-1 bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-emerald-600 font-mono"
+                                      className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 p-3 rounded-xl text-xs font-bold outline-none focus:border-emerald-600 dark:focus:border-emerald-500 font-mono dark:text-white"
                                       id={`comm-trx-${gateway.id}`}
                                     />
                                     <button 
@@ -1765,8 +1970,8 @@ export function Dashboard() {
                         </div>
 
                         {/* Submission details block */}
-                        <div className="bg-white border border-zinc-200 p-5 rounded-2xl space-y-4 shadow-inner">
-                          <p className="text-xs font-bold uppercase tracking-widest text-zinc-800 border-b border-zinc-100 pb-2">
+                        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-inner">
+                          <p className="text-xs font-bold uppercase tracking-widest text-zinc-800 dark:text-zinc-200 border-b border-zinc-100 dark:border-zinc-800 pb-2">
                             2. Submit Commission Reference for Verification
                           </p>
                           
@@ -1778,7 +1983,7 @@ export function Dashboard() {
                               <select
                                 value={agentCommissionChannel}
                                 onChange={(e) => setAgentCommissionChannel(e.target.value as any)}
-                                className="w-full bg-zinc-50 border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
+                                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 dark:focus:border-zinc-600 text-zinc-900 dark:text-zinc-100"
                               >
                                 <option value="WhatsApp">WhatsApp Agent</option>
                                 <option value="IMO">IMO Agent</option>
@@ -1794,7 +1999,7 @@ export function Dashboard() {
                                 placeholder="e.g. IMO-01726XXXXX or TxnID"
                                 value={agentCommissionReference}
                                 onChange={(e) => setAgentCommissionReference(e.target.value)}
-                                className="w-full bg-zinc-50 border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 font-mono text-zinc-900"
+                                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 dark:focus:border-zinc-600 font-mono text-zinc-900 dark:text-zinc-100"
                                 required={selectedCommissionMethod === 'agent'}
                               />
                             </div>

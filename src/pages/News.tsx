@@ -1,83 +1,14 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Play, Sparkles } from 'lucide-react';
-
-interface NewsArticle {
-  id: number;
-  title: string;
-  excerpt: string;
-  date: string;
-  imageUrl: string;
-  bannerTitle?: string;
-  bannerSubtitle?: string;
-  bannerBg?: string; // CSS tailwind configuration
-}
-
-const newsArticles: NewsArticle[] = [
-  {
-    id: 1,
-    title: 'Emirate Draw: Indian Player Wins INR 2.8 Million!',
-    excerpt: "How one man's belief paid off big and why your moment could be next. He started with a single ticket and is now celebrating with family.",
-    date: '11 June 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
-    bannerTitle: 'SURE 1 WINNER',
-    bannerSubtitle: '$30,000',
-    bannerBg: 'bg-gradient-to-r from-pink-600 via-pink-500 to-rose-600 text-white',
-  },
-  {
-    id: 2,
-    title: 'One Number Away From $4 Million: Three Indian Expats Celebrate Golobal Lottery Wins',
-    excerpt: 'Now, $50 Million MEGA7 Opportunity Awaits This Sunday. All three matched 6 of the 7 numbers to unlock the secondary prizes.',
-    date: '4 June 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1556157382-97dea7d240ff?auto=format&fit=crop&q=80&w=400',
-    bannerTitle: 'Winners every week!',
-    bannerSubtitle: '$8,333 EASY6 WINNER',
-    bannerBg: 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white',
-  },
-  {
-    id: 3,
-    title: 'Golobal Lottery: You Spend This Much Every Week. Make It Count!',
-    excerpt: 'A limited-time offer and the belief that one ticket can change everything. Check out our Eid special multipliers to learn more.',
-    date: '29 May 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&q=80&w=400',
-    bannerTitle: 'EID BONANZA',
-    bannerSubtitle: 'WIN 52 FREE TICKETS',
-    bannerBg: 'bg-gradient-to-r from-red-650 from-red-600 via-[#E52535] to-amber-500 text-white',
-  },
-  {
-    id: 4,
-    title: 'Golobal Lottery Highlights Why Thousands of Players Return Every Week',
-    excerpt: 'Limited-time promotions and life-changing prize opportunities continue to drive engagement globally. Explore our ongoing ticket referral systems.',
-    date: '21 May 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
-    bannerTitle: 'FLASH SALE',
-    bannerSubtitle: 'ONLY FOR $50',
-    bannerBg: 'bg-gradient-to-r from-[#1E2E80] to-indigo-500 text-white',
-  },
-  {
-    id: 5,
-    title: '$25,000 Golobal Lottery EASY6 Brings Life-Changing Moment for One Indian Family',
-    excerpt: 'The lucky winner almost hit $4 million. With his winnings, he plans to secure his daughters university education fees and travel home.',
-    date: '14 May 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=400',
-    bannerTitle: 'Tamil Nadu is on fire!',
-    bannerSubtitle: '$25,000 EASY6 WINNER',
-    bannerBg: 'bg-gradient-to-r from-green-600 to-emerald-500 text-white',
-  },
-  {
-    id: 6,
-    title: 'One Number Away: Expat in Qatar Wins Big & the $50 Million Dream Isn\'t Over Yet',
-    excerpt: 'Golobal Lottery Turns Everyday Hope Into Reality for Latest MEGA7 Winner. He has played consecutively for several draws and finally hit gold.',
-    date: '7 May 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400',
-    bannerTitle: 'One number away!',
-    bannerSubtitle: '$40,000 WINNER',
-    bannerBg: 'bg-gradient-to-r from-[#7C3AED] via-purple-600 to-purple-800 text-white',
-  },
-];
+import { useAuth, NewsArticle } from '../context/AuthContext';
 
 export function News() {
+  const { newsArticles } = useAuth();
   const [activeArticle, setActiveArticle] = useState<NewsArticle | null>(null);
+
+  // Filter only active news articles
+  const activeArticles = newsArticles.filter(n => n.isActive !== false);
 
   return (
     <div id="news-root-view" className="bg-[#FAF9FC] min-h-screen text-zinc-900 font-sans pb-16">
@@ -117,60 +48,68 @@ export function News() {
           </div>
 
           {/* Grid of Articles (3 columns on medium/large) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-2">
-            {newsArticles.map((article) => (
-              <div 
-                key={article.id} 
-                className="bg-white rounded-2xl border border-gray-150 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-200 group"
-              >
-                <div>
-                  
-                  {/* Photo Head with Premium Graphic Banners */}
-                  <div className="relative aspect-video w-full bg-zinc-100 overflow-hidden relative select-none shrink-0">
-                    <img 
-                      src={article.imageUrl} 
-                      alt={article.title} 
-                      className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
-                      referrerPolicy="no-referrer"
-                    />
+          {activeArticles.length === 0 ? (
+            <div className="text-center py-12 bg-zinc-50 rounded-2xl border border-zinc-150">
+              <Sparkles className="w-12 h-12 text-zinc-300 mx-auto mb-3 animate-pulse" />
+              <p className="text-zinc-500 font-extrabold text-sm uppercase tracking-wider">No News Available</p>
+              <p className="text-zinc-400 text-xs mt-1 font-semibold">Check back soon for the latest drawing winners, announcements and lotto releases!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-2">
+              {activeArticles.map((article) => (
+                <div 
+                  key={article.id} 
+                  className="bg-white rounded-2xl border border-gray-150 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-200 group"
+                >
+                  <div>
+                    
+                    {/* Photo Head with Premium Graphic Banners */}
+                    <div className="relative aspect-video w-full bg-zinc-100 overflow-hidden relative select-none shrink-0">
+                      <img 
+                        src={article.imageUrl} 
+                        alt={article.title} 
+                        className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
+                        referrerPolicy="no-referrer"
+                      />
 
-                    {/* Highly styled banner representing screenshot's overlay elements */}
-                    {article.bannerTitle && (
-                      <div className={`absolute bottom-0 inset-x-0 p-2 px-3 text-xs font-bold font-sans flex items-center justify-between ${article.bannerBg} shadow-inner`}>
-                        <span className="uppercase tracking-wide font-black truncate max-w-[60%]">{article.bannerTitle}</span>
-                        <span className="font-mono font-black border-l border-white/20 pl-2 shrink-0">{article.bannerSubtitle}</span>
-                      </div>
-                    )}
+                      {/* Highly styled banner representing screenshot's overlay elements */}
+                      {article.bannerTitle && (
+                        <div className={`absolute bottom-0 inset-x-0 p-2 px-3 text-xs font-bold font-sans flex items-center justify-between ${article.bannerBg} shadow-inner`}>
+                          <span className="uppercase tracking-wide font-black truncate max-w-[60%]">{article.bannerTitle}</span>
+                          <span className="font-mono font-black border-l border-white/20 pl-2 shrink-0">{article.bannerSubtitle}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Body Text */}
+                    <div className="p-5 space-y-3">
+                      <p className="text-[11px] font-black text-zinc-400 font-sans uppercase">
+                        {article.date}
+                      </p>
+                      <h3 className="font-extrabold text-base text-zinc-950 leading-snug line-clamp-2 uppercase tracking-tight group-hover:text-red-650 transition-colors">
+                        {article.title}
+                      </h3>
+                      <p className="text-zinc-500 text-xs font-semibold leading-relaxed line-clamp-3">
+                        {article.excerpt}
+                      </p>
+                    </div>
+
                   </div>
 
-                  {/* Body Text */}
-                  <div className="p-5 space-y-3">
-                    <p className="text-[11px] font-black text-zinc-400 font-sans uppercase">
-                      {article.date}
-                    </p>
-                    <h3 className="font-extrabold text-base text-zinc-950 leading-snug line-clamp-2 uppercase tracking-tight group-hover:text-red-650 transition-colors">
-                      {article.title}
-                    </h3>
-                    <p className="text-zinc-500 text-xs font-semibold leading-relaxed line-clamp-3">
-                      {article.excerpt}
-                    </p>
+                  {/* READ MORE Outline Button at Footer of Card */}
+                  <div className="p-5 pt-0">
+                    <button 
+                      onClick={() => setActiveArticle(article)}
+                      className="w-full sm:w-auto text-center border border-zinc-200 hover:border-zinc-400 text-zinc-950 bg-white font-black text-[10px] tracking-widest px-5 py-2.5 rounded-lg transition-colors uppercase"
+                    >
+                      Read More
+                    </button>
                   </div>
 
                 </div>
-
-                {/* READ MORE Outline Button at Footer of Card */}
-                <div className="p-5 pt-0">
-                  <button 
-                    onClick={() => setActiveArticle(article)}
-                    className="w-full sm:w-auto text-center border border-zinc-200 hover:border-zinc-400 text-zinc-950 bg-white font-black text-[10px] tracking-widest px-5 py-2.5 rounded-lg transition-colors uppercase"
-                  >
-                    Read More
-                  </button>
-                </div>
-
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Pagination Component exactly matching < 01 02 03 ... 08 > */}
           <div className="flex justify-center items-center gap-2 pt-8">

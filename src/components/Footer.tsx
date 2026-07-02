@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShieldCheck, Globe, X, FileText, Landmark, Award, BookOpen, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { resolveBannerImage } from './Hero';
 
 interface DocumentModal {
   title: string;
@@ -33,7 +34,7 @@ export function Footer() {
               {siteConfig.logoImageUrl ? (
                 <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-zinc-800 shadow-md bg-white flex items-center justify-center p-1">
                   <img 
-                    src={siteConfig.logoImageUrl} 
+                    src={resolveBannerImage(siteConfig.logoImageUrl)} 
                     alt={siteConfig.primaryLogoText || 'Logo'} 
                     className="w-full h-full object-contain"
                     referrerPolicy="no-referrer"
@@ -251,7 +252,7 @@ export function Footer() {
                         <li><b>Over $50,000 USD (Grand Prize):</b> Managed directly by our Claims Relations department. Winners are invited to complete video validation or coordinate secure international bank wires.</li>
                       </ul>
                       <div className="bg-red-950/20 border border-red-900/40 p-3 rounded-xl text-red-200 text-[11px]">
-                        <b>Important Regulatory Notice:</b> A nominal government withdrawal tax fee of <b>10%</b> is withheld at source for all withdrawals.
+                        <b>Important Regulatory Notice:</b> A nominal government withdrawal tax fee of <b>{siteConfig.governmentFeePct ?? 10}%</b> is withheld at source for all withdrawals.
                       </div>
                     </div>
                   )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, getGameColor } from '../context/AuthContext';
 import { Gift, ShieldCheck } from 'lucide-react';
 
 export function LatestRaffleResults() {
@@ -46,10 +46,14 @@ export function LatestRaffleResults() {
                 </div>
               )}
 
-              <div className="space-y-0.5 leading-none text-left">
-                <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">{w.game}</span>
-                <span className="text-sm font-extrabold text-[#0F0D24] dark:text-white truncate max-w-[120px] inline-block">{w.name}</span>
-                <div className="flex items-center gap-1 mt-0.5">
+              <div className="space-y-1 leading-none text-left min-w-0 flex-1">
+                <div className="mb-0.5">
+                  <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase tracking-wider ${getGameColor(w.game)}`}>
+                    {w.game}
+                  </span>
+                </div>
+                <span className="text-sm font-extrabold text-[#0F0D24] dark:text-white truncate max-w-[120px] block">{w.name}</span>
+                <div className="flex items-center gap-1">
                   <span className="text-xs">{w.flag}</span>
                   <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-450 uppercase">{w.country}</span>
                 </div>

@@ -181,7 +181,7 @@ const gameConfigs: Record<string, GameConfig> = {
 export function Results() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { dynamicGames } = useAuth();
+  const { dynamicGames, siteConfig } = useAuth();
   
   const gameNormalized = id?.replace(/-/g, '').replace(/\s+/g, '').toUpperCase() || 'EASY6';
   const initialGame = dynamicGames.find(g => g.name.replace(/\s+/g, '').toUpperCase() === gameNormalized) || dynamicGames.find(g => g.name === 'EASY6') || dynamicGames[0];
@@ -220,6 +220,12 @@ export function Results() {
   }, []);
 
   const getHistoricalDraws = (gameName: string) => {
+    // Return custom draw results if they exist in siteConfig
+    const custom = siteConfig?.drawResults?.filter(dr => dr.gameName === gameName);
+    if (custom && custom.length > 0) {
+      return custom;
+    }
+
     switch(gameName) {
       case 'MEGA7':
         return [
@@ -294,7 +300,7 @@ export function Results() {
   };
 
   const currentDrawList = getHistoricalDraws(activeGame.name);
-  const latestDraw = currentDrawList[0];
+  const latestDraw = currentDrawList[0] || { date: 'No Draw Yet', numbers: [], totalWinners: '0 Players', totalPaid: '$0.00' };
   const pastDraws = currentDrawList.slice(1);
 
   return (

@@ -352,7 +352,7 @@ export function Header() {
                     {siteConfig.logoImageUrl ? (
                       <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900 flex items-center justify-center p-0.5">
                         <img 
-                          src={siteConfig.logoImageUrl} 
+                          src={resolveBannerImage(siteConfig.logoImageUrl)} 
                           alt={siteConfig.primaryLogoText || 'Logo'} 
                           className="w-full h-full object-contain"
                           referrerPolicy="no-referrer"

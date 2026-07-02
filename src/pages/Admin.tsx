@@ -1,8 +1,88 @@
 import React, { useState } from 'react';
-import { useAuth, UserProfile, DynamicGame } from '../context/AuthContext';
+import { useAuth, UserProfile, DynamicGame, getGameColor, extractYoutubeId, getYoutubeThumbnail } from '../context/AuthContext';
 import { ShieldCheck, Users, Radio, History, Newspaper, Plus, DollarSign, Award, Trash2, Sliders, TrendingUp, Coins, Check, Calendar, Ticket, Gift, Edit2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { resolveBannerImage } from '../components/Hero';
+
+const DEFAULT_GAME_PRIZES: Record<string, { label: string; count: number; prize: string }[]> = {
+  'MEGA7': [
+    { label: 'Match any 7 Numbers', count: 7, prize: '$50,000,000' },
+    { label: 'Match any 6 Numbers', count: 6, prize: '$45,000' },
+    { label: 'Match any 5 Numbers', count: 5, prize: '$300' },
+    { label: 'Match any 4 Numbers', count: 4, prize: '$20' },
+    { label: 'Match any 3 Numbers', count: 3, prize: '$3' },
+  ],
+  'WILD5': [
+    { label: 'Match any 5 Numbers', count: 5, prize: '$3,000,000' },
+    { label: 'Match any 4 Numbers', count: 4, prize: '$25,000' },
+    { label: 'Match any 3 Numbers', count: 3, prize: '$4,000' },
+    { label: 'Match any 2 Numbers', count: 2, prize: '$100' },
+  ],
+  'EASY6': [
+    { label: 'Match any 6 Numbers', count: 6, prize: '$4,000,000' },
+    { label: 'Match any 5 Numbers', count: 5, prize: '$25,000' },
+    { label: 'Match any 4 Numbers', count: 4, prize: '$4,000' },
+    { label: 'Match any 3 Numbers', count: 3, prize: '$2' },
+  ],
+  'FAST5': [
+    { label: 'Match any 5 Numbers', count: 5, prize: '$6,000 / Month for 25 Years' },
+    { label: 'Match any 4 Numbers', count: 4, prize: '$20,500 Cash' },
+    { label: 'Match any 3 Numbers', count: 3, prize: '$2,500 Cash' },
+    { label: 'Match any 2 Numbers', count: 2, prize: '$50 Cash' },
+  ],
+  'SURE 1': [
+    { label: 'Match 1 Standard Order', count: 1, prize: '$10,005' },
+    { label: 'Exact Match Digit', count: 1, prize: '$1,000 Guaranteed' }
+  ],
+  'SURE 2': [
+    { label: 'Match 2 Standard Order', count: 2, prize: '$25,005' },
+    { label: 'Match 1 Digit', count: 1, prize: '$2,500 Cash' }
+  ],
+  'SURE 3': [
+    { label: 'Match All 3 Digits', count: 3, prize: '$50,005 Cash' },
+    { label: 'Match Any 2 Digits', count: 2, prize: '$5,000 Cash' },
+    { label: 'Match Any 1 Digit', count: 1, prize: '$500 Cash' }
+  ],
+  'PICK 1': [
+    { label: 'Correct Flag Pick', count: 1, prize: '$60,005' },
+    { label: 'Consolation Bonus', count: 1, prize: '$1,000 Cash' }
+  ],
+  'PICK 2': [
+    { label: 'Match Both 2 Numbers', count: 2, prize: '$100,005' },
+    { label: 'Match 1 Number', count: 1, prize: '$5,000 Cash' }
+  ],
+  'LOTTERY': [
+    { label: 'Match any 6 Numbers', count: 6, prize: '$1,000,005' },
+    { label: 'Match any 5 Numbers', count: 5, prize: '$10,005' },
+    { label: 'Match any 4 Numbers', count: 4, prize: '$500' },
+    { label: 'Match any 3 Numbers', count: 3, prize: '$10' },
+  ],
+  'SCRATCH CARDS': [
+    { label: 'Top Prize', count: 1, prize: '$50,005' },
+    { label: 'Instant Bonus', count: 1, prize: '$500' },
+  ]
+};
+
+const getDefaultPrizesForGame = (gameName: string, ballCount: number, mainPrize: string) => {
+  const normalized = gameName.trim().toUpperCase();
+  if (DEFAULT_GAME_PRIZES[normalized]) {
+    const list = DEFAULT_GAME_PRIZES[normalized].map(p => ({ ...p }));
+    if (list.length > 0 && mainPrize) {
+      list[0].prize = mainPrize;
+    }
+    return list;
+  }
+  const list = [];
+  const balls = ballCount || 5;
+  for (let i = balls; i >= Math.max(1, balls - 3); i--) {
+    list.push({
+      label: `Match any ${i} Numbers`,
+      count: i,
+      prize: i === balls ? (mainPrize || '$1,000,000') : `$${Math.pow(10, i) * 5}`
+    });
+  }
+  return list;
+};
 
 export function Admin() {
   const { 
@@ -26,6 +106,15 @@ export function Admin() {
     addRaffleWinner,
     deleteRaffleWinner,
     updateRaffleWinner,
+    // Dynamic promotions & news
+    promotions = [],
+    addPromotion,
+    deletePromotion,
+    updatePromotion,
+    newsArticles = [],
+    addNewsArticle,
+    deleteNewsArticle,
+    updateNewsArticle,
     withdrawalRequests = [],
     setWithdrawalRequests,
     updateWithdrawalStatus,
@@ -126,7 +215,7 @@ export function Admin() {
   const [newWinnerFlag, setNewWinnerFlag] = useState('🇧🇩');
   const [newWinnerTicket, setNewWinnerTicket] = useState('SR1-1049B');
   const [newWinnerPrize, setNewWinnerPrize] = useState('$30,000.00');
-  const [newWinnerGame, setNewWinnerGame] = useState('SURE 1 DRAW');
+  const [newWinnerGame, setNewWinnerGame] = useState('MEGA7');
   const [newWinnerInitials, setNewWinnerInitials] = useState('SB');
   const [winnerAvatarBg, setWinnerAvatarBg] = useState('bg-gradient-to-tr from-emerald-500 to-teal-600');
   const [newWinnerImageUrl, setNewWinnerImageUrl] = useState('');
@@ -162,6 +251,51 @@ export function Admin() {
   const [newBannerButtonColor, setNewBannerButtonColor] = useState('#FFD700');
   const [newBannerButtonTextColor, setNewBannerButtonTextColor] = useState('#09090b');
   const [newBannerHideShadow, setNewBannerHideShadow] = useState(false);
+
+  // Grand Prize Winners states
+  const [newGpwName, setNewGpwName] = useState('');
+  const [newGpwPrize, setNewGpwPrize] = useState('');
+  const [newGpwImageUrl, setNewGpwImageUrl] = useState('');
+  const [newGpwIsActive, setNewGpwIsActive] = useState(true);
+  const [editingGpwId, setEditingGpwId] = useState<string | null>(null);
+
+  // YouTube Video states
+  const [youtubeVideoUrl, setYoutubeVideoUrl] = useState(siteConfig.youtubeVideoUrl || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  const [youtubeThumbnailUrl, setYoutubeThumbnailUrl] = useState(siteConfig.youtubeThumbnailUrl || '/images/emirates_interview_thumbnail_1781775097474.jpg');
+  const [youtubeVideoTitle, setYoutubeVideoTitle] = useState(siteConfig.youtubeVideoTitle || "From Mother's Blessings to AED 100 Million");
+  const [youtubeVideoSubtitle, setYoutubeVideoSubtitle] = useState(siteConfig.youtubeVideoSubtitle || 'INTERVIEWS');
+  const [youtubeVideoDescription, setYoutubeVideoDescription] = useState(siteConfig.youtubeVideoDescription || 'Meet our lucky winners');
+  const [youtubeVideoDetails, setYoutubeVideoDetails] = useState(siteConfig.youtubeVideoDetails || 'Discover the deep stories of global participants who completed life-changing draw wins.');
+
+  // Live Statistics states
+  const [totalMetricRegisteredUsers, setTotalMetricRegisteredUsers] = useState(siteConfig.totalMetricRegisteredUsers || '1,230,692');
+  const [totalMetricTicketsPurchased, setTotalMetricTicketsPurchased] = useState(siteConfig.totalMetricTicketsPurchased || '3,485,912');
+
+  // Finance Config States
+  const [governmentFeePct, setGovernmentFeePct] = useState(siteConfig.governmentFeePct !== undefined ? siteConfig.governmentFeePct : 10);
+  const [minWithdrawalAmount, setMinWithdrawalAmount] = useState(siteConfig.minWithdrawalAmount !== undefined ? siteConfig.minWithdrawalAmount : 10);
+  const [maxWithdrawalAmount, setMaxWithdrawalAmount] = useState(siteConfig.maxWithdrawalAmount !== undefined ? siteConfig.maxWithdrawalAmount : 100000000);
+  const [usdExchangeRate, setUsdExchangeRate] = useState(siteConfig.usdExchangeRate !== undefined ? siteConfig.usdExchangeRate : 117);
+
+  // Video Winners states
+  const [newVwTitle, setNewVwTitle] = useState('');
+  const [newVwName, setNewVwName] = useState('');
+  const [newVwPrizeText, setNewVwPrizeText] = useState('');
+  const [newVwDate, setNewVwDate] = useState('');
+  const [newVwThumbnailUrl, setNewVwThumbnailUrl] = useState('');
+  const [newVwYoutubeId, setNewVwYoutubeId] = useState('');
+  const [newVwIsActive, setNewVwIsActive] = useState(true);
+  const [editingVwId, setEditingVwId] = useState<string | null>(null);
+
+  // Draw Results states
+  const [newDrGameName, setNewDrGameName] = useState('MEGA7');
+  const [newDrDate, setNewDrDate] = useState('');
+  const [newDrNumbers, setNewDrNumbers] = useState('');
+  const [newDrTotalWinners, setNewDrTotalWinners] = useState('');
+  const [newDrTotalPaid, setNewDrTotalPaid] = useState('');
+  const [newDrRefCode, setNewDrRefCode] = useState('EMD-2941-XQ9');
+  const [editingDrId, setEditingDrId] = useState<string | null>(null);
+  const [drawFilter, setDrawFilter] = useState('ALL');
 
   // Dynamic Gateways Local States
   const [editingGatewayId, setEditingGatewayId] = useState<string | null>(null);
@@ -241,6 +375,9 @@ export function Admin() {
   };
 
   const currentBanners = siteConfig.banners || [];
+  const currentGpws = siteConfig.grandPrizeWinners || [];
+  const currentVws = siteConfig.videoWinners || [];
+  const currentDrs = siteConfig.drawResults || [];
   const currentGateways = siteConfig.paymentGateways || [];
 
   const handleAddGateway = (e: React.FormEvent) => {
@@ -296,18 +433,12 @@ export function Admin() {
   };
 
   const handleDeleteGateway = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this gateway?")) {
-      const updated = currentGateways.filter(g => g.id !== id);
-      updateSiteConfig({ paymentGateways: updated });
-    }
+    const updated = currentGateways.filter(g => g.id !== id);
+    updateSiteConfig({ paymentGateways: updated });
   };
 
   const handleAddBanner = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBannerTitle) {
-      alert("Please specify a Banner Title!");
-      return;
-    }
     if (newBannerBgType === 'image' && !newBannerImageUrl) {
       alert("Please specify a Background Image URL!");
       return;
@@ -421,6 +552,259 @@ export function Admin() {
     if (editingBannerId === id) {
       handleCancelEditBanner();
     }
+  };
+
+  // Grand Prize Winners CRUD helpers
+  const handleToggleGpwActive = (id: string) => {
+    const updatedGpws = currentGpws.map(g => g.id === id ? { ...g, isActive: !g.isActive } : g);
+    updateSiteConfig({ grandPrizeWinners: updatedGpws });
+  };
+
+  const handleDeleteGpw = (id: string) => {
+    const updatedGpws = currentGpws.filter(g => g.id !== id);
+    updateSiteConfig({ grandPrizeWinners: updatedGpws });
+    if (editingGpwId === id) {
+      handleCancelEditGpw();
+    }
+  };
+
+  const handleSaveGpw = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGpwName || !newGpwPrize) {
+      alert("Please enter a Name and Prize for the Grand Prize Winner!");
+      return;
+    }
+
+    if (editingGpwId) {
+      // Edit mode
+      const updatedGpws = currentGpws.map(g => 
+        g.id === editingGpwId 
+          ? { 
+              ...g, 
+              name: newGpwName, 
+              prize: newGpwPrize, 
+              imageUrl: newGpwImageUrl || '/images/emirates_winner_robert_1781775078543.jpg',
+              isActive: newGpwIsActive
+            } 
+          : g
+      );
+      updateSiteConfig({ grandPrizeWinners: updatedGpws });
+      setEditingGpwId(null);
+      alert("🎉 Grand prize winner updated successfully!");
+    } else {
+      // Add mode
+      const newGpw = {
+        id: 'gpw-' + Math.floor(1000 + Math.random() * 9000),
+        name: newGpwName,
+        prize: newGpwPrize,
+        imageUrl: newGpwImageUrl || '/images/emirates_winner_robert_1781775078543.jpg',
+        isActive: newGpwIsActive
+      };
+      const updatedGpws = [...currentGpws, newGpw];
+      updateSiteConfig({ grandPrizeWinners: updatedGpws });
+      alert("🎉 Grand prize winner added successfully!");
+    }
+
+    setNewGpwName('');
+    setNewGpwPrize('');
+    setNewGpwImageUrl('');
+    setNewGpwIsActive(true);
+  };
+
+  const handleEditGpw = (gpw: any) => {
+    setEditingGpwId(gpw.id);
+    setNewGpwName(gpw.name);
+    setNewGpwPrize(gpw.prize);
+    setNewGpwImageUrl(gpw.imageUrl);
+    setNewGpwIsActive(gpw.isActive);
+  };
+
+  const handleCancelEditGpw = () => {
+    setEditingGpwId(null);
+    setNewGpwName('');
+    setNewGpwPrize('');
+    setNewGpwImageUrl('');
+    setNewGpwIsActive(true);
+  };
+
+  // --- Video Winners CRUD Helpers ---
+  const handleToggleVwActive = (id: string) => {
+    const updated = currentVws.map(v => v.id === id ? { ...v, isActive: !v.isActive } : v);
+    updateSiteConfig({ videoWinners: updated });
+  };
+
+  const handleDeleteVw = (id: string) => {
+    const updated = currentVws.filter(v => v.id !== id);
+    updateSiteConfig({ videoWinners: updated });
+    if (editingVwId === id) {
+      handleCancelEditVw();
+    }
+  };
+
+  const handleSaveVw = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVwTitle || !newVwName) {
+      alert("Please enter a Title and Name for the Video Winner!");
+      return;
+    }
+
+    const cleanYoutubeId = extractYoutubeId(newVwYoutubeId || 'dQw4w9WgXcQ');
+    const autoThumbnailUrl = newVwThumbnailUrl.trim() || getYoutubeThumbnail(cleanYoutubeId);
+
+    if (editingVwId) {
+      // Edit mode
+      const updated = currentVws.map(v => 
+        v.id === editingVwId 
+          ? { 
+              ...v, 
+              title: newVwTitle, 
+              name: newVwName, 
+              prizeText: newVwPrizeText,
+              date: newVwDate,
+              thumbnailUrl: autoThumbnailUrl,
+              youtubeId: cleanYoutubeId,
+              isActive: newVwIsActive
+            } 
+          : v
+      );
+      updateSiteConfig({ videoWinners: updated });
+      setEditingVwId(null);
+      alert("🎉 Video winner details updated successfully!");
+    } else {
+      // Add mode
+      const newVw = {
+        id: 'vw-' + Math.floor(1000 + Math.random() * 9000),
+        title: newVwTitle,
+        name: newVwName,
+        prizeText: newVwPrizeText,
+        date: newVwDate,
+        thumbnailUrl: autoThumbnailUrl,
+        youtubeId: cleanYoutubeId,
+        isActive: newVwIsActive
+      };
+      const updated = [...currentVws, newVw];
+      updateSiteConfig({ videoWinners: updated });
+      alert("🎉 Video winner details added successfully!");
+    }
+
+    setNewVwTitle('');
+    setNewVwName('');
+    setNewVwPrizeText('');
+    setNewVwDate('');
+    setNewVwThumbnailUrl('');
+    setNewVwYoutubeId('');
+    setNewVwIsActive(true);
+  };
+
+  const handleEditVw = (vw: any) => {
+    setEditingVwId(vw.id);
+    setNewVwTitle(vw.title);
+    setNewVwName(vw.name);
+    setNewVwPrizeText(vw.prizeText);
+    setNewVwDate(vw.date);
+    setNewVwThumbnailUrl(vw.thumbnailUrl);
+    setNewVwYoutubeId(vw.youtubeId);
+    setNewVwIsActive(vw.isActive !== false);
+  };
+
+  const handleCancelEditVw = () => {
+    setEditingVwId(null);
+    setNewVwTitle('');
+    setNewVwName('');
+    setNewVwPrizeText('');
+    setNewVwDate('');
+    setNewVwThumbnailUrl('');
+    setNewVwYoutubeId('');
+    setNewVwIsActive(true);
+  };
+
+  // --- Draw Results CRUD Helpers ---
+  const handleDeleteDr = (id: string) => {
+    const updated = currentDrs.filter(d => d.id !== id);
+    updateSiteConfig({ drawResults: updated });
+    if (editingDrId === id) {
+      handleCancelEditDr();
+    }
+  };
+
+  const handleSaveDr = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDrDate || !newDrNumbers) {
+      alert("Please enter a Date and Winning Numbers (comma separated)!");
+      return;
+    }
+
+    // Parse numbers array
+    const numbersArr = newDrNumbers
+      .split(',')
+      .map(n => parseInt(n.trim(), 10))
+      .filter(n => !isNaN(n));
+
+    if (numbersArr.length === 0) {
+      alert("Winning numbers must be valid numbers separated by commas (e.g. 4,12,18,32)");
+      return;
+    }
+
+    if (editingDrId) {
+      // Edit mode
+      const updated = currentDrs.map(d => 
+        d.id === editingDrId 
+          ? { 
+              ...d, 
+              gameName: newDrGameName,
+              date: newDrDate,
+              numbers: numbersArr,
+              totalWinners: newDrTotalWinners || '0 Players',
+              totalPaid: newDrTotalPaid || '$0.00',
+              refCode: newDrRefCode || 'EMD-2941-XQ9'
+            } 
+          : d
+      );
+      updateSiteConfig({ drawResults: updated });
+      setEditingDrId(null);
+      alert("🎉 Draw results updated successfully!");
+    } else {
+      // Add mode
+      const newDr = {
+        id: 'dr-' + Math.floor(1000 + Math.random() * 9000),
+        gameName: newDrGameName,
+        date: newDrDate,
+        numbers: numbersArr,
+        totalWinners: newDrTotalWinners || '0 Players',
+        totalPaid: newDrTotalPaid || '$0.00',
+        refCode: newDrRefCode || 'EMD-2941-XQ9'
+      };
+      const updated = [newDr, ...currentDrs]; // Prepend latest
+      updateSiteConfig({ drawResults: updated });
+      alert("🎉 Draw results added successfully!");
+    }
+
+    // Reset fields
+    setNewDrDate('');
+    setNewDrNumbers('');
+    setNewDrTotalWinners('');
+    setNewDrTotalPaid('');
+    setNewDrRefCode('EMD-2941-XQ9');
+  };
+
+  const handleEditDr = (dr: any) => {
+    setEditingDrId(dr.id);
+    setNewDrGameName(dr.gameName);
+    setNewDrDate(dr.date);
+    setNewDrNumbers(dr.numbers.join(', '));
+    setNewDrTotalWinners(dr.totalWinners);
+    setNewDrTotalPaid(dr.totalPaid);
+    setNewDrRefCode(dr.refCode || 'EMD-2941-XQ9');
+  };
+
+  const handleCancelEditDr = () => {
+    setEditingDrId(null);
+    setNewDrGameName('MEGA7');
+    setNewDrDate('');
+    setNewDrNumbers('');
+    setNewDrTotalWinners('');
+    setNewDrTotalPaid('');
+    setNewDrRefCode('EMD-2941-XQ9');
   };
 
   const handleAdminAddDeposit = (e: React.FormEvent) => {
@@ -556,14 +940,13 @@ export function Admin() {
   };
 
   const handleDeleteSelectedGame = async () => {
-    if (!editingGame) return;
-    const confirmDel = window.confirm(`Are you absolutely sure you want to permanently delete the game "${editingGame.name}"?`);
-    if (!confirmDel) return;
+    const gameIdToDelete = selectedGameToEdit;
+    if (!gameIdToDelete) return;
     try {
-      await deleteDynamicGame(editingGame.name);
-      alert(`🗑️ Game "${editingGame.name}" deleted successfully.`);
+      await deleteDynamicGame(gameIdToDelete);
+      alert(`🗑️ Game "${gameIdToDelete}" deleted successfully.`);
       if (dynamicGames.length > 1) {
-        const remaining = dynamicGames.filter(g => g.name !== editingGame.name);
+        const remaining = dynamicGames.filter(g => g.name !== gameIdToDelete);
         setSelectedGameToEdit(remaining[0].name);
       } else {
         setEditingGame(null);
@@ -624,7 +1007,20 @@ export function Admin() {
       footerLiveChat,
       footerLicenseBoard,
       footerLicenseSerial,
-      footerGccCompliance
+      footerGccCompliance,
+      // Showcase customization sections
+      youtubeVideoUrl,
+      youtubeThumbnailUrl,
+      youtubeVideoTitle,
+      youtubeVideoSubtitle,
+      youtubeVideoDescription,
+      youtubeVideoDetails,
+      totalMetricRegisteredUsers,
+      totalMetricTicketsPurchased,
+      governmentFeePct,
+      minWithdrawalAmount,
+      maxWithdrawalAmount,
+      usdExchangeRate
     });
     alert("✨ Website dynamic theme configuration & payment gateways updated successfully! Walk back to homepage or checkout to view your custom branding.");
   };
@@ -642,6 +1038,35 @@ export function Admin() {
   const [bulletinTitle, setBulletinTitle] = useState('');
   const [bulletinSummary, setBulletinSummary] = useState('');
   const [isPromo, setIsPromo] = useState(false);
+
+  // Sub tab for announcements
+  const [announcementsSubTab, setAnnouncementsSubTab] = useState<'promotions' | 'news'>('promotions');
+
+  // Dynamic Promotions form state
+  const [promoFormTitle, setPromoFormTitle] = useState('');
+  const [promoFormDate, setPromoFormDate] = useState('');
+  const [promoFormExcerpt, setPromoFormExcerpt] = useState('');
+  const [promoFormBtnText, setPromoFormBtnText] = useState('READ MORE');
+  const [promoFormFlyerTitle, setPromoFormFlyerTitle] = useState('MEGA7 Rollover');
+  const [promoFormFlyerAmount, setPromoFormFlyerAmount] = useState('$50,000,000');
+  const [promoFormFlyerSub, setPromoFormFlyerSub] = useState('Reach for the skies!');
+  const [promoFormFlyerExtra, setPromoFormFlyerExtra] = useState('ENDS THIS SUNDAY');
+  const [promoFormFlyerGradient, setPromoFormFlyerGradient] = useState('from-amber-600 via-[#E52535] to-[#4A030A] text-white');
+  const [promoFormAccentColor, setPromoFormAccentColor] = useState('[#E52535]');
+  const [promoFormTargetLink, setPromoFormTargetLink] = useState('/games/mega7');
+  const [promoFormIsActive, setPromoFormIsActive] = useState(true);
+  const [editingPromoId, setEditingPromoId] = useState<string | null>(null);
+
+  // Dynamic News form state
+  const [newsFormTitle, setNewsFormTitle] = useState('');
+  const [newsFormExcerpt, setNewsFormExcerpt] = useState('');
+  const [newsFormDate, setNewsFormDate] = useState('');
+  const [newsFormImageUrl, setNewsFormImageUrl] = useState('');
+  const [newsFormBannerTitle, setNewsFormBannerTitle] = useState('');
+  const [newsFormBannerSubtitle, setNewsFormBannerSubtitle] = useState('');
+  const [newsFormBannerBg, setNewsFormBannerBg] = useState('bg-gradient-to-r from-pink-600 via-pink-500 to-rose-600 text-white');
+  const [newsFormIsActive, setNewsFormIsActive] = useState(true);
+  const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
   const [publishedBulletins, setPublishedBulletins] = useState<Array<{title: string, summary: string, isPromo: boolean, date: string}>>([
     {
       title: 'Golobal Lottery Celebrates Year-End Mega Winners',
@@ -799,6 +1224,158 @@ export function Admin() {
     alert("🎉 Bulletin published instantly to simulated files!");
   };
 
+  // Save dynamic promotion
+  const handleSavePromotion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!promoFormTitle || !promoFormExcerpt) {
+      alert("Please enter promotion Title and Excerpt.");
+      return;
+    }
+
+    const promoData = {
+      title: promoFormTitle,
+      date: promoFormDate || new Date().toLocaleDateString('en-GB'),
+      excerpt: promoFormExcerpt,
+      buttonText: promoFormBtnText || 'READ MORE',
+      flyerTitle: promoFormFlyerTitle || 'MEGA7 Rollover',
+      flyerAmount: promoFormFlyerAmount || '$50,000,000',
+      flyerSub: promoFormFlyerSub || 'Reach for the skies!',
+      flyerExtra: promoFormFlyerExtra,
+      flyerGradient: promoFormFlyerGradient || 'from-amber-600 via-[#E52535] to-[#4A030A] text-white',
+      accentColor: promoFormAccentColor || '[#E52535]',
+      targetLink: promoFormTargetLink || '/games/mega7',
+      isActive: promoFormIsActive
+    };
+
+    try {
+      if (editingPromoId) {
+        if (updatePromotion) {
+          await updatePromotion(editingPromoId, promoData);
+          alert("🎉 Promotion updated successfully!");
+        }
+        setEditingPromoId(null);
+      } else {
+        if (addPromotion) {
+          await addPromotion(promoData);
+          alert("🎉 New promotion added successfully!");
+        }
+      }
+      // Reset form
+      setPromoFormTitle('');
+      setPromoFormDate('');
+      setPromoFormExcerpt('');
+      setPromoFormBtnText('READ MORE');
+      setPromoFormFlyerTitle('MEGA7 Rollover');
+      setPromoFormFlyerAmount('$50,000,000');
+      setPromoFormFlyerSub('Reach for the skies!');
+      setPromoFormFlyerExtra('ENDS THIS SUNDAY');
+      setPromoFormFlyerGradient('from-amber-600 via-[#E52535] to-[#4A030A] text-white');
+      setPromoFormAccentColor('[#E52535]');
+      setPromoFormTargetLink('/games/mega7');
+      setPromoFormIsActive(true);
+    } catch (err) {
+      console.error(err);
+      alert("❌ Failed to save promotion.");
+    }
+  };
+
+  const handleEditPromotionClick = (promo: any) => {
+    setEditingPromoId(promo.id);
+    setPromoFormTitle(promo.title);
+    setPromoFormDate(promo.date);
+    setPromoFormExcerpt(promo.excerpt);
+    setPromoFormBtnText(promo.buttonText);
+    setPromoFormFlyerTitle(promo.flyerTitle);
+    setPromoFormFlyerAmount(promo.flyerAmount);
+    setPromoFormFlyerSub(promo.flyerSub);
+    setPromoFormFlyerExtra(promo.flyerExtra || '');
+    setPromoFormFlyerGradient(promo.flyerGradient);
+    setPromoFormAccentColor(promo.accentColor);
+    setPromoFormTargetLink(promo.targetLink);
+    setPromoFormIsActive(promo.isActive !== false);
+  };
+
+  const handleDeletePromotionClick = async (id: string) => {
+    try {
+      if (deletePromotion) {
+        await deletePromotion(id);
+        alert("🗑️ Promotion deleted successfully.");
+      }
+    } catch (err) {
+      alert("❌ Failed to delete promotion.");
+    }
+  };
+
+  // Save dynamic news article
+  const handleSaveNewsArticle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsFormTitle || !newsFormExcerpt) {
+      alert("Please enter news Title and Excerpt.");
+      return;
+    }
+
+    const newsData = {
+      title: newsFormTitle,
+      excerpt: newsFormExcerpt,
+      date: newsFormDate || new Date().toLocaleDateString('en-GB'),
+      imageUrl: newsFormImageUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
+      bannerTitle: newsFormBannerTitle,
+      bannerSubtitle: newsFormBannerSubtitle,
+      bannerBg: newsFormBannerBg || 'bg-gradient-to-r from-pink-600 via-pink-500 to-rose-600 text-white',
+      isActive: newsFormIsActive
+    };
+
+    try {
+      if (editingNewsId) {
+        if (updateNewsArticle) {
+          await updateNewsArticle(editingNewsId, newsData);
+          alert("🎉 News article updated successfully!");
+        }
+        setEditingNewsId(null);
+      } else {
+        if (addNewsArticle) {
+          await addNewsArticle(newsData);
+          alert("🎉 New news article added successfully!");
+        }
+      }
+      // Reset form
+      setNewsFormTitle('');
+      setNewsFormExcerpt('');
+      setNewsFormDate('');
+      setNewsFormImageUrl('');
+      setNewsFormBannerTitle('');
+      setNewsFormBannerSubtitle('');
+      setNewsFormBannerBg('bg-gradient-to-r from-pink-600 via-pink-500 to-rose-600 text-white');
+      setNewsFormIsActive(true);
+    } catch (err) {
+      console.error(err);
+      alert("❌ Failed to save news article.");
+    }
+  };
+
+  const handleEditNewsClick = (news: any) => {
+    setEditingNewsId(news.id);
+    setNewsFormTitle(news.title);
+    setNewsFormExcerpt(news.excerpt);
+    setNewsFormDate(news.date);
+    setNewsFormImageUrl(news.imageUrl);
+    setNewsFormBannerTitle(news.bannerTitle || '');
+    setNewsFormBannerSubtitle(news.bannerSubtitle || '');
+    setNewsFormBannerBg(news.bannerBg || 'bg-gradient-to-r from-pink-600 via-pink-500 to-rose-600 text-white');
+    setNewsFormIsActive(news.isActive !== false);
+  };
+
+  const handleDeleteNewsClick = async (id: string) => {
+    try {
+      if (deleteNewsArticle) {
+        await deleteNewsArticle(id);
+        alert("🗑️ News article deleted successfully.");
+      }
+    } catch (err) {
+      alert("❌ Failed to delete news article.");
+    }
+  };
+
   // Delete simulated user profile
   const handleDeleteUser = async (email: string) => {
     if (email === user?.email) {
@@ -833,7 +1410,7 @@ export function Admin() {
   const totalWithdrawAmount = withdrawalRequests.reduce((sum, r) => sum + r.amount, 0);
 
   // Conversion rate (realistic 1 USD = 117 BDT)
-  const USD_TO_BDT = 117;
+  const USD_TO_BDT = siteConfig.usdExchangeRate ?? 117;
 
   return (
     <div className="min-h-screen bg-[#070709] text-zinc-100 font-sans selection:bg-red-500/30">
@@ -1333,12 +1910,14 @@ export function Admin() {
                       </div>
                       <div className="flex gap-2">
                         <button 
+                          type="button"
                           onClick={() => handleEditGateway(gw)}
                           className="p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-colors border border-zinc-800"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button 
+                          type="button"
                           onClick={() => handleDeleteGateway(gw.id)}
                           className="p-2 bg-zinc-900 hover:bg-red-600/20 text-zinc-400 hover:text-red-500 rounded-lg transition-colors border border-zinc-800"
                         >
@@ -2077,122 +2656,453 @@ export function Admin() {
 
           {/* TAB 3: News & Announcements center */}
           {activeTab === 'announcements' && (
-            <div className="space-y-8 text-left">
+            <div className="space-y-8 text-left text-white">
               <div className="border-b border-zinc-800 pb-4">
                 <h2 className="text-xl font-bold flex items-center gap-2 text-white">
-                  <Newspaper className="w-5 h-5 text-red-500" /> Golobal Bulletin Creator
+                  <Newspaper className="w-5 h-5 text-red-500" /> Dynamic Promotions & News Manager
                 </h2>
-                <p className="text-zinc-500 text-xs mt-1">Publish live promotional campaigns and new lottery stories to the public frontend news bulletin board.</p>
+                <p className="text-zinc-500 text-xs mt-1">Configure live promotions, flyers, discount banners and lottery news published in real-time to the public frontend pages.</p>
               </div>
 
-              {/* Detailed Page Guide / কুইক এডমিন গাইড */}
-              <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 relative overflow-hidden text-left">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-green-600/5 rounded-full blur-2xl" />
-                <h3 className="text-xs font-black text-green-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                  <ShieldCheck className="w-4.5 h-4.5 text-green-400" /> 💡 Admin Control Guide • এই পেজের কাজের বিবরণী
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  <div className="space-y-2.5">
-                    <p className="text-zinc-300 leading-relaxed font-semibold">
-                      এখানে আপনি হোমপেজের নোটিশবোর্ডে দেখানোর জন্য নতুন কোনো নোটিশ বা সতর্কবার্তা লিখতে, প্রকাশ করতে বা ডিলিট করতে পারবেন।
-                    </p>
-                    <ul className="space-y-1.5 text-zinc-400 font-medium">
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-green-400 mt-0.5">•</span>
-                        <span><b>Draft Editor Form (নোটিশ লেখার ফরম):</b> নতুন নোটিশ প্রকাশের ফরম। এখানে নোটিশের শিরোনাম, ক্যাটাগরি ব্যাজ এবং বিস্তারিত বর্ণনা টাইপ করুন।</span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-green-400 mt-0.5">•</span>
-                        <span><b>Publish New Alert (প্রকাশ বাটন):</b> এই বাটনে চাপ দিলে নোটিশটি সাথে সাথে হোমপেজে সেভ হয়ে লাইভ প্রদর্শিত হবে।</span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="space-y-2.5">
-                    <ul className="space-y-1.5 text-zinc-400 font-medium">
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-green-400 mt-0.5">•</span>
-                        <span><b>Active Announcements Feed (বর্তমান নোটিশসমূহ):</b> বর্তমানে ওয়েবসাইটে সচল নোটিশগুলোর তালিকা।</span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-green-400 mt-0.5">•</span>
-                        <span><b>Delete Bulletin Option (ডিলিট বাটন):</b> যেকোনো নোটিশ হোমপেজ থেকে সরিয়ে নেওয়ার জন্য ডাস্টবিন আইকন বাটনে চাপ দিন।</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
+              {/* Sub-tab selection */}
+              <div className="flex gap-2 border-b border-zinc-800 pb-2">
+                <button
+                  type="button"
+                  onClick={() => setAnnouncementsSubTab('promotions')}
+                  className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+                    announcementsSubTab === 'promotions'
+                      ? 'bg-red-600 text-white shadow'
+                      : 'bg-zinc-900 text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  📢 Active Promotions ({promotions.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAnnouncementsSubTab('news')}
+                  className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+                    announcementsSubTab === 'news'
+                      ? 'bg-red-600 text-white shadow'
+                      : 'bg-zinc-900 text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  📰 News Articles ({newsArticles.length})
+                </button>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                
-                {/* Draft editor Form */}
-                <form onSubmit={handlePublishAnnouncement} className="lg:col-span-6 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
-                  <div>
-                    <label className="text-xs font-bold text-zinc-400 uppercase block">Bulletin Header Title</label>
-                    <input 
-                      type="text" 
-                      placeholder="" 
-                      value={bulletinTitle}
-                      onChange={(e) => setBulletinTitle(e.target.value)}
-                      className="bg-zinc-950 border border-zinc-855 border-zinc-800 rounded-xl p-3 w-full mt-1.5 text-sm font-semibold text-white focus:outline-none focus:ring-1 focus:ring-red-500"
-                      required
-                    />
-                  </div>
+              {/* Sub-tab 1: PROMOTIONS */}
+              {announcementsSubTab === 'promotions' && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  
+                  {/* Promotion Edit/Add Form */}
+                  <form onSubmit={handleSavePromotion} className="lg:col-span-5 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-red-500">
+                      {editingPromoId ? '✏️ Edit Promotion' : '➕ Create New Promotion'}
+                    </h3>
+                    
+                    <div>
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase block">Promotion Main Title</label>
+                      <input 
+                        type="text" 
+                        value={promoFormTitle}
+                        onChange={(e) => setPromoFormTitle(e.target.value)}
+                        placeholder="e.g. MEGA7 Rollover to $50 Million"
+                        className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 w-full mt-1 text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-red-500"
+                        required
+                      />
+                    </div>
 
-                  <div>
-                    <label className="text-xs font-bold text-zinc-400 uppercase block">Draft summary description</label>
-                    <textarea 
-                      placeholder=""
-                      value={bulletinSummary}
-                      onChange={(e) => setBulletinSummary(e.target.value)}
-                      rows={4}
-                      className="bg-zinc-950 border border-zinc-855 border-zinc-800 rounded-xl p-3 w-full mt-1.5 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-red-500"
-                      required
-                    ></textarea>
-                  </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase block">Expiry / Valid Date text</label>
+                      <input 
+                        type="text" 
+                        value={promoFormDate}
+                        onChange={(e) => setPromoFormDate(e.target.value)}
+                        placeholder="e.g. 31/05/2026"
+                        className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 w-full mt-1 text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-red-500"
+                        required
+                      />
+                    </div>
 
-                  <div className="flex items-center gap-2 pt-1">
-                    <input 
-                      type="checkbox" 
-                      id="isPromoCheckbox"
-                      checked={isPromo}
-                      onChange={(e) => setIsPromo(e.target.checked)}
-                      className="h-4 w-4 bg-zinc-950 rounded border-zinc-800 text-red-600 focus:ring-red-500" 
-                    />
-                    <label htmlFor="isPromoCheckbox" className="text-xs text-zinc-400 font-semibold cursor-pointer">
-                      Flag as **Promotional Coupon** event (reloads in Promotions menu!)
-                    </label>
-                  </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase block">Excerpt summary (under card detail)</label>
+                      <textarea 
+                        value={promoFormExcerpt}
+                        onChange={(e) => setPromoFormExcerpt(e.target.value)}
+                        placeholder="Provide details about standard tickets or entry requirements..."
+                        rows={3}
+                        className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 w-full mt-1 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        required
+                      ></textarea>
+                    </div>
 
-                  <button 
-                    type="submit" 
-                    className="w-full bg-red-650 bg-red-600 hover:bg-red-700 text-white font-bold p-3 rounded-xl text-xs uppercase"
-                  >
-                    Publish News Card
-                  </button>
-                </form>
-
-                {/* Published listings previewer */}
-                <div className="lg:col-span-6 space-y-4">
-                  <h3 className="text-xs font-black uppercase text-zinc-500 tracking-wider">Sandbox Published Feed Preview</h3>
-                  <div className="space-y-3 max-h-[350px] overflow-y-auto font-mono">
-                    {publishedBulletins.map((pb, index) => (
-                      <div key={index} className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-2">
-                        <div className="flex justify-between items-start gap-2">
-                          <span className={`text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded ${
-                            pb.isPromo ? 'bg-amber-950 text-amber-400' : 'bg-red-950 text-red-400'
-                          }`}>
-                            {pb.isPromo ? 'Promo Event' : 'General News'}
-                          </span>
-                          <span className="text-[10px] text-zinc-500">{pb.date}</span>
-                        </div>
-                        <h4 className="font-bold text-white text-sm">{pb.title}</h4>
-                        <p className="text-zinc-400 text-[11px] leading-relaxed">{pb.summary}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase block">Button Label</label>
+                        <input 
+                          type="text" 
+                          value={promoFormBtnText}
+                          onChange={(e) => setPromoFormBtnText(e.target.value)}
+                          className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 w-full mt-1 text-xs text-white focus:outline-none"
+                        />
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase block">Target Link</label>
+                        <input 
+                          type="text" 
+                          value={promoFormTargetLink}
+                          onChange={(e) => setPromoFormTargetLink(e.target.value)}
+                          className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 w-full mt-1 text-xs text-white focus:outline-none"
+                        />
+                      </div>
+                    </div>
 
-              </div>
+                    <div className="border-t border-zinc-800 pt-3 space-y-3">
+                      <span className="text-[10px] font-black text-yellow-500 tracking-wider block uppercase">🎨 Flyer Visual Design Attributes</span>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase block">Badge Title</label>
+                          <input 
+                            type="text" 
+                            value={promoFormFlyerTitle}
+                            onChange={(e) => setPromoFormFlyerTitle(e.target.value)}
+                            placeholder="e.g. MEGA7 Rollover"
+                            className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 w-full mt-1 text-xs text-white focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase block">Grand Promo Text</label>
+                          <input 
+                            type="text" 
+                            value={promoFormFlyerAmount}
+                            onChange={(e) => setPromoFormFlyerAmount(e.target.value)}
+                            placeholder="e.g. $50,000,000"
+                            className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 w-full mt-1 text-xs text-white focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase block">Flyer Sub-text</label>
+                          <input 
+                            type="text" 
+                            value={promoFormFlyerSub}
+                            onChange={(e) => setPromoFormFlyerSub(e.target.value)}
+                            placeholder="e.g. Buy 5 tickets to entry"
+                            className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 w-full mt-1 text-xs text-white focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase block">Flyer Footer Banner</label>
+                          <input 
+                            type="text" 
+                            value={promoFormFlyerExtra}
+                            onChange={(e) => setPromoFormFlyerExtra(e.target.value)}
+                            placeholder="e.g. OFFER ENDS SUNDAY"
+                            className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 w-full mt-1 text-xs text-white focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase block">Flyer Theme Gradient Classes (Tailwind)</label>
+                        <select 
+                          value={promoFormFlyerGradient}
+                          onChange={(e) => setPromoFormFlyerGradient(e.target.value)}
+                          className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 w-full mt-1 text-xs text-white focus:outline-none"
+                        >
+                          <option value="from-amber-600 via-[#E52535] to-[#4A030A] text-white">🔥 Amber-Red Glow (Mega7 Theme)</option>
+                          <option value="from-purple-800 via-[#7C3AED] to-[#1C1F5C] text-white">🔮 Royal Purple-Violet (Eid Special)</option>
+                          <option value="from-emerald-700 via-[#0D9488] to-[#113C4A] text-white">🌲 Emerald-Teal Multiplier (Green Dreams)</option>
+                          <option value="from-blue-600 via-indigo-700 to-[#0A0D2A] text-white">🌀 Deep Space Blue Cosmic</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2">
+                      <input 
+                        type="checkbox" 
+                        id="promoFormIsActiveCheckbox"
+                        checked={promoFormIsActive}
+                        onChange={(e) => setPromoFormIsActive(e.target.checked)}
+                        className="h-4 w-4 bg-zinc-950 rounded border-zinc-800 text-red-600 focus:ring-red-500" 
+                      />
+                      <label htmlFor="promoFormIsActiveCheckbox" className="text-xs text-zinc-400 font-semibold cursor-pointer">
+                        Is Active / Visible on frontend Promotions list
+                      </label>
+                    </div>
+
+                    <div className="flex gap-2 pt-1">
+                      <button 
+                        type="submit" 
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white font-black p-3 rounded-xl text-xs uppercase tracking-widest transition-all"
+                      >
+                        {editingPromoId ? 'Save Changes' : 'Publish Promotion'}
+                      </button>
+                      {editingPromoId && (
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setEditingPromoId(null);
+                            setPromoFormTitle('');
+                            setPromoFormDate('');
+                            setPromoFormExcerpt('');
+                            setPromoFormIsActive(true);
+                          }}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold p-3 rounded-xl text-xs uppercase"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+
+                  {/* Promotions List Table */}
+                  <div className="lg:col-span-7 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+                    <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">Current Published Promotions ({promotions.length})</h3>
+                    {promotions.length === 0 ? (
+                      <div className="p-12 text-center text-zinc-500 text-xs">
+                        No promotions added to Firestore yet. Use the editor to add your first campaign!
+                      </div>
+                    ) : (
+                      <div className="space-y-4 max-h-[550px] overflow-y-auto">
+                        {promotions.map((p) => (
+                          <div key={p.id} className="p-4 bg-zinc-950 border border-zinc-850 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-zinc-700 transition-all">
+                            <div className="space-y-1.5 flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
+                                  p.isActive !== false ? 'bg-emerald-950 text-emerald-400 border border-emerald-900' : 'bg-red-950 text-red-400 border border-red-900'
+                                }`}>
+                                  {p.isActive !== false ? 'Active' : 'Inactive'}
+                                </span>
+                                <span className="text-[10px] text-zinc-500 font-mono">ID: {p.id}</span>
+                              </div>
+                              <h4 className="font-extrabold text-sm text-white truncate uppercase tracking-tight">{p.title}</h4>
+                              <p className="text-zinc-400 text-xs line-clamp-2">{p.excerpt}</p>
+                              <p className="text-[10px] text-zinc-500 font-semibold uppercase">Valid Until: {p.date}</p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end border-t border-zinc-800/60 md:border-t-0 pt-3 md:pt-0">
+                              <button
+                                type="button"
+                                onClick={() => handleEditPromotionClick(p)}
+                                className="bg-zinc-900 hover:bg-zinc-850 text-zinc-300 font-bold text-[10px] uppercase px-3 py-1.5 rounded-lg border border-zinc-850"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePromotionClick(p.id)}
+                                className="bg-red-950/40 hover:bg-red-900/40 text-red-400 font-bold text-[10px] uppercase px-3 py-1.5 rounded-lg border border-red-900/30"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              )}
+
+              {/* Sub-tab 2: NEWS ARTICLES */}
+              {announcementsSubTab === 'news' && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  
+                  {/* News Edit/Add Form */}
+                  <form onSubmit={handleSaveNewsArticle} className="lg:col-span-5 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-red-500">
+                      {editingNewsId ? '✏️ Edit News Article' : '➕ Create New News Article'}
+                    </h3>
+                    
+                    <div>
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase block">News Title / Slogan</label>
+                      <input 
+                        type="text" 
+                        value={newsFormTitle}
+                        onChange={(e) => setNewsFormTitle(e.target.value)}
+                        placeholder="e.g. Indian Expat Wins AED 10 Million!"
+                        className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 w-full mt-1 text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-red-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase block">Release Date text</label>
+                      <input 
+                        type="text" 
+                        value={newsFormDate}
+                        onChange={(e) => setNewsFormDate(e.target.value)}
+                        placeholder="e.g. 11 June 2026"
+                        className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 w-full mt-1 text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-red-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase block">Excerpt / Summary Description</label>
+                      <textarea 
+                        value={newsFormExcerpt}
+                        onChange={(e) => setNewsFormExcerpt(e.target.value)}
+                        placeholder="Write details about the story here..."
+                        rows={4}
+                        className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 w-full mt-1 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        required
+                      ></textarea>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase block">Featured Image URL</label>
+                      <input 
+                        type="text" 
+                        value={newsFormImageUrl}
+                        onChange={(e) => setNewsFormImageUrl(e.target.value)}
+                        placeholder="e.g. https://images.unsplash.com/photo-..."
+                        className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 w-full mt-1 text-xs text-white focus:outline-none focus:ring-1"
+                      />
+                      <span className="text-[9px] text-zinc-500 mt-1 block">Leave empty to use clean default placeholder.</span>
+                    </div>
+
+                    <div className="border-t border-zinc-800 pt-3 space-y-3">
+                      <span className="text-[10px] font-black text-yellow-500 tracking-wider block uppercase font-sans">🎖️ Card Highlight Overlay (Optional)</span>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase block">Banner Header</label>
+                          <input 
+                            type="text" 
+                            value={newsFormBannerTitle}
+                            onChange={(e) => setNewsFormBannerTitle(e.target.value)}
+                            placeholder="e.g. SURE1 WINNER"
+                            className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 w-full mt-1 text-xs text-white focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase block">Banner Subtitle</label>
+                          <input 
+                            type="text" 
+                            value={newsFormBannerSubtitle}
+                            onChange={(e) => setNewsFormBannerSubtitle(e.target.value)}
+                            placeholder="e.g. $30,000"
+                            className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 w-full mt-1 text-xs text-white focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase block">Banner Overlay Background Style</label>
+                        <select 
+                          value={newsFormBannerBg}
+                          onChange={(e) => setNewsFormBannerBg(e.target.value)}
+                          className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 w-full mt-1 text-xs text-white focus:outline-none"
+                        >
+                          <option value="bg-gradient-to-r from-pink-600 via-pink-500 to-rose-600 text-white">💗 Pink-Rose Gradient (SURE1 style)</option>
+                          <option value="bg-gradient-to-r from-emerald-600 to-teal-500 text-white">💚 Emerald-Teal Gradient (EASY6 style)</option>
+                          <option value="bg-gradient-to-r from-red-650 from-red-600 via-[#E52535] to-amber-500 text-white">❤️ Eid Red-Gold Special</option>
+                          <option value="bg-gradient-to-r from-[#1E2E80] to-indigo-500 text-white">💙 Deep Royal Indigo-Blue</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2">
+                      <input 
+                        type="checkbox" 
+                        id="newsFormIsActiveCheckbox"
+                        checked={newsFormIsActive}
+                        onChange={(e) => setNewsFormIsActive(e.target.checked)}
+                        className="h-4 w-4 bg-zinc-950 rounded border-zinc-800 text-red-600 focus:ring-red-500" 
+                      />
+                      <label htmlFor="newsFormIsActiveCheckbox" className="text-xs text-zinc-400 font-semibold cursor-pointer">
+                        Is Active / Visible on frontend News list
+                      </label>
+                    </div>
+
+                    <div className="flex gap-2 pt-1">
+                      <button 
+                        type="submit" 
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white font-black p-3 rounded-xl text-xs uppercase tracking-widest transition-all"
+                      >
+                        {editingNewsId ? 'Save Changes' : 'Publish Article'}
+                      </button>
+                      {editingNewsId && (
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setEditingNewsId(null);
+                            setNewsFormTitle('');
+                            setNewsFormDate('');
+                            setNewsFormExcerpt('');
+                            setNewsFormImageUrl('');
+                            setNewsFormIsActive(true);
+                          }}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold p-3 rounded-xl text-xs uppercase"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+
+                  {/* News Articles Table */}
+                  <div className="lg:col-span-7 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+                    <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider">Current News Articles ({newsArticles.length})</h3>
+                    {newsArticles.length === 0 ? (
+                      <div className="p-12 text-center text-zinc-500 text-xs">
+                        No news articles added to Firestore yet. Use the editor to add your first article!
+                      </div>
+                    ) : (
+                      <div className="space-y-4 max-h-[550px] overflow-y-auto">
+                        {newsArticles.map((n) => (
+                          <div key={n.id} className="p-4 bg-zinc-950 border border-zinc-850 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-zinc-700 transition-all">
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                              <img 
+                                src={n.imageUrl} 
+                                alt="" 
+                                className="w-12 h-12 object-cover rounded-lg bg-zinc-800 shrink-0 border border-zinc-800"
+                                referrerPolicy="no-referrer"
+                              />
+                              <div className="space-y-1 min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
+                                    n.isActive !== false ? 'bg-emerald-950 text-emerald-400 border border-emerald-900' : 'bg-red-950 text-red-400 border border-red-900'
+                                  }`}>
+                                    {n.isActive !== false ? 'Active' : 'Inactive'}
+                                  </span>
+                                  <span className="text-[10px] text-zinc-500 font-mono">ID: {n.id}</span>
+                                </div>
+                                <h4 className="font-extrabold text-xs text-white truncate uppercase tracking-tight">{n.title}</h4>
+                                <p className="text-zinc-400 text-[11px] line-clamp-1">{n.excerpt}</p>
+                                <p className="text-[9px] text-zinc-500 font-semibold uppercase">{n.date}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end border-t border-zinc-800/60 md:border-t-0 pt-3 md:pt-0">
+                              <button
+                                type="button"
+                                onClick={() => handleEditNewsClick(n)}
+                                className="bg-zinc-900 hover:bg-zinc-850 text-zinc-300 font-bold text-[10px] uppercase px-3 py-1.5 rounded-lg border border-zinc-850"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteNewsClick(n.id)}
+                                className="bg-red-950/40 hover:bg-red-900/40 text-red-400 font-bold text-[10px] uppercase px-3 py-1.5 rounded-lg border border-red-900/30"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              )}
+
             </div>
           )}
 
@@ -2618,26 +3528,57 @@ export function Admin() {
                       </button>
                     </div>
 
-                    {/* Game Selector Tab bar inside customizer */}
-                    <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-none">
-                      {dynamicGames.map((game) => (
-                        <button
-                          key={game.name}
-                          type="button"
-                          onClick={() => {
-                            setSelectedGameToEdit(game.name);
-                            setIsAddingGame(false);
-                          }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-black transition whitespace-nowrap cursor-pointer ${
-                            !isAddingGame && selectedGameToEdit === game.name
-                              ? 'bg-red-600 text-white font-extrabold'
-                              : 'bg-zinc-900 text-zinc-400 hover:text-white'
-                          }`}
-                        >
-                          {game.name}
-                        </button>
-                      ))}
-                    </div>
+                     {/* Game Selector Tab bar inside customizer with inline delete button */}
+                     <div className="flex flex-wrap gap-2 pb-2">
+                       {dynamicGames.map((game) => (
+                         <div 
+                           key={game.name} 
+                           className={`flex items-center gap-1.5 p-1 rounded-xl border transition-all ${
+                             !isAddingGame && selectedGameToEdit === game.name
+                               ? 'bg-red-950/85 border-red-500/50 text-white'
+                               : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                           }`}
+                         >
+                           <button
+                             type="button"
+                             onClick={() => {
+                               setSelectedGameToEdit(game.name);
+                               setIsAddingGame(false);
+                             }}
+                             className={`px-2 py-1 rounded-lg text-xs font-black transition whitespace-nowrap cursor-pointer ${
+                               !isAddingGame && selectedGameToEdit === game.name
+                                 ? 'text-white'
+                                 : 'text-zinc-400 hover:text-white'
+                             }`}
+                           >
+                             {game.name}
+                           </button>
+                           <button
+                             type="button"
+                             onClick={async () => {
+                               const confirmDel = window.confirm(`Are you sure you want to permanently delete the game "${game.name}"?`);
+                               if (!confirmDel) return;
+                               try {
+                                 await deleteDynamicGame(game.name);
+                                 alert(`🗑️ Game "${game.name}" deleted successfully.`);
+                                 if (dynamicGames.length > 1) {
+                                   const remaining = dynamicGames.filter(g => g.name !== game.name);
+                                   setSelectedGameToEdit(remaining[0].name);
+                                 } else {
+                                   setEditingGame(null);
+                                 }
+                               } catch (err) {
+                                 alert('❌ Failed to delete game.');
+                               }
+                             }}
+                             className="p-1.5 hover:bg-red-900/40 text-red-500 hover:text-red-400 rounded-lg transition cursor-pointer"
+                             title={`Delete ${game.name}`}
+                           >
+                             <Trash2 className="w-3.5 h-3.5" />
+                           </button>
+                         </div>
+                       ))}
+                     </div>
 
                     {/* Selected Game Config Form fields */}
                     {(() => {
@@ -2982,6 +3923,57 @@ export function Admin() {
                             </div>
                           )}
 
+                          {/* Game Prizes Breakdown Customization */}
+                          <div className="mt-4 pt-4 border-t border-zinc-900 space-y-3">
+                            <div className="flex justify-between items-center">
+                              <label className="text-[10px] font-bold text-red-500 uppercase tracking-widest block font-black">
+                                🏆 Prizes Breakdown Customizer (All Games)
+                              </label>
+                              <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider">
+                                manually adjust prize payouts
+                              </span>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              {(() => {
+                                // Resolve list of prizes to edit
+                                const defaultPrizesList = getDefaultPrizesForGame(editingGame.name, editingGame.ballCount || 5, editingGame.prize);
+                                const currentPrizesList = editingGame.prizeBreakdown && editingGame.prizeBreakdown.length > 0
+                                  ? editingGame.prizeBreakdown
+                                  : defaultPrizesList;
+
+                                return currentPrizesList.map((p, idx) => (
+                                  <div key={idx} className="bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-800 flex items-center justify-between gap-3">
+                                    <div className="min-w-0 flex-1">
+                                      <span className="text-[10px] font-black text-zinc-300 block truncate">{p.label}</span>
+                                      <span className="text-[8px] text-zinc-500 font-mono">Tier Match Level Count: {p.count}</span>
+                                    </div>
+                                    <div className="w-1/2">
+                                      <input 
+                                        type="text"
+                                        value={p.prize}
+                                        onChange={(e) => {
+                                          const updatedBreakdown = currentPrizesList.map((item, curIdx) => 
+                                            curIdx === idx ? { ...item, prize: e.target.value } : { ...item }
+                                          );
+                                          
+                                          const updates: Partial<DynamicGame> = { prizeBreakdown: updatedBreakdown };
+                                          // If it's the 1st tier (top prize), let's sync the main jackpot field automatically for consistency
+                                          if (idx === 0) {
+                                            updates.prize = e.target.value;
+                                          }
+                                          handleUpdateEditingGame(updates);
+                                        }}
+                                        className="bg-zinc-950 border border-zinc-800 rounded-lg p-1.5 px-2 w-full text-xs text-white text-right font-sans font-black focus:outline-none focus:border-red-500"
+                                        placeholder="e.g. $50,000,000"
+                                      />
+                                    </div>
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+
                           <div className="grid grid-cols-2 gap-3 mt-4">
                             <button
                               type="button"
@@ -3095,36 +4087,35 @@ export function Admin() {
                     
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-zinc-400 font-bold uppercase text-[9px] tracking-wider mb-1">Banner Large Title</label>
+                        <label className="block text-zinc-400 font-bold uppercase text-[9px] tracking-wider mb-1">Banner Large Title (ঐচ্ছিক - খালি রাখলে শুধু ব্যানার দেখাবে)</label>
                         <input 
                           type="text"
                           value={newBannerTitle}
                           onChange={(e) => setNewBannerTitle(e.target.value)}
-                          placeholder="e.g. GET 100% DEPOSIT BONUS TO PLAY!"
+                          placeholder="e.g. GET 100% DEPOSIT BONUS TO PLAY! (খালি রাখতে পারেন)"
                           className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-yellow-500"
-                          required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-zinc-400 font-bold uppercase text-[9px] tracking-wider mb-1">Banner Subtitle / Slogan</label>
+                        <label className="block text-zinc-400 font-bold uppercase text-[9px] tracking-wider mb-1">Banner Subtitle / Slogan (ঐচ্ছিক - খালি রাখতে পারেন)</label>
                         <input 
                           type="text"
                           value={newBannerSubtitle}
                           onChange={(e) => setNewBannerSubtitle(e.target.value)}
-                          placeholder="e.g. valid for first time users who sign up in June"
+                          placeholder="e.g. valid for first time users who sign up in June (খালি রাখতে পারেন)"
                           className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-yellow-500"
                         />
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-zinc-400 font-bold uppercase text-[9px] tracking-wider mb-1">Button Text</label>
+                          <label className="block text-zinc-400 font-bold uppercase text-[9px] tracking-wider mb-1">Button Text (খালি রাখলে বাটন লুকাবে)</label>
                           <input 
                             type="text"
                             value={newBannerButtonText}
                             onChange={(e) => setNewBannerButtonText(e.target.value)}
-                            placeholder="e.g. PLAY NOW"
+                            placeholder="e.g. PLAY NOW (খালি রাখতে পারেন)"
                             className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-yellow-500 font-bold"
                           />
                         </div>
@@ -3447,7 +4438,7 @@ export function Admin() {
                             </div>
                             
                             <div className="leading-tight min-w-0 flex-1">
-                              <span className="font-extrabold text-white text-xs block truncate">{bannerItem.title}</span>
+                              <span className="font-extrabold text-white text-xs block truncate">{bannerItem.title || "No Title (সরাসরি ব্যানার)"}</span>
                               <span className="text-[9px] text-zinc-400 block truncate mt-1">
                                 {bannerItem.subtitle || "No subtitle"} • <span className="font-mono text-yellow-500">{bannerItem.linkUrl}</span>
                               </span>
@@ -3508,6 +4499,794 @@ export function Admin() {
 
                     <div className="bg-[#121215] p-3 rounded-xl border border-zinc-900 text-[10px] text-zinc-400 leading-relaxed font-mono">
                       💡 <b>Note:</b> You can disable all custom banners to instantly switch back to the classic Golobal Lottery themed hero section with the jackpot counters and mascots.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* HOMEPAGE STATISTICS & VIDEO LINK CUSTOMIZER */}
+              <div className="mt-12 pt-12 border-t border-zinc-800/80 space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <span className="p-1.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg">📊</span>
+                    Showcase Section: Stats & YouTube Video
+                  </h3>
+                  <p className="text-zinc-500 text-xs mt-1 text-left">
+                    Configure the live drawing YouTube video link, thumbnail, titles, and manually override the live statistics shown in the third card.
+                  </p>
+                </div>
+
+                <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-850">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* YouTube settings */}
+                    <div className="space-y-4">
+                      <h4 className="text-xs font-black text-white uppercase tracking-wider mb-2 text-indigo-400">📺 YouTube Live Draw Card Settings</h4>
+                      
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-zinc-400 font-extrabold uppercase">YouTube Video URL</label>
+                        <input 
+                          type="text" 
+                          value={youtubeVideoUrl} 
+                          onChange={(e) => setYoutubeVideoUrl(e.target.value)}
+                          placeholder="e.g. https://www.youtube.com/watch?v=..."
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Thumbnail Image URL</label>
+                        <input 
+                          type="text" 
+                          value={youtubeThumbnailUrl} 
+                          onChange={(e) => setYoutubeThumbnailUrl(e.target.value)}
+                          placeholder="Image URL"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Card Title</label>
+                          <input 
+                            type="text" 
+                            value={youtubeVideoTitle} 
+                            onChange={(e) => setYoutubeVideoTitle(e.target.value)}
+                            placeholder="e.g. From Mother's Blessings to..."
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Card Tag/Category</label>
+                          <input 
+                            type="text" 
+                            value={youtubeVideoSubtitle} 
+                            onChange={(e) => setYoutubeVideoSubtitle(e.target.value)}
+                            placeholder="e.g. INTERVIEWS"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Card Short Slogan</label>
+                        <input 
+                          type="text" 
+                          value={youtubeVideoDescription} 
+                          onChange={(e) => setYoutubeVideoDescription(e.target.value)}
+                          placeholder="e.g. Meet our lucky winners"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Card Detail Description</label>
+                        <textarea 
+                          rows={2}
+                          value={youtubeVideoDetails} 
+                          onChange={(e) => setYoutubeVideoDetails(e.target.value)}
+                          placeholder="e.g. Discover the deep stories of global participants..."
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Stats settings */}
+                    <div className="space-y-4 flex flex-col justify-between">
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-black text-white uppercase tracking-wider mb-2 text-emerald-400">💰 Finance System Configuration</h4>
+                        
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Government Fee Percentage (%)</label>
+                          <input 
+                            type="number" 
+                            value={governmentFeePct} 
+                            onChange={(e) => setGovernmentFeePct(Number(e.target.value))}
+                            placeholder="e.g. 10"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none focus:border-emerald-500 font-mono"
+                          />
+                          <span className="text-[9px] text-zinc-500 font-mono block">Deducted automatically from user winning payouts (Default: 10%)</span>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Global Exchange Rate (1 USD = X BDT)</label>
+                          <input 
+                            type="number" 
+                            value={usdExchangeRate} 
+                            onChange={(e) => setUsdExchangeRate(Number(e.target.value))}
+                            placeholder="e.g. 117"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none focus:border-emerald-500 font-mono"
+                          />
+                          <span className="text-[9px] text-zinc-500 font-mono block">System-wide standard conversion rate (Default: 117)</span>
+                        </div>
+                        
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Min Withdrawal Amount (USD)</label>
+                          <input 
+                            type="number" 
+                            value={minWithdrawalAmount} 
+                            onChange={(e) => setMinWithdrawalAmount(Number(e.target.value))}
+                            placeholder="e.g. 10"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none focus:border-emerald-500 font-mono"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Max Withdrawal Amount (USD)</label>
+                          <input 
+                            type="number" 
+                            value={maxWithdrawalAmount} 
+                            onChange={(e) => setMaxWithdrawalAmount(Number(e.target.value))}
+                            placeholder="e.g. 1000000"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none focus:border-emerald-500 font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-6 border-t border-zinc-800/60">
+                        <h4 className="text-xs font-black text-white uppercase tracking-wider mb-2 text-indigo-400">📊 Live Statistics Manually Adjustable Counts</h4>
+                        
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Registered Users Counter</label>
+                          <input 
+                            type="text" 
+                            value={totalMetricRegisteredUsers} 
+                            onChange={(e) => setTotalMetricRegisteredUsers(e.target.value)}
+                            placeholder="e.g. 1,230,692"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none focus:border-indigo-500 font-mono"
+                          />
+                          <span className="text-[9px] text-zinc-500 font-mono block">Shown in Yellow as "Registered participants around the globe"</span>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Tickets Purchased Counter</label>
+                          <input 
+                            type="text" 
+                            value={totalMetricTicketsPurchased} 
+                            onChange={(e) => setTotalMetricTicketsPurchased(e.target.value)}
+                            placeholder="e.g. 3,485,912"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none focus:border-indigo-500 font-mono"
+                          />
+                          <span className="text-[9px] text-zinc-500 font-mono block">Shown in Blue as "Total Tickets Sold & Drawn"</span>
+                        </div>
+                      </div>
+
+                      {/* Instant Save buttons row */}
+                      <div className="pt-6">
+                        <button
+                          type="button"
+                          onClick={handleSaveSiteConfig}
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold uppercase text-xs p-3.5 rounded-xl transition-all cursor-pointer shadow flex items-center justify-center gap-2"
+                        >
+                          💾 Save Stats & YouTube Draw Settings
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* GRAND PRIZE WINNERS CAROUSEL MANAGER */}
+              <div className="mt-12 pt-12 border-t border-zinc-800/80 space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <span className="p-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg">🏆</span>
+                    Grand Prize Winners Manager
+                  </h3>
+                  <p className="text-zinc-500 text-xs mt-1 text-left">
+                    Add or edit Grand Prize Winners featured in the slide deck in Card 1. Upload or paste custom image URLs, name, and total winnings.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  
+                  {/* GPW Form */}
+                  <form onSubmit={handleSaveGpw} className="lg:col-span-5 bg-zinc-950 p-6 rounded-2xl border border-zinc-850 space-y-4">
+                    <h4 className="text-xs font-black text-white uppercase tracking-wider mb-2 text-red-400">
+                      {editingGpwId ? '✏️ Edit Grand Prize Winner' : '🚀 Add Grand Prize Winner'}
+                    </h4>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Winner Full Name</label>
+                      <input 
+                        type="text" 
+                        value={newGpwName}
+                        onChange={(e) => setNewGpwName(e.target.value)}
+                        placeholder="e.g. Robert Burkovski"
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Prize Won (Amount)</label>
+                      <input 
+                        type="text" 
+                        value={newGpwPrize}
+                        onChange={(e) => setNewGpwPrize(e.target.value)}
+                        placeholder="e.g. $2,042,205"
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] text-zinc-400 font-extrabold uppercase">Winner Portrait URL</label>
+                      <input 
+                        type="text" 
+                        value={newGpwImageUrl}
+                        onChange={(e) => setNewGpwImageUrl(e.target.value)}
+                        placeholder="e.g. /images/... or URL"
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-xs font-semibold focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1.5">
+                      <input 
+                        type="checkbox" 
+                        id="newGpwIsActive"
+                        checked={newGpwIsActive}
+                        onChange={(e) => setNewGpwIsActive(e.target.checked)}
+                        className="h-4 w-4 bg-zinc-900 rounded border-zinc-800 text-red-550 focus:ring-red-500 accent-red-500 cursor-pointer" 
+                      />
+                      <label htmlFor="newGpwIsActive" className="text-zinc-400 font-semibold cursor-pointer select-none text-xs">
+                        Activate this winner slide immediately
+                      </label>
+                    </div>
+
+                    <div className="flex gap-2.5 pt-2">
+                      <button
+                        type="submit"
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white font-extrabold uppercase text-xs p-3 rounded-xl transition-all cursor-pointer shadow"
+                      >
+                        {editingGpwId ? '💾 Update Winner' : '🚀 Add Winner'}
+                      </button>
+                      {editingGpwId && (
+                        <button
+                          type="button"
+                          onClick={handleCancelEditGpw}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-extrabold uppercase text-xs p-3 rounded-xl transition-all cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+
+                  {/* GPW List */}
+                  <div className="lg:col-span-7 bg-zinc-950 p-5 rounded-2xl border border-zinc-850 space-y-4 text-left">
+                    <div>
+                      <h4 className="text-xs font-black text-white uppercase tracking-wider mb-1">Manage Grand Prize Winners ({currentGpws.length})</h4>
+                      <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Toggle status, edit, or remove winners featured in the slide show</p>
+                    </div>
+
+                    <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+                      {currentGpws.map((gpwItem) => (
+                        <div 
+                          key={gpwItem.id}
+                          className="bg-[#121215] border border-zinc-800 hover:border-zinc-700 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition"
+                        >
+                          <div className="flex items-center gap-3">
+                            {/* Portrait Preview */}
+                            <div className="w-12 h-12 rounded-lg bg-zinc-900 border border-zinc-800 overflow-hidden shrink-0 flex items-center justify-center shadow">
+                              <img src={resolveBannerImage(gpwItem.imageUrl)} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            </div>
+                            
+                            <div className="leading-tight min-w-0 flex-1">
+                              <span className="font-extrabold text-white text-xs block truncate">{gpwItem.name}</span>
+                              <span className="text-[10px] text-yellow-500 font-mono block truncate mt-1">
+                                {gpwItem.prize}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
+                            {/* Toggle Switch */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleGpwActive(gpwItem.id)}
+                              className={`px-2.5 py-1 rounded-full text-[9px] font-bold transition border cursor-pointer uppercase ${
+                                gpwItem.isActive 
+                                  ? 'bg-green-950/60 text-green-400 border-green-800/60' 
+                                  : 'bg-zinc-900 text-zinc-500 border-zinc-800'
+                              }`}
+                            >
+                              {gpwItem.isActive ? '● Active' : '○ Inactive'}
+                            </button>
+
+                            {/* Edit Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleEditGpw(gpwItem)}
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition ${
+                                editingGpwId === gpwItem.id
+                                  ? 'bg-red-500 text-zinc-950'
+                                  : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                              }`}
+                              title="Edit Winner details"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Delete */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm("Are you sure you want to delete this grand prize winner?")) {
+                                  handleDeleteGpw(gpwItem.id);
+                                }
+                              }}
+                              className="w-7 h-7 rounded-lg bg-red-950/40 text-red-500 hover:bg-red-900/60 flex items-center justify-center cursor-pointer transition"
+                              title="Delete Winner"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {currentGpws.length === 0 && (
+                        <div className="py-12 text-center bg-zinc-900/20 border border-dashed border-zinc-850 rounded-2xl">
+                          <p className="text-[10px] text-zinc-500 uppercase font-black">No grand prize winners created. Create your first winner on the left!</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* WINNERS VIDEO GALLERY MANAGER (Winners Living the Dream) */}
+              <div className="mt-12 pt-12 border-t border-zinc-800/80 space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <span className="p-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg">📹</span>
+                    Winners Video Gallery Manager
+                  </h3>
+                  <p className="text-[11px] text-zinc-400 mt-1">
+                    Manage the YouTube-styled video cards that appear in the &quot;Winners Living the Dream&quot; video section on the Winners page.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* Form Column */}
+                  <form onSubmit={handleSaveVw} className="lg:col-span-4 bg-zinc-950/60 border border-zinc-850/80 rounded-2xl p-5 space-y-4">
+                    <h4 className="text-xs font-bold text-red-400 uppercase tracking-widest border-b border-zinc-900 pb-2">
+                      {editingVwId ? 'Edit Video Winner' : 'Add New Video Winner'}
+                    </h4>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-[10px] font-black uppercase text-zinc-400 block mb-1">Video Title</label>
+                        <input
+                          type="text"
+                          value={newVwTitle}
+                          onChange={(e) => setNewVwTitle(e.target.value)}
+                          placeholder="e.g. From Mother's Blessings to AED 100 Mill..."
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-black uppercase text-zinc-400 block mb-1">Winner's Name</label>
+                        <input
+                          type="text"
+                          value={newVwName}
+                          onChange={(e) => setNewVwName(e.target.value)}
+                          placeholder="e.g. Sriram Rajagopalan"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition"
+                          required
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-black uppercase text-zinc-400 block mb-1">Prize Text</label>
+                          <input
+                            type="text"
+                            value={newVwPrizeText}
+                            onChange={(e) => setNewVwPrizeText(e.target.value)}
+                            placeholder="e.g. $27,229,408"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-black uppercase text-zinc-400 block mb-1">Draw Date</label>
+                          <input
+                            type="text"
+                            value={newVwDate}
+                            onChange={(e) => setNewVwDate(e.target.value)}
+                            placeholder="e.g. 16 March 2025"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-black uppercase text-zinc-400 block mb-1">Thumbnail Image URL</label>
+                        <input
+                          type="text"
+                          value={newVwThumbnailUrl}
+                          onChange={(e) => setNewVwThumbnailUrl(e.target.value)}
+                          placeholder="e.g. https://images.unsplash.com/..."
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-black uppercase text-zinc-400 block mb-1">YouTube Video Link or ID (ইউটিউব ভিডিও লিংক বা আইডি)</label>
+                        <input
+                          type="text"
+                          value={newVwYoutubeId}
+                          onChange={(e) => setNewVwYoutubeId(e.target.value)}
+                          placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ (অথবা shorts বা ১১ অক্ষরের আইডি)"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <input
+                          type="checkbox"
+                          id="newVwIsActive"
+                          checked={newVwIsActive}
+                          onChange={(e) => setNewVwIsActive(e.target.checked)}
+                          className="rounded border-zinc-800 bg-zinc-900 text-red-500 focus:ring-0 cursor-pointer"
+                        />
+                        <label htmlFor="newVwIsActive" className="text-[11px] text-zinc-300 font-bold cursor-pointer select-none">
+                          Display Active on Website
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="submit"
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-zinc-950 font-black text-xs py-2 px-4 rounded-xl cursor-pointer transition active:scale-97"
+                      >
+                        {editingVwId ? 'Update Details' : 'Add Video Card'}
+                      </button>
+                      {editingVwId && (
+                        <button
+                          type="button"
+                          onClick={handleCancelEditVw}
+                          className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 font-bold text-xs py-2 px-4 rounded-xl cursor-pointer transition"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+
+                  {/* List Column */}
+                  <div className="lg:col-span-8 space-y-3">
+                    <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-900 pb-2 flex justify-between items-center">
+                      <span>Video Winner Cards ({currentVws.length})</span>
+                      <span className="text-[9px] text-zinc-500 lowercase font-normal">videos are displayed on the /winners page</span>
+                    </h4>
+
+                    <div className="max-h-[460px] overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-zinc-800 font-sans">
+                      {currentVws.map((vwItem) => (
+                        <div
+                          key={vwItem.id}
+                          className="bg-zinc-950/40 border border-zinc-850 hover:border-zinc-800 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition"
+                        >
+                          <div className="flex items-start gap-3.5 min-w-0">
+                            {vwItem.thumbnailUrl ? (
+                              <img
+                                src={vwItem.thumbnailUrl}
+                                alt=""
+                                className="w-16 aspect-video object-cover rounded-lg border border-zinc-800 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-16 aspect-video bg-zinc-900 rounded-lg border border-zinc-800 shrink-0 flex items-center justify-center text-zinc-600 text-xs font-mono">
+                                No Img
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <span className="font-extrabold text-white text-xs block truncate">{vwItem.title}</span>
+                              <span className="text-[10px] text-zinc-400 block truncate mt-0.5">
+                                <span className="font-bold text-red-400">{vwItem.name}</span> • Won {vwItem.prizeText || 'N/A'} • {vwItem.date}
+                              </span>
+                              <span className="text-[9px] text-zinc-500 font-mono block mt-1">
+                                YouTube: {vwItem.youtubeId}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
+                            {/* Toggle switch */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleVwActive(vwItem.id)}
+                              className={`px-2.5 py-1 rounded-full text-[9px] font-bold transition border cursor-pointer uppercase ${
+                                vwItem.isActive !== false
+                                  ? 'bg-green-950/60 text-green-400 border-green-800/60'
+                                  : 'bg-zinc-900 text-zinc-500 border-zinc-800'
+                              }`}
+                            >
+                              {vwItem.isActive !== false ? '● Active' : '○ Inactive'}
+                            </button>
+
+                            {/* Edit Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleEditVw(vwItem)}
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition ${
+                                editingVwId === vwItem.id
+                                  ? 'bg-red-500 text-zinc-950'
+                                  : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                              }`}
+                              title="Edit Video Details"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Delete Button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm("Are you sure you want to delete this video winner?")) {
+                                  handleDeleteVw(vwItem.id);
+                                }
+                              }}
+                              className="w-7 h-7 rounded-lg bg-red-950/40 text-red-500 hover:bg-red-900/60 flex items-center justify-center cursor-pointer transition"
+                              title="Delete Video Card"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {currentVws.length === 0 && (
+                        <div className="py-12 text-center bg-zinc-900/20 border border-dashed border-zinc-850 rounded-2xl">
+                          <p className="text-[10px] text-zinc-500 uppercase font-black">No video cards created. Create your first card on the left!</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ALL GAMES DRAW RESULTS & PAST DRAWING RECORDS MANAGER */}
+              <div className="mt-12 pt-12 border-t border-zinc-800/80 space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <span className="p-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg">🎰</span>
+                    All Games Draw Results &amp; Past Records
+                  </h3>
+                  <p className="text-[11px] text-zinc-400 mt-1">
+                    Add or modify official winning combination draws and past records for EASY6, MEGA7, WILD5, SURE 1/2/3, PICK 1/2, LOTTERY.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* Form Column */}
+                  <form onSubmit={handleSaveDr} className="lg:col-span-4 bg-zinc-950/60 border border-zinc-850/80 rounded-2xl p-5 space-y-4">
+                    <h4 className="text-xs font-bold text-red-400 uppercase tracking-widest border-b border-zinc-900 pb-2">
+                      {editingDrId ? 'Edit Draw Result' : 'Add New Draw Result'}
+                    </h4>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-[10px] font-black uppercase text-zinc-400 block mb-1">Select Game Name</label>
+                        <select
+                          value={newDrGameName}
+                          onChange={(e) => setNewDrGameName(e.target.value)}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition"
+                        >
+                          {dynamicGames.map(g => (
+                            <option key={g.name} value={g.name}>{g.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-black uppercase text-zinc-400 block mb-1">Draw Date</label>
+                        <input
+                          type="text"
+                          value={newDrDate}
+                          onChange={(e) => setNewDrDate(e.target.value)}
+                          placeholder="e.g. 14 June 2026"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-[10px] font-black uppercase text-zinc-400 block">Winning Numbers</label>
+                          <span className="text-[8px] text-zinc-500 uppercase font-bold">comma-separated</span>
+                        </div>
+                        <input
+                          type="text"
+                          value={newDrNumbers}
+                          onChange={(e) => setNewDrNumbers(e.target.value)}
+                          placeholder="e.g. 4, 12, 18, 32, 49, 15, 21"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition font-mono"
+                          required
+                        />
+                        <p className="text-[9px] text-zinc-500 mt-1">
+                          Enter numbers separated by commas. For PICK 1 flags, use codes 1 to 36.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-black uppercase text-zinc-400 block mb-1">Total Winners</label>
+                          <input
+                            type="text"
+                            value={newDrTotalWinners}
+                            onChange={(e) => setNewDrTotalWinners(e.target.value)}
+                            placeholder="e.g. 1,250 Players"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-black uppercase text-zinc-400 block mb-1">Total Paid / Prize</label>
+                          <input
+                            type="text"
+                            value={newDrTotalPaid}
+                            onChange={(e) => setNewDrTotalPaid(e.target.value)}
+                            placeholder="e.g. $45,000.00"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-black uppercase text-zinc-400 block mb-1">Drawing Match Ref Code</label>
+                        <input
+                          type="text"
+                          value={newDrRefCode}
+                          onChange={(e) => setNewDrRefCode(e.target.value)}
+                          placeholder="e.g. EMD-2941-XQ9"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="submit"
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-zinc-950 font-black text-xs py-2 px-4 rounded-xl cursor-pointer transition active:scale-97"
+                      >
+                        {editingDrId ? 'Update Record' : 'Save Draw Result'}
+                      </button>
+                      {editingDrId && (
+                        <button
+                          type="button"
+                          onClick={handleCancelEditDr}
+                          className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 font-bold text-xs py-2 px-4 rounded-xl cursor-pointer transition"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+
+                  {/* List Column */}
+                  <div className="lg:col-span-8 space-y-3 font-sans">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-900 pb-2">
+                      <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest shrink-0">
+                        Historical Draw Records ({currentDrs.length})
+                      </h4>
+                      {/* Game Filter Tab list or select dropdown */}
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <label className="text-[9px] text-zinc-500 uppercase font-black shrink-0">Filter Game:</label>
+                        <select
+                          value={drawFilter}
+                          onChange={(e) => setDrawFilter(e.target.value)}
+                          className="bg-zinc-900 border border-zinc-850 rounded-lg px-2 py-1 text-[10px] text-white focus:outline-none"
+                          style={{ minWidth: '100px' }}
+                          id="admin-draw-filter-select"
+                        >
+                          <option value="ALL">Show All Games</option>
+                          {dynamicGames.map(g => (
+                            <option key={g.name} value={g.name}>{g.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="max-h-[460px] overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-zinc-800">
+                      {currentDrs
+                        .filter(dr => {
+                          return drawFilter === 'ALL' || dr.gameName === drawFilter;
+                        })
+                        .map((drItem) => (
+                          <div
+                            key={drItem.id}
+                            className="bg-zinc-950/40 border border-zinc-850 hover:border-zinc-800 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                                <span className="bg-red-950 text-red-400 border border-red-900 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">
+                                  {drItem.gameName}
+                                </span>
+                                <span className="text-[10px] text-zinc-400 font-bold">
+                                  {drItem.date}
+                                </span>
+                                {drItem.refCode && (
+                                  <span className="text-[9px] text-zinc-500 font-mono">
+                                    Ref: {drItem.refCode}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Numbers list styled as balls */}
+                              <div className="flex flex-wrap gap-1 mb-2">
+                                {drItem.numbers.map((val: number, idx: number) => (
+                                  <span
+                                    key={idx}
+                                    className="w-5.5 h-5.5 rounded-full bg-red-650 bg-red-600 text-zinc-950 font-black text-[9px] flex items-center justify-center shadow-xs select-none"
+                                  >
+                                    {val}
+                                  </span>
+                                ))}
+                              </div>
+
+                              <div className="text-[10px] text-zinc-500">
+                                Winners: <span className="text-zinc-300 font-bold">{drItem.totalWinners}</span> • Paid: <span className="text-zinc-300 font-black">{drItem.totalPaid}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
+                              {/* Edit Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleEditDr(drItem)}
+                                className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition ${
+                                  editingDrId === drItem.id
+                                    ? 'bg-red-500 text-zinc-950'
+                                    : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                                }`}
+                                title="Edit Draw results"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* Delete Button */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (confirm("Are you sure you want to delete this draw result record?")) {
+                                    handleDeleteDr(drItem.id);
+                                  }
+                                }}
+                                className="w-7 h-7 rounded-lg bg-red-950/40 text-red-500 hover:bg-red-900/60 flex items-center justify-center cursor-pointer transition"
+                                title="Delete Draw Record"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                      {currentDrs.length === 0 && (
+                        <div className="py-12 text-center bg-zinc-900/20 border border-dashed border-zinc-850 rounded-2xl">
+                          <p className="text-[10px] text-zinc-500 uppercase font-black">No draw results found. Create your first record on the left!</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -3696,13 +5475,25 @@ export function Admin() {
                           <select
                             value={newWinnerGame}
                             onChange={(e) => setNewWinnerGame(e.target.value)}
-                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-emerald-500 appearance-none"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-emerald-500 appearance-none font-bold"
                           >
-                            <option value="SURE 1 DRAW">SURE 1 DRAW</option>
-                            <option value="SURE 2 DRAW">SURE 2 DRAW</option>
-                            <option value="SURE 3 DRAW">SURE 3 DRAW</option>
-                            <option value="PICK 1 DRAW">PICK 1 DRAW</option>
-                            <option value="PICK 2 DRAW">PICK 2 DRAW</option>
+                            <optgroup label="Life Changing Games" className="bg-zinc-950 text-zinc-400">
+                              <option value="MEGA7">MEGA7</option>
+                              <option value="WILD5">WILD5</option>
+                              <option value="EASY6">EASY6</option>
+                              <option value="FAST5">FAST5</option>
+                              <option value="LOTTERY">LOTTERY</option>
+                              <option value="SCRATCH CARDS">SCRATCH CARDS</option>
+                            </optgroup>
+                            <optgroup label="Raffle Draws" className="bg-zinc-950 text-zinc-400">
+                              <option value="SURE 1">SURE 1</option>
+                              <option value="SURE 2">SURE 2</option>
+                              <option value="SURE 3">SURE 3</option>
+                            </optgroup>
+                            <optgroup label="Rush Draws" className="bg-zinc-950 text-zinc-400">
+                              <option value="PICK 1">PICK 1</option>
+                              <option value="PICK 2">PICK 2</option>
+                            </optgroup>
                           </select>
                         </div>
                       </div>
@@ -3785,7 +5576,12 @@ export function Admin() {
                             
                             <div className="leading-tight">
                               <span className="font-extrabold text-white block truncate max-w-[160px]">{w.name} {w.flag}</span>
-                              <span className="text-[9px] text-zinc-400 uppercase tracking-widest font-semibold block">{w.game} • {w.country}</span>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${getGameColor(w.game)}`}>
+                                  {w.game}
+                                </span>
+                                <span className="text-[9px] text-zinc-500 font-semibold">• {w.country}</span>
+                              </div>
                             </div>
                           </div>
 
@@ -3874,7 +5670,7 @@ export function Admin() {
                   <p className="text-zinc-500 text-xs mt-0.5">Directly inject withdrawal requests for any registered user. Selecting "Approved" debits the user's winnings wallet instantly.</p>
                 </div>
 
-                <form onSubmit={handleAdminAddWithdrawal} className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end text-xs font-semibold">
+                <form onSubmit={handleAdminAddWithdrawal} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-end text-xs font-semibold">
                   <div>
                     <label className="text-[9px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1.5">User Email</label>
                     <select 
@@ -3988,7 +5784,7 @@ export function Admin() {
                   </div>
                   <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-850">
                     <span className="text-[9px] font-black text-zinc-500 uppercase tracking-wider block">Simulated Exchange Rate</span>
-                    <span className="text-2xl font-black text-cyan-400 font-mono block mt-1">1 USD = 117 BDT</span>
+                    <span className="text-2xl font-black text-cyan-400 font-mono block mt-1">1 USD = {USD_TO_BDT} BDT</span>
                     <span className="text-[9px] text-zinc-400 block mt-1 uppercase">Global system standard conversion</span>
                   </div>
                 </div>
@@ -3996,7 +5792,7 @@ export function Admin() {
                 {/* Table list of withdrawals */}
                 <div className="bg-zinc-950 rounded-2xl border border-zinc-850 overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs">
+                    <table className="w-full text-left border-collapse text-xs min-w-[800px]">
                       <thead>
                         <tr className="bg-zinc-900 border-b border-zinc-850">
                           <th className="p-4 font-black text-zinc-400 uppercase tracking-wider text-[9px]">ID</th>
@@ -4137,7 +5933,7 @@ export function Admin() {
                   <p className="text-zinc-500 text-xs mt-0.5">Directly inject verified or pending deposit ledger files for any registered user. Selecting "Approved" credits the user wallet instantly.</p>
                 </div>
 
-                <form onSubmit={handleAdminAddDeposit} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end text-xs font-semibold">
+                <form onSubmit={handleAdminAddDeposit} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-end text-xs font-semibold">
                   <div>
                     <label className="text-[9px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1.5">User Email</label>
                     <select 
@@ -4248,7 +6044,7 @@ export function Admin() {
                 </div>
 
                 <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-950/40">
-                  <table className="min-w-full divide-y divide-zinc-800 text-left text-xs text-zinc-300">
+                  <table className="min-w-full divide-y divide-zinc-800 text-left text-xs text-zinc-300 min-w-[700px]">
                     <thead className="bg-zinc-950 text-[10px] font-black tracking-wider text-zinc-400 uppercase">
                       <tr>
                         <th className="p-4">User / Email</th>

@@ -250,6 +250,19 @@ export function GameDetail() {
   const bannerGradient = config.bannerGradient;
   const ticketType = config.ticketType;
 
+  // Resolve dynamic prizes or use config fallback
+  let displayPrizes = game.prizeBreakdown && game.prizeBreakdown.length > 0
+    ? game.prizeBreakdown
+    : [...(config.prizes || [])];
+
+  // Auto-sync first item with game's main jackpot prize if it exists
+  if (displayPrizes.length > 0 && game.prize) {
+    displayPrizes = [
+      { ...displayPrizes[0], prize: game.prize },
+      ...displayPrizes.slice(1)
+    ];
+  }
+
   // Dynamic banner background logic matching GameGrid logic for consistency
   // Priority: Explicit Image/Gradient -> Force Solid Switch -> Default Color
   let bannerStyle: React.CSSProperties = {};
@@ -740,7 +753,7 @@ export function GameDetail() {
 
               {/* Custom Sphere matches mockup list */}
               <div className="space-y-4 font-semibold text-xs sm:text-sm text-zinc-800 leading-none">
-                {config.prizes.map((p, idx) => (
+                {displayPrizes.map((p, idx) => (
                   <div key={idx} className="flex justify-between items-center bg-zinc-50 rounded-xl p-3.5 hover:bg-zinc-100/50 transition-colors">
                     
                     {/* Display match text and balls row */}

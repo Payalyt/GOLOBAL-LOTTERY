@@ -33,6 +33,7 @@ export interface WithdrawalRequest {
   status: 'Pending' | 'Approved' | 'Rejected';
   accountName?: string;
   userBalanceAtRequest?: number;
+  commissionDeducted?: number;
 }
 
 export interface PurchasedTicket {
@@ -68,6 +69,7 @@ export interface DynamicGame {
   cardBgType?: 'image' | 'gradient' | 'color';
   cardBgImage?: string;
   cardBgGradient?: string;
+  prizeBreakdown?: { label: string; count: number; prize: string }[];
 }
 
 export interface PaymentGateway {
@@ -94,6 +96,88 @@ export interface DailyRaffleWinner {
   imageUrl?: string;
 }
 
+export function getGameColor(gameName: string): string {
+  const name = gameName?.trim().toUpperCase() || '';
+  if (name.includes('MEGA7') || name.includes('MEGA 7')) return 'bg-red-600 text-white';
+  if (name.includes('WILD5') || name.includes('WILD 5')) return 'bg-blue-600 text-white';
+  if (name.includes('EASY6') || name.includes('EASY 6')) return 'bg-green-600 text-white';
+  if (name.includes('FAST5') || name.includes('FAST 5')) return 'bg-blue-500 text-white';
+  if (name.includes('LOTTERY')) return 'bg-yellow-600 text-white';
+  if (name.includes('SCRATCH')) return 'bg-purple-600 text-white';
+  if (name.includes('SURE 1') || name.includes('SURE1')) return 'bg-pink-500 text-white';
+  if (name.includes('SURE 2') || name.includes('SURE2')) return 'bg-purple-600 text-white';
+  if (name.includes('SURE 3') || name.includes('SURE3')) return 'bg-teal-500 text-white';
+  if (name.includes('PICK 1') || name.includes('PICK1')) return 'bg-purple-600 text-white';
+  if (name.includes('PICK 2') || name.includes('PICK2')) return 'bg-orange-500 text-white';
+  return 'bg-zinc-600 text-white'; // default fallback
+}
+
+export function extractYoutubeId(urlOrId: string): string {
+  if (!urlOrId) return 'dQw4w9WgXcQ';
+  let trimmed = urlOrId.trim();
+  
+  // If it's already an 11-char ID
+  if (trimmed.length === 11 && !trimmed.includes('/') && !trimmed.includes('?') && !trimmed.includes('=')) {
+    return trimmed;
+  }
+
+  // Prepend protocol if missing to make URL parser happy
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    trimmed = 'https://' + trimmed;
+  }
+  
+  // Try parsing using URL API
+  try {
+    const url = new URL(trimmed);
+    if (url.hostname.includes('youtube.com')) {
+      if (url.searchParams.has('v')) {
+        const v = url.searchParams.get('v');
+        if (v && v.length === 11) return v;
+      }
+      const pathnameParts = url.pathname.split('/');
+      // Handles /embed/ID, /shorts/ID, /v/ID, etc.
+      for (let i = 0; i < pathnameParts.length; i++) {
+        if ((pathnameParts[i] === 'embed' || pathnameParts[i] === 'shorts' || pathnameParts[i] === 'v') && pathnameParts[i+1]) {
+          const id = pathnameParts[i+1].split('?')[0];
+          if (id.length === 11) return id;
+        }
+      }
+      // General fallback for last segment
+      const last = pathnameParts[pathnameParts.length - 1];
+      if (last && last.length === 11) return last;
+    } else if (url.hostname.includes('youtu.be')) {
+      const id = url.pathname.substring(1).split('?')[0];
+      if (id.length === 11) return id;
+    }
+  } catch (e) {
+    // URL parsing failed
+  }
+
+  // Regex fallback (including shorts)
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+  const match = trimmed.match(regExp);
+  if (match && match[2] && match[2].length === 11) {
+    return match[2];
+  }
+  
+  // Fallback to strip query string and get last 11 chars
+  try {
+    const withoutQuery = trimmed.split('?')[0];
+    const parts = withoutQuery.split('/');
+    const lastPart = parts[parts.length - 1];
+    if (lastPart && lastPart.length === 11) {
+      return lastPart;
+    }
+  } catch (e) {}
+  
+  return urlOrId.trim();
+}
+
+export function getYoutubeThumbnail(urlOrId: string): string {
+  const videoId = extractYoutubeId(urlOrId);
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+}
+
 export interface DepositRequest {
   id: string;
   email: string;
@@ -103,6 +187,63 @@ export interface DepositRequest {
   details?: string;
   date: string;
   status: 'Pending' | 'Approved' | 'Rejected';
+}
+
+export interface GrandPrizeWinner {
+  id: string;
+  name: string;
+  prize: string;
+  imageUrl: string;
+  isActive: boolean;
+}
+
+export interface Promotion {
+  id: string;
+  title: string;
+  date: string;
+  excerpt: string;
+  buttonText: string;
+  flyerTitle: string;
+  flyerAmount: string;
+  flyerSub: string;
+  flyerExtra?: string;
+  flyerGradient: string;
+  accentColor: string;
+  targetLink: string;
+  isActive: boolean;
+}
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  excerpt: string;
+  date: string;
+  imageUrl: string;
+  bannerTitle?: string;
+  bannerSubtitle?: string;
+  bannerBg?: string;
+  isActive: boolean;
+}
+
+export interface VideoWinner {
+  id: string;
+  title: string;
+  name: string;
+  prizeText: string;
+  date: string;
+  thumbnailUrl: string;
+  youtubeId: string;
+  isActive: boolean;
+}
+
+export interface DrawResult {
+  id: string;
+  gameName: string;
+  date: string;
+  numbers: number[];
+  totalWinners: string;
+  totalPaid: string;
+  refCode?: string;
 }
 
 export interface CustomBanner {
@@ -157,7 +298,9 @@ export interface SiteThemeConfig {
   usdtInstructions: string;
   // Finance settings
   governmentFeePct: number;
+  minWithdrawalAmount?: number;
   maxWithdrawalAmount: number;
+  usdExchangeRate?: number;
   // Agent configuration
   agentWhatsappLink: string;
   agentImoLink: string;
@@ -177,6 +320,22 @@ export interface SiteThemeConfig {
   footerLicenseBoard?: string;
   footerLicenseSerial?: string;
   footerGccCompliance?: string;
+  // Customizable Showcase sections
+  grandPrizeWinners?: GrandPrizeWinner[];
+  youtubeVideoUrl?: string;
+  youtubeThumbnailUrl?: string;
+  youtubeVideoTitle?: string;
+  youtubeVideoSubtitle?: string;
+  youtubeVideoDescription?: string;
+  youtubeVideoDetails?: string;
+  totalMetricRegisteredUsers?: string;
+  totalMetricTicketsPurchased?: string;
+  totalMetricRegisteredUsersBase?: string;
+  totalMetricTicketsPurchasedBase?: string;
+  totalMetricRegisteredUsersRate?: string;
+  totalMetricTicketsPurchasedRate?: string;
+  videoWinners?: VideoWinner[];
+  drawResults?: DrawResult[];
 }
 
 interface AuthContextType {
@@ -207,6 +366,18 @@ interface AuthContextType {
   addRaffleWinner: (winner: Omit<DailyRaffleWinner, 'id'>) => void;
   deleteRaffleWinner: (id: string) => void;
   updateRaffleWinner: (id: string, fields: Partial<DailyRaffleWinner>) => void;
+  // Dynamic Promotions
+  promotions: Promotion[];
+  setPromotions: React.Dispatch<React.SetStateAction<Promotion[]>>;
+  addPromotion: (promo: Omit<Promotion, 'id'>) => Promise<void>;
+  updatePromotion: (id: string, fields: Partial<Promotion>) => Promise<void>;
+  deletePromotion: (id: string) => Promise<void>;
+  // Dynamic News Articles
+  newsArticles: NewsArticle[];
+  setNewsArticles: React.Dispatch<React.SetStateAction<NewsArticle[]>>;
+  addNewsArticle: (news: Omit<NewsArticle, 'id'>) => Promise<void>;
+  updateNewsArticle: (id: string, fields: Partial<NewsArticle>) => Promise<void>;
+  deleteNewsArticle: (id: string) => Promise<void>;
   // Withdrawal requests
   withdrawalRequests: WithdrawalRequest[];
   setWithdrawalRequests: React.Dispatch<React.SetStateAction<WithdrawalRequest[]>>;
@@ -224,6 +395,8 @@ interface AuthContextType {
   language: 'en' | 'bn';
   toggleLanguage: () => void;
   setLanguage: (lang: 'en' | 'bn') => void;
+  allUsersCount: number;
+  allTicketsCount: number;
 }
 
 const DEFAULT_USERS: UserProfile[] = [
@@ -300,7 +473,9 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
   usdtEnabled: true,
   usdtInstructions: 'Send USDT (ERC20/TRC20) to our secure address: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e. Enter the TxHash for instant validation.',
   governmentFeePct: 10,
+  minWithdrawalAmount: 10,
   maxWithdrawalAmount: 100000000,
+  usdExchangeRate: 117,
   // Agent defaults
   agentWhatsappLink: 'https://wa.me/8801986259552',
   agentImoLink: 'https://imo.im/8801986259552',
@@ -381,7 +556,141 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
       instructions: 'Send USDT (ERC20/TRC20) to our secure address: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e. Enter the TxHash for instant validation.',
       enabled: true,
       type: 'both'
+    },
+    {
+      id: 'pg-5',
+      name: 'Dokan Pay',
+      numberOrAddress: 'API-Enabled',
+      instructions: 'Pay securely using bKash, Nagad, Rocket or Bank Transfer via Dokan Pay gateway.',
+      enabled: true,
+      type: 'deposit'
     }
+  ],
+  grandPrizeWinners: [
+    {
+      id: 'gpw-1',
+      name: 'Robert Burkovski',
+      prize: '$2,042,205',
+      imageUrl: '/images/emirates_winner_robert_1781775078543.jpg',
+      isActive: true
+    }
+  ],
+  youtubeVideoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  youtubeThumbnailUrl: '/images/emirates_interview_thumbnail_1781775097474.jpg',
+  youtubeVideoTitle: "From Mother's Blessings to AED 100 Million",
+  youtubeVideoSubtitle: 'INTERVIEWS',
+  youtubeVideoDescription: 'Meet our lucky winners',
+  youtubeVideoDetails: 'Discover the deep stories of global participants who completed life-changing draw wins.',
+  totalMetricRegisteredUsers: '119,230,692',
+  totalMetricTicketsPurchased: '105,485,912',
+  totalMetricRegisteredUsersBase: '119230000',
+  totalMetricTicketsPurchasedBase: '105485000',
+  totalMetricRegisteredUsersRate: '12',
+  totalMetricTicketsPurchasedRate: '25',
+  videoWinners: [
+    {
+      id: 'vw-1',
+      title: "From Mother's Blessings to AED 100 Mill...",
+      name: 'Sriram Rajagopalan',
+      prizeText: '$27,229,408',
+      date: '16 March 2025',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=600',
+      youtubeId: 'dQw4w9WgXcQ',
+      isActive: true
+    },
+    {
+      id: 'vw-2',
+      title: 'Meet our first Canadian Grand Prize Win...',
+      name: 'Robert Burkovski',
+      prizeText: '$6,807 EVERY MONTH X 25 YEARS',
+      date: '16 December 2023',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=600',
+      youtubeId: 'dQw4w9WgXcQ',
+      isActive: true
+    },
+    {
+      id: 'vw-3',
+      title: 'Our AED 15 million Grand Prize Winner, M...',
+      name: 'Mohammad Inam',
+      prizeText: '$4,084,111',
+      date: '15 December 2023',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=600',
+      youtubeId: 'dQw4w9WgXcQ',
+      isActive: true
+    },
+    {
+      id: 'vw-4',
+      title: '"I don\'t think much-if I need it, I buy it."',
+      name: 'Mohammad Inam',
+      prizeText: '$4,084,111',
+      date: '15 December 2023',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=600',
+      youtubeId: 'dQw4w9WgXcQ',
+      isActive: true
+    },
+    {
+      id: 'vw-5',
+      title: 'Magesh Kumar secured a worry-free life',
+      name: 'Magesh Kumar',
+      prizeText: '$6,807 EVERY MONTH X 25 YEARS',
+      date: '14 October 2023',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=600',
+      youtubeId: 'dQw4w9WgXcQ',
+      isActive: true
+    },
+    {
+      id: 'vw-6',
+      title: 'Freilyn achieved her financial freedom by',
+      name: 'Freilyn Angob',
+      prizeText: '$6,807 EVERY MONTH X 25 YEARS',
+      date: '9 September 2023',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600',
+      youtubeId: 'dQw4w9WgXcQ',
+      isActive: true
+    }
+  ],
+  drawResults: [
+    // MEGA7
+    { id: 'dr-1', gameName: 'MEGA7', date: '14 June 2026', numbers: [4, 12, 18, 32, 49, 15, 21], totalWinners: '1,250 Players', totalPaid: '$45,000.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-2', gameName: 'MEGA7', date: '07 June 2026', numbers: [8, 11, 23, 27, 35, 42, 45], totalWinners: '1,090 Players', totalPaid: '$38,200.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-3', gameName: 'MEGA7', date: '31 May 2026', numbers: [1, 9, 14, 22, 30, 39, 48], totalWinners: '1,430 Players', totalPaid: '$53,100.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-4', gameName: 'MEGA7', date: '24 May 2026', numbers: [3, 7, 19, 25, 34, 41, 47], totalWinners: '990 Players', totalPaid: '$31,400.00', refCode: 'EMD-2941-XQ9' },
+    // WILD5
+    { id: 'dr-5', gameName: 'WILD5', date: '13 June 2026', numbers: [5, 12, 19, 27, 35], totalWinners: '840 Players', totalPaid: '$18,500.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-6', gameName: 'WILD5', date: '06 June 2026', numbers: [2, 10, 15, 22, 31], totalWinners: '750 Players', totalPaid: '$14,200.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-7', gameName: 'WILD5', date: '30 May 2026', numbers: [1, 5, 12, 18, 29], totalWinners: '910 Players', totalPaid: '$21,000.00', refCode: 'EMD-2941-XQ9' },
+    // EASY6
+    { id: 'dr-8', gameName: 'EASY6', date: '12 June 2026', numbers: [23, 11, 35, 39, 31, 25], totalWinners: '540 Players', totalPaid: '$4,512.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-9', gameName: 'EASY6', date: '05 June 2026', numbers: [4, 18, 22, 29, 33, 9], totalWinners: '412 Players', totalPaid: '$3,110.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-10', gameName: 'EASY6', date: '29 May 2026', numbers: [12, 15, 19, 21, 30, 37], totalWinners: '625 Players', totalPaid: '$5,980.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-11', gameName: 'EASY6', date: '22 May 2026', numbers: [2, 10, 16, 27, 34, 38], totalWinners: '390 Players', totalPaid: '$3,400.00', refCode: 'EMD-2941-XQ9' },
+    // FAST5
+    { id: 'dr-12', gameName: 'FAST5', date: '13 June 2026', numbers: [7, 14, 22, 35, 41], totalWinners: '640 Players', totalPaid: '1 Grand Winner (Monthly)', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-13', gameName: 'FAST5', date: '06 June 2026', numbers: [3, 11, 25, 30, 39], totalWinners: '430 Players', totalPaid: '$11,000.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-14', gameName: 'FAST5', date: '30 May 2026', numbers: [9, 15, 18, 26, 33], totalWinners: '580 Players', totalPaid: '$12,500.00', refCode: 'EMD-2941-XQ9' },
+    // SURE 1
+    { id: 'dr-15', gameName: 'SURE 1', date: '16 June 2026', numbers: [7], totalWinners: '3,210 Players', totalPaid: '$31,000.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-16', gameName: 'SURE 1', date: '15 June 2026', numbers: [4], totalWinners: '2,890 Players', totalPaid: '$27,500.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-17', gameName: 'SURE 1', date: '14 June 2026', numbers: [9], totalWinners: '3,100 Players', totalPaid: '$30,000.00', refCode: 'EMD-2941-XQ9' },
+    // SURE 2
+    { id: 'dr-18', gameName: 'SURE 2', date: '15 June 2026', numbers: [2, 9], totalWinners: '1,450 Players', totalPaid: '$36,000.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-19', gameName: 'SURE 2', date: '08 June 2026', numbers: [5, 0], totalWinners: '1,120 Players', totalPaid: '$29,000.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-20', gameName: 'SURE 2', date: '01 June 2026', numbers: [3, 7], totalWinners: '1,280 Players', totalPaid: '$32,000.00', refCode: 'EMD-2941-XQ9' },
+    // SURE 3
+    { id: 'dr-21', gameName: 'SURE 3', date: '11 June 2026', numbers: [1, 9, 5], totalWinners: '610 Players', totalPaid: '$52,000.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-22', gameName: 'SURE 3', date: '01 June 2026', numbers: [6, 2, 8], totalWinners: '480 Players', totalPaid: '$41,000.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-23', gameName: 'SURE 3', date: '21 May 2026', numbers: [3, 0, 7], totalWinners: '520 Players', totalPaid: '$44,500.00', refCode: 'EMD-2941-XQ9' },
+    // PICK 1
+    { id: 'dr-24', gameName: 'PICK 1', date: '16 June 2026', numbers: [1], totalWinners: '110 Players', totalPaid: '$60,000.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-25', gameName: 'PICK 1', date: '15 June 2026', numbers: [15], totalWinners: '95 Players', totalPaid: '$5,000.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-26', gameName: 'PICK 1', date: '14 June 2026', numbers: [7], totalWinners: '105 Players', totalPaid: '$6,000.00', refCode: 'EMD-2941-XQ9' },
+    // PICK 2
+    { id: 'dr-27', gameName: 'PICK 2', date: '16 June 2026', numbers: [4, 18], totalWinners: '125 Players', totalPaid: '$100,000.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-28', gameName: 'PICK 2', date: '15 June 2026', numbers: [7, 12], totalWinners: '88 Players', totalPaid: '$5,000.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-29', gameName: 'PICK 2', date: '14 June 2026', numbers: [3, 9], totalWinners: '102 Players', totalPaid: '$8,000.00', refCode: 'EMD-2941-XQ9' },
+    // LOTTERY
+    { id: 'dr-30', gameName: 'LOTTERY', date: '16 June 2026', numbers: [5, 12, 19, 27, 33, 41], totalWinners: '241 Players', totalPaid: '$1,000,000.00', refCode: 'EMD-2941-XQ9' },
+    { id: 'dr-31', gameName: 'LOTTERY', date: '09 June 2026', numbers: [1, 10, 15, 22, 38, 44], totalWinners: '189 Players', totalPaid: '$15,000.00', refCode: 'EMD-2941-XQ9' }
   ]
 };
 
@@ -411,6 +720,16 @@ const AuthContext = createContext<AuthContextType>({
   addRaffleWinner: () => {},
   deleteRaffleWinner: () => {},
   updateRaffleWinner: () => {},
+  promotions: [],
+  setPromotions: () => {},
+  addPromotion: async () => {},
+  updatePromotion: async () => {},
+  deletePromotion: async () => {},
+  newsArticles: [],
+  setNewsArticles: () => {},
+  addNewsArticle: async () => {},
+  updateNewsArticle: async () => {},
+  deleteNewsArticle: async () => {},
   withdrawalRequests: [],
   setWithdrawalRequests: () => {},
   addWithdrawalRequest: () => {},
@@ -460,6 +779,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [historicalDraws, setHistoricalDraws] = useState<HistoricalDraw[]>([]);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [raffleWinners, setRaffleWinners] = useState<DailyRaffleWinner[]>([]);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [depositRequests, setDepositRequests] = useState<DepositRequest[]>([]);
   const [siteConfig, setSiteConfig] = useState<SiteThemeConfig>(() => {
@@ -474,6 +795,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     return DEFAULT_SITE_CONFIG;
   });
+
+  const [allUsersCount, setAllUsersCount] = useState<number>(0);
+  const [allTicketsCount, setAllTicketsCount] = useState<number>(0);
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('theme');
@@ -633,6 +957,147 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log("Raffle winners seeding skipped");
         }
 
+        // Seed Promotions (Public Read)
+        try {
+          const promoColl = collection(db, 'promotions');
+          const promoSnap = await getDocs(promoColl);
+          if (promoSnap.empty) {
+            const initialPromos = [
+              {
+                id: 'p-1',
+                title: 'MEGA7 Rollover to USD 50 Million',
+                date: '31/05/2026',
+                excerpt: 'Purchase a MEGA7 ticket during the promotional period to enter the draw... High odds and monumental rollovers inside the drawing engines.',
+                buttonText: 'READ MORE',
+                flyerTitle: 'MEGA7 Rollover',
+                flyerAmount: '$50,000,000',
+                flyerSub: 'EXTENDED: Reach for the skies with $50M!',
+                flyerExtra: 'ENDS 21st JUNE • RESETS TO $30,000,000',
+                flyerGradient: 'from-amber-600 via-[#E52535] to-[#4A030A] text-white',
+                accentColor: '[#E52535]',
+                targetLink: '/games/mega7',
+                isActive: true
+              },
+              {
+                id: 'p-2',
+                title: 'WIN 52 FREE TICKETS PROMO',
+                date: '24/05/2026',
+                excerpt: 'Congratulations to Our Eid Bonanza Winners! Every purchase qualifies you automatically for the free tickets multiplier pools.',
+                buttonText: 'READ MORE',
+                flyerTitle: 'EID BONANZA',
+                flyerAmount: 'WIN 52 FREE',
+                flyerSub: 'Buy 5 tickets of any game to qualify instantly!',
+                flyerExtra: 'OFFER ENDS 31 MAY • ADD TO CART',
+                flyerGradient: 'from-purple-850 via-[#7C3AED] to-[#1C1F5C] text-white',
+                accentColor: '[#7C3AED]',
+                targetLink: '/dashboard',
+                isActive: true
+              },
+              {
+                id: 'p-3',
+                title: 'BUY 3 PICK2 GET 2 FREE',
+                date: '12/02/2026',
+                excerpt: 'Add 5 PICK2 tickets to your cart in a single transaction during the promotional times to instantly avail of the automatic bonus free codes.',
+                buttonText: 'READ MORE',
+                flyerTitle: 'BUY 3 GET 2 FREE',
+                flyerAmount: '$150,000',
+                flyerSub: 'Live your dreams with Pick2 prize multipliers!',
+                flyerExtra: 'LIMITED TIME OFFER • PICK TICKETS NOW',
+                flyerGradient: 'from-emerald-700 via-[#0D9488] to-[#113C4A] text-white',
+                accentColor: 'teal-600',
+                targetLink: '/rush/pick2',
+                isActive: true
+              }
+            ];
+            for (const p of initialPromos) {
+              await setDoc(doc(db, 'promotions', p.id), p);
+            }
+          }
+        } catch (e) {
+          console.log("Promotions seeding skipped");
+        }
+
+        // Seed News Articles (Public Read)
+        try {
+          const newsColl = collection(db, 'newsArticles');
+          const newsSnap = await getDocs(newsColl);
+          if (newsSnap.empty) {
+            const initialNews = [
+              {
+                id: 'n-1',
+                title: 'Emirate Draw: Indian Player Wins INR 2.8 Million!',
+                excerpt: "How one man's belief paid off big and why your moment could be next. He started with a single ticket and is now celebrating with family.",
+                date: '11 June 2026',
+                imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
+                bannerTitle: 'SURE 1 WINNER',
+                bannerSubtitle: '$30,000',
+                bannerBg: 'bg-gradient-to-r from-pink-600 via-pink-500 to-rose-600 text-white',
+                isActive: true
+              },
+              {
+                id: 'n-2',
+                title: 'One Number Away From $4 Million: Three Indian Expats Celebrate Golobal Lottery Wins',
+                excerpt: 'Now, $50 Million MEGA7 Opportunity Awaits This Sunday. All three matched 6 of the 7 numbers to unlock the secondary prizes.',
+                date: '4 June 2026',
+                imageUrl: 'https://images.unsplash.com/photo-1556157382-97dea7d240ff?auto=format&fit=crop&q=80&w=400',
+                bannerTitle: 'Winners every week!',
+                bannerSubtitle: '$8,333 EASY6 WINNER',
+                bannerBg: 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white',
+                isActive: true
+              },
+              {
+                id: 'n-3',
+                title: 'Golobal Lottery: You Spend This Much Every Week. Make It Count!',
+                excerpt: 'A limited-time offer and the belief that one ticket can change everything. Check out our Eid special multipliers to learn more.',
+                date: '29 May 2026',
+                imageUrl: 'https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&q=80&w=400',
+                bannerTitle: 'EID BONANZA',
+                bannerSubtitle: 'WIN 52 FREE TICKETS',
+                bannerBg: 'bg-gradient-to-r from-red-650 from-red-600 via-[#E52535] to-amber-500 text-white',
+                isActive: true
+              },
+              {
+                id: 'n-4',
+                title: 'Golobal Lottery Highlights Why Thousands of Players Return Every Week',
+                excerpt: 'Limited-time promotions and life-changing prize opportunities continue to drive engagement globally. Explore our ongoing ticket referral systems.',
+                date: '21 May 2026',
+                imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+                bannerTitle: 'FLASH SALE',
+                bannerSubtitle: 'ONLY FOR $50',
+                bannerBg: 'bg-gradient-to-r from-[#1E2E80] to-indigo-500 text-white',
+                isActive: true
+              },
+              {
+                id: 'n-5',
+                title: '$25,000 Golobal Lottery EASY6 Brings Life-Changing Moment for One Indian Family',
+                excerpt: 'The lucky winner almost hit $4 million. With his winnings, he plans to secure his daughters university education fees and travel home.',
+                date: '14 May 2026',
+                imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=400',
+                bannerTitle: 'Tamil Nadu is on fire!',
+                bannerSubtitle: '$25,000 EASY6 WINNER',
+                bannerBg: 'bg-gradient-to-r from-green-600 to-emerald-500 text-white',
+                isActive: true
+              },
+              {
+                id: 'n-6',
+                title: 'One Number Away: Expat in Qatar Wins Big & the $50 Million Dream Isn\'t Over Yet',
+                excerpt: 'Golobal Lottery Turns Everyday Hope Into Reality for Latest MEGA7 Winner. He has played consecutively for several draws and finally hit gold.',
+                date: '7 May 2026',
+                imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400',
+                bannerTitle: 'One number away!',
+                bannerSubtitle: '$40,000 WINNER',
+                bannerBg: 'bg-gradient-to-r from-[#7C3AED] via-purple-600 to-purple-800 text-white',
+                isActive: true
+              }
+            ];
+            for (const n of initialNews) {
+              await setDoc(doc(db, 'newsArticles', n.id), n);
+            }
+          }
+        } catch (e) {
+          console.log("News seeding skipped");
+        }
+
         // 5. Seed Deposit Requests (Protected)
         try {
           const depositColl = collection(db, 'depositRequests');
@@ -730,6 +1195,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setHistoricalDraws(list);
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'historicalDraws'));
 
+    const unsubPromotions = onSnapshot(collection(db, 'promotions'), (snap) => {
+      const list: Promotion[] = [];
+      snap.forEach((d) => {
+        const p = d.data() as Promotion;
+        list.push({ ...p, id: d.id });
+      });
+      setPromotions(list);
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'promotions'));
+
+    const unsubNews = onSnapshot(collection(db, 'newsArticles'), (snap) => {
+      const list: NewsArticle[] = [];
+      snap.forEach((d) => {
+        const n = d.data() as NewsArticle;
+        list.push({ ...n, id: d.id });
+      });
+      setNewsArticles(list);
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'newsArticles'));
+
+    const unsubAllUsersCount = onSnapshot(collection(db, 'users'), (snap) => {
+      setAllUsersCount(snap.size);
+    }, (err) => console.log('unsubAllUsersCount err', err));
+
+    const unsubAllTicketsCount = onSnapshot(collection(db, 'purchasedTickets'), (snap) => {
+      setAllTicketsCount(snap.size);
+    }, (err) => console.log('unsubAllTicketsCount err', err));
+
     let unsubUserDoc: (() => void) | null = null;
 
     const unsubAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -786,6 +1277,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unsubGames();
       unsubRaffle();
       unsubDraws();
+      unsubPromotions();
+      unsubNews();
+      unsubAllUsersCount();
+      unsubAllTicketsCount();
       unsubAuth();
       if (unsubUserDoc) {
         unsubUserDoc();
@@ -1099,6 +1594,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const addPromotion = async (promo: Omit<Promotion, 'id'>) => {
+    try {
+      const id = 'p-' + Date.now();
+      const newPromo = { ...promo, id };
+      await setDoc(doc(db, 'promotions', id), newPromo);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'promotions');
+    }
+  };
+
+  const deletePromotion = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'promotions', id));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `promotions/${id}`);
+    }
+  };
+
+  const updatePromotion = async (id: string, fields: Partial<Promotion>) => {
+    try {
+      await setDoc(doc(db, 'promotions', id), fields, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `promotions/${id}`);
+    }
+  };
+
+  const addNewsArticle = async (news: Omit<NewsArticle, 'id'>) => {
+    try {
+      const id = 'n-' + Date.now();
+      const newNews = { ...news, id };
+      await setDoc(doc(db, 'newsArticles', id), newNews);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'newsArticles');
+    }
+  };
+
+  const deleteNewsArticle = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'newsArticles', id));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `newsArticles/${id}`);
+    }
+  };
+
+  const updateNewsArticle = async (id: string, fields: Partial<NewsArticle>) => {
+    try {
+      await setDoc(doc(db, 'newsArticles', id), fields, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `newsArticles/${id}`);
+    }
+  };
+
   const addWithdrawalRequest = async (req: Omit<WithdrawalRequest, 'id' | 'date' | 'status'>) => {
     try {
       const id = 'WD-' + Math.floor(1000 + Math.random() * 9000);
@@ -1110,18 +1657,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
       await setDoc(doc(db, 'withdrawalRequests', id), newReq);
 
-      // Deduct winnings balance
-      const userRef = doc(db, 'users', req.email.toLowerCase());
-      const userSnap = await getDoc(userRef);
-      if (userSnap.exists()) {
-        const uData = userSnap.data() as UserProfile;
-        const currentWinBal = uData.winningsBalance !== undefined ? uData.winningsBalance : 180;
-        const nextWinBal = Math.max(0, currentWinBal - req.amount);
-        await setDoc(userRef, { winningsBalance: nextWinBal }, { merge: true });
-        if (user && user.email.toLowerCase() === req.email.toLowerCase()) {
-          setUser(prev => prev ? { ...prev, winningsBalance: nextWinBal } : null);
-        }
-      }
+      // We no longer deduct here because Dashboard.tsx already deducts it before calling this.
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'withdrawalRequests');
     }
@@ -1133,16 +1669,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const reqSnap = await getDoc(reqRef);
       if (reqSnap.exists()) {
         const req = reqSnap.data() as WithdrawalRequest;
-        if (status === 'Rejected') {
+        if (status === 'Rejected' && req.status === 'Pending') {
           const userRef = doc(db, 'users', req.email.toLowerCase());
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
             const uData = userSnap.data() as UserProfile;
-            const currentWinBal = uData.winningsBalance !== undefined ? uData.winningsBalance : 180;
-            const nextWinBal = currentWinBal + req.amount;
-            await setDoc(userRef, { winningsBalance: nextWinBal }, { merge: true });
+            const currentBal = uData.balance || 0;
+            const currentComm = uData.commissionBalance || 0;
+            
+            const nextBal = currentBal + req.amount;
+            const nextComm = currentComm + (req.commissionDeducted || 0);
+            
+            await setDoc(userRef, { balance: nextBal, commissionBalance: nextComm }, { merge: true });
             if (user && user.email.toLowerCase() === req.email.toLowerCase()) {
-              setUser(prev => prev ? { ...prev, winningsBalance: nextWinBal } : null);
+              setUser(prev => prev ? { ...prev, balance: nextBal, commissionBalance: nextComm } : null);
             }
           }
         }
@@ -1175,7 +1715,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (reqSnap.exists()) {
         const req = reqSnap.data() as DepositRequest;
         if (status === 'Approved' && req.status === 'Pending') {
-          await updateUserBalance(req.email, req.amount);
+          // Check if it's a commission deposit based on gateway or details
+          const isCommission = req.gateway.toLowerCase().includes('commission') || req.details?.toLowerCase().includes('commission');
+          
+          if (isCommission) {
+            const userTarget = allUsers.find(u => u.email === req.email);
+            const currentComm = userTarget?.commissionBalance || 0;
+            await updateUserProfileFields(req.email, { commissionBalance: currentComm + req.amount });
+          } else {
+            await updateUserBalance(req.email, req.amount);
+          }
         }
         await setDoc(reqRef, { status }, { merge: true });
       }
@@ -1213,6 +1762,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       addRaffleWinner,
       deleteRaffleWinner,
       updateRaffleWinner,
+      // Dynamic Promotions
+      promotions,
+      setPromotions,
+      addPromotion,
+      deletePromotion,
+      updatePromotion,
+      // Dynamic News Articles
+      newsArticles,
+      setNewsArticles,
+      addNewsArticle,
+      deleteNewsArticle,
+      updateNewsArticle,
       // Withdrawal requests
       withdrawalRequests,
       setWithdrawalRequests,
@@ -1229,7 +1790,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Language management
       language,
       toggleLanguage,
-      setLanguage
+      setLanguage,
+      allUsersCount,
+      allTicketsCount
     }}>
       {children}
     </AuthContext.Provider>

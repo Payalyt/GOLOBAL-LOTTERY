@@ -1,70 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Play, Sparkles, AlertCircle, Sparkle } from 'lucide-react';
-
-interface Promo {
-  id: number;
-  title: string;
-  date: string;
-  excerpt: string;
-  buttonText: string;
-  flyerTitle: string;
-  flyerAmount: string;
-  flyerSub: string;
-  flyerExtra?: string;
-  flyerGradient: string; // Tailwinds CSS gradient config
-  accentColor: string;
-  targetLink: string;
-}
-
-const promoList: Promo[] = [
-  {
-    id: 1,
-    title: 'MEGA7 Rollover to USD 50 Million',
-    date: '31/05/2026',
-    excerpt: 'Purchase a MEGA7 ticket during the promotional period to enter the draw... High odds and monumental rollovers inside the drawing engines.',
-    buttonText: 'READ MORE',
-    flyerTitle: 'MEGA7 Rollover',
-    flyerAmount: '$50,000,000',
-    flyerSub: 'EXTENDED: Reach for the skies with $50M!',
-    flyerExtra: 'ENDS 21st JUNE • RESETS TO $30,000,000',
-    flyerGradient: 'from-amber-600 via-[#E52535] to-[#4A030A] text-white',
-    accentColor: '[#E52535]',
-    targetLink: '/games/mega7'
-  },
-  {
-    id: 2,
-    title: 'WIN 52 FREE TICKETS PROMO',
-    date: '24/05/2026',
-    excerpt: 'Congratulations to Our Eid Bonanza Winners! Every purchase qualifies you automatically for the free tickets multiplier pools.',
-    buttonText: 'READ MORE',
-    flyerTitle: 'EID BONANZA',
-    flyerAmount: 'WIN 52 FREE',
-    flyerSub: 'Buy 5 tickets of any game to qualify instantly!',
-    flyerExtra: 'OFFER ENDS 31 MAY • ADD TO CART',
-    flyerGradient: 'from-purple-850 via-[#7C3AED] to-[#1C1F5C] text-white',
-    accentColor: '[#7C3AED]',
-    targetLink: '/dashboard'
-  },
-  {
-    id: 3,
-    title: 'BUY 3 PICK2 GET 2 FREE',
-    date: '12/02/2026',
-    excerpt: 'Add 5 PICK2 tickets to your cart in a single transaction during the promotional times to instantly avail of the automatic bonus free codes.',
-    buttonText: 'READ MORE',
-    flyerTitle: 'BUY 3 GET 2 FREE',
-    flyerAmount: '$150,000',
-    flyerSub: 'Live your dreams with Pick2 prize multipliers!',
-    flyerExtra: 'LIMITED TIME OFFER • PICK TICKETS NOW',
-    flyerGradient: 'from-emerald-700 via-[#0D9488] to-[#113C4A] text-white',
-    accentColor: 'teal-600',
-    targetLink: '/rush/pick2'
-  }
-];
+import { useAuth, Promotion } from '../context/AuthContext';
 
 export function Promotions() {
   const navigate = useNavigate();
-  const [activePromo, setActivePromo] = useState<Promo | null>(null);
+  const { promotions } = useAuth();
+  const [activePromo, setActivePromo] = useState<Promotion | null>(null);
+
+  // Only display active promotions
+  const activePromotions = promotions.filter(p => p.isActive !== false);
 
   return (
     <div id="promotions-root-view" className="bg-[#FAF9FC] min-h-screen text-zinc-900 font-sans pb-16">
@@ -104,51 +49,58 @@ export function Promotions() {
           </div>
 
           {/* Grid of Promotion Cards (3 columns structure strictly matching Screenshot 3) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-2">
-            {promoList.map((promo) => (
-              <div 
-                key={promo.id} 
-                className="bg-white rounded-2xl border border-gray-150 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-200 group"
-              >
-                <div>
-                  
-                  {/* Visual Promotional Flyer utilizing pure high-fidelity CSS text design */}
-                  <div className={`aspect-[4/3] w-full bg-gradient-to-br ${promo.flyerGradient} p-6 flex flex-col justify-between relative select-none shrink-0 overflow-hidden`}>
+          {activePromotions.length === 0 ? (
+            <div className="text-center py-12 bg-zinc-50 rounded-2xl border border-zinc-150">
+              <Sparkles className="w-12 h-12 text-zinc-300 mx-auto mb-3 animate-pulse" />
+              <p className="text-zinc-500 font-extrabold text-sm uppercase tracking-wider">No Active Promotions</p>
+              <p className="text-zinc-400 text-xs mt-1 font-semibold">Check back soon for exciting campaigns and custom bonus multipliers!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-2">
+              {activePromotions.map((promo) => (
+                <div 
+                  key={promo.id} 
+                  className="bg-white rounded-2xl border border-gray-150 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-200 group"
+                >
+                  <div>
                     
-                    {/* Radial light glow element overlay */}
-                    <div className="absolute inset-0 bg-radial-gradient from-transparent to-black/20 pointer-events-none" />
-                    
-                    {/* Upper Ribbon and Badge */}
-                    <div className="flex justify-between items-start relative z-10 w-full">
-                      <span className="bg-white/15 backdrop-blur-md px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded border border-white/10">
-                        {promo.flyerTitle}
-                      </span>
-                      <span className="bg-red-600 text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded shadow-sm flex items-center gap-1 shrink-0 animate-pulse">
-                        <Sparkle className="w-2.5 h-2.5 fill-white" /> Extended
-                      </span>
-                    </div>
-
-                    {/* Bold Golden Amount display */}
-                    <div className="space-y-1 my-auto relative z-10 text-center">
-                      <span className="text-[10px] tracking-widest uppercase font-extrabold text-yellow-300 block">
-                        Guaranteed Grand Draw
-                      </span>
-                      <h3 className="text-3xl font-black font-sans leading-none tracking-tight text-white drop-shadow">
-                        {promo.flyerAmount}
-                      </h3>
-                      <p className="text-[10px] text-zinc-100 font-bold max-w-[90%] mx-auto leading-tight">
-                        {promo.flyerSub}
-                      </p>
-                    </div>
-
-                    {/* Bottom Flyer Fineprint info bar */}
-                    {promo.flyerExtra && (
-                      <div className="bg-black/20 backdrop-blur-3xs p-1.5 px-2 text-[8px] rounded border border-white/5 relative z-10 text-center uppercase tracking-wide font-extrabold text-[#FFEA4A] shrink-0 truncate">
-                        {promo.flyerExtra}
+                    {/* Visual Promotional Flyer utilizing pure high-fidelity CSS text design */}
+                    <div className={`aspect-[4/3] w-full bg-gradient-to-br ${promo.flyerGradient} p-6 flex flex-col justify-between relative select-none shrink-0 overflow-hidden`}>
+                      
+                      {/* Radial light glow element overlay */}
+                      <div className="absolute inset-0 bg-radial-gradient from-transparent to-black/20 pointer-events-none" />
+                      
+                      {/* Upper Ribbon and Badge */}
+                      <div className="flex justify-between items-start relative z-10 w-full">
+                        <span className="bg-white/15 backdrop-blur-md px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded border border-white/10">
+                          {promo.flyerTitle}
+                        </span>
+                        <span className="bg-red-600 text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded shadow-sm flex items-center gap-1 shrink-0 animate-pulse">
+                          <Sparkle className="w-2.5 h-2.5 fill-white" /> Extended
+                        </span>
                       </div>
-                    )}
 
-                  </div>
+                      {/* Bold Golden Amount display */}
+                      <div className="space-y-1 my-auto relative z-10 text-center">
+                        <span className="text-[10px] tracking-widest uppercase font-extrabold text-yellow-300 block">
+                          Guaranteed Grand Draw
+                        </span>
+                        <h3 className="text-3xl font-black font-sans leading-none tracking-tight text-white drop-shadow">
+                          {promo.flyerAmount}
+                        </h3>
+                        <p className="text-[10px] text-zinc-100 font-bold max-w-[90%] mx-auto leading-tight">
+                          {promo.flyerSub}
+                        </p>
+                      </div>
+
+                      {/* Bottom Flyer Fineprint info bar */}
+                      {promo.flyerExtra && (
+                        <div className="bg-black/20 backdrop-blur-3xs p-1.5 px-2 text-[8px] rounded border border-white/5 relative z-10 text-center uppercase tracking-wide font-extrabold text-[#FFEA4A] shrink-0 truncate">
+                          {promo.flyerExtra}
+                        </div>
+                      )}
+
+                    </div>
 
                   {/* Body textual Content details */}
                   <div className="p-5 space-y-3">
@@ -178,6 +130,7 @@ export function Promotions() {
               </div>
             ))}
           </div>
+          )}
 
         </div>
 
