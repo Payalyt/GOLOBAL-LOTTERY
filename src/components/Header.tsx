@@ -272,7 +272,7 @@ export function Header() {
                   className="hidden md:flex items-center gap-2 bg-black border border-zinc-800 rounded-xl px-3 py-1.5 shadow-md text-white"
                 >
                   <div className="flex flex-col text-right">
-                    <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wide">{user.name.split(' ')[0]}</span>
+                    <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wide">{t('wallet_balance', language)}</span>
                     <span className="text-sm font-black text-emerald-400 leading-none mt-0.5">${user.balance.toFixed(2)}</span>
                   </div>
                 </div>

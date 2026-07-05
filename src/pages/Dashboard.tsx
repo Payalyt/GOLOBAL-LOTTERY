@@ -246,6 +246,9 @@ export function Dashboard() {
 
   // Legacy variables kept or adapted to prevent compilation errors
   const [selectedDepositMethod, setSelectedDepositMethod] = useState<'manual_gateway' | 'card' | 'agent' | 'crypto'>('manual_gateway');
+  const [cryptoSubMethod, setCryptoSubMethod] = useState<'automatic' | 'manual'>('automatic');
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
+
   const [selectedCommissionMethod, setSelectedCommissionMethod] = useState<'manual_gateway' | 'card' | 'agent'>('manual_gateway');
   const [selectedWithdrawMethod, setSelectedWithdrawMethod] = useState<'manual_gateway' | 'bank' | 'agent'>('manual_gateway');
   const [isProcessingDokan, setIsProcessingDokan] = useState(false);
@@ -469,6 +472,54 @@ export function Dashboard() {
     alert(`🎉 Success! Agent Deposit request for $${amt.toFixed(2)} via ${agentDepositChannel} has been submitted to Admin.`);
     setAgentDepositReference('');
     setActiveTab('Transactions');
+  };
+
+  const handleCreateCryptoInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    const amt = parseFloat(depositAmount);
+    if (isNaN(amt) || amt <= 0) {
+      alert("Please specify a valid deposit amount.");
+      return;
+    }
+
+    if (amt < 2) {
+      alert("Minimum deposit amount for crypto payments is $2.00");
+      return;
+    }
+
+    setIsCreatingInvoice(true);
+    try {
+      const response = await fetch("/api/nowpayments/create-payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          amount: amt,
+          email: user.email
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create payment invoice.");
+      }
+
+      if (data.invoice_url) {
+        alert(language === 'en' 
+          ? "Redirecting you to NOWPayments secure crypto payment portal..." 
+          : "আপনাকে NOWPayments-এর নিরাপদ ক্রিপ্টো পেমেন্ট পেজে নিয়ে যাওয়া হচ্ছে...");
+        window.location.href = data.invoice_url;
+      } else {
+        alert("Unexpected response from server: Payment invoice URL missing.");
+      }
+    } catch (err: any) {
+      console.error("Error creating payment link:", err);
+      alert(`❌ Error: ${err.message || "Failed to generate crypto payment link. Please try again."}`);
+    } finally {
+      setIsCreatingInvoice(false);
+    }
   };
 
   const handleManualDepositSubmit = async (e: React.FormEvent) => {
@@ -1706,114 +1757,207 @@ export function Dashboard() {
                   )}
 
                   {selectedDepositMethod === 'crypto' && (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (!user) return;
-                        const amt = parseFloat(depositAmount);
-                        if (isNaN(amt) || amt <= 0) {
-                          alert("Please specify a valid deposit amount.");
-                          return;
-                        }
-                        if (!depositTrxId) {
-                          alert("Please enter USDT Transaction Hash (TxHash).");
-                          return;
-                        }
-                        if (addDepositRequest) {
-                          addDepositRequest({
-                            email: user.email,
-                            amount: amt,
-                            gateway: 'USDT (TRC20)',
-                            transactionId: depositTrxId,
-                            details: `Sender Address: ${depositPhoneOrAccount || 'Not Specified'}`
-                          });
-                          alert(`🎉 Crypto Deposit request of $${amt.toFixed(2)} submitted successfully! It will be verified by our Admin team shortly.`);
-                          setDepositAmount('100');
-                          setDepositPhoneOrAccount('');
-                          setDepositTrxId('');
-                          setActiveTab('Transactions');
-                        }
-                      }}
-                      className="space-y-6"
-                    >
-                      {/* Amount Input */}
+                    <div className="space-y-6">
+                      {/* Sub Method Toggle (Automatic vs Manual) */}
                       <div>
-                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
-                          {language === 'en' ? 'Enter USDT Deposit Amount ($)' : 'USDT ডিপোজিট পরিমাণ লিখুন ($)'}
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
+                          {language === 'en' ? 'Select Crypto Processing Mode' : 'ক্রিপ্টো প্রসেসিং মোড সিলেক্ট করুন'}
                         </label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={depositAmount}
-                          onChange={(e) => setDepositAmount(e.target.value)}
-                          className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-sm font-semibold outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all"
-                          required
-                        />
-                      </div>
-
-                      {/* Crypto details */}
-                      <div className="animate-fade-in space-y-5 bg-zinc-50 border border-zinc-200/60 p-5 rounded-2xl">
-                        <div className="bg-white border border-zinc-200/80 rounded-xl p-4 flex flex-col items-center justify-center text-center">
-                          <span className="text-[9px] font-black text-[#E52535] uppercase tracking-widest block mb-1">
-                            USDT (TRC20) Wallet Address:
-                          </span>
-                          <p className="font-mono text-xs sm:text-sm font-black text-zinc-950 select-all break-all mb-2">
-                            0x742d35Cc6634C0532925a3b844Bc454e4438f44e
-                          </p>
+                        <div className="grid grid-cols-2 gap-2 bg-zinc-100 p-1 rounded-2xl border border-zinc-200">
                           <button
                             type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText('0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
-                              alert("USDT Address Copied!");
-                            }}
-                            className="text-[9px] font-black tracking-widest uppercase bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-lg"
+                            onClick={() => setCryptoSubMethod('automatic')}
+                            className={`py-3 px-1 text-center font-bold text-xs rounded-xl transition-all uppercase tracking-wider ${
+                              cryptoSubMethod === 'automatic'
+                                ? 'bg-zinc-900 text-white shadow-sm font-black'
+                                : 'text-zinc-600 hover:text-zinc-900'
+                            }`}
                           >
-                            COPY ADDRESS / কপি করুন
+                            ⚡ {language === 'en' ? 'Automatic Pay' : 'অটোমেটিক পে'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setCryptoSubMethod('manual')}
+                            className={`py-3 px-1 text-center font-bold text-xs rounded-xl transition-all uppercase tracking-wider ${
+                              cryptoSubMethod === 'manual'
+                                ? 'bg-zinc-900 text-white shadow-sm font-black'
+                                : 'text-zinc-600 hover:text-zinc-900'
+                            }`}
+                          >
+                            📝 {language === 'en' ? 'Manual Send' : 'ম্যানুয়াল সেন্ড'}
                           </button>
                         </div>
+                      </div>
 
-                        <div className="text-xs text-zinc-600 font-medium italic bg-white border border-zinc-150 p-4 rounded-xl">
-                          <p className="font-bold text-zinc-700 not-italic mb-1 uppercase tracking-wider text-[9px]">Instructions:</p>
-                          "Send USDT (TRC20) to our secure address above. Enter your Sender Wallet Address and Transaction Hash (TxHash/TxID) below for instant audit & verification."
-                        </div>
-
-                        {/* Inputs: User Wallet, TxHash */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {cryptoSubMethod === 'automatic' ? (
+                        <form onSubmit={handleCreateCryptoInvoice} className="space-y-6">
+                          {/* Amount Input */}
                           <div>
-                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
-                              {language === 'en' ? 'Your Sender Wallet Address' : 'আপনার প্রেরক ওয়ালেট অ্যাড্রেস'}
+                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
+                              {language === 'en' ? 'Enter Crypto Deposit Amount ($)' : 'ক্রিপ্টো ডিপোজিট পরিমাণ লিখুন ($)'}
                             </label>
                             <input
-                              type="text"
-                              placeholder="e.g. T9yD14NjX..."
-                              value={depositPhoneOrAccount}
-                              onChange={(e) => setDepositPhoneOrAccount(e.target.value)}
-                              className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 font-mono"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
-                              {language === 'en' ? 'Transaction Hash (TxID) *' : 'ট্রানজেকশন হ্যাশ (TxID) *'} <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="e.g. f8319a27b9c9d..."
-                              value={depositTrxId}
-                              onChange={(e) => setDepositTrxId(e.target.value)}
-                              className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 font-mono"
+                              type="number"
+                              min="2"
+                              value={depositAmount}
+                              onChange={(e) => setDepositAmount(e.target.value)}
+                              className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-sm font-semibold outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all"
                               required
                             />
                           </div>
-                        </div>
 
-                        <button
-                          type="submit"
-                          className="w-full bg-[#E52535] hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                          <div className="animate-fade-in space-y-5 bg-emerald-50/50 border border-emerald-200/60 p-6 rounded-2xl">
+                            <div className="flex items-center gap-3 border-b border-emerald-100 pb-3">
+                              <span className="text-2xl">⚡</span>
+                              <div>
+                                <h4 className="font-extrabold text-xs text-zinc-950 uppercase tracking-widest">
+                                  {language === 'en' ? 'Instant Automated Payment' : 'ইনস্ট্যান্ট অটোমেটিক পেমেন্ট'}
+                                </h4>
+                                <p className="text-[10px] text-zinc-500 font-medium">
+                                  Powered by NOWPayments API Gateway
+                                </p>
+                              </div>
+                            </div>
+
+                            <p className="text-xs text-zinc-600 font-semibold leading-relaxed">
+                              {language === 'en' 
+                                ? "Pay instantly using BTC, USDT, ETH, TRX, LTC, or other supported cryptocurrencies. Once the network confirms your payment, your wallet balance is instantly credited to your account — no manual audit or waiting required!" 
+                                : "BTC, USDT, ETH, TRX, LTC বা অন্যান্য ক্রিপ্টো কারেন্সি দিয়ে ইনস্ট্যান্ট পেমেন্ট করুন। পেমেন্ট কনফার্ম হওয়ার সাথে সাথে আপনার অ্যাকাউন্টে অটোমেটিক ব্যালেন্স যোগ হবে — কোনো ম্যানুয়াল রিভিউ বা অপেক্ষা করার প্রয়োজন নেই!"}
+                            </p>
+
+                            <div className="text-[10px] text-emerald-800 font-bold flex items-center gap-1">
+                              🛡️ {language === 'en' ? 'Zero-fee secure blockchain checkout' : 'জিরো-ফি সুরক্ষিত ব্লকচেইন চেকআউট'}
+                            </div>
+
+                            <button
+                              type="submit"
+                              disabled={isCreatingInvoice}
+                              className="w-full bg-[#E52535] hover:bg-red-700 disabled:bg-red-400 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                            >
+                              {isCreatingInvoice ? (
+                                <>
+                                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                  {language === 'en' ? 'GENERATING PAYMENT LINK...' : 'পেমেন্ট লিংক তৈরি হচ্ছে...'}
+                                </>
+                              ) : (
+                                <>
+                                  🪙 {language === 'en' ? 'PAY WITH CRYPTO INSTANTLY' : 'ইনস্ট্যান্ট ক্রিপ্টো পেমেন্ট করুন'}
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            if (!user) return;
+                            const amt = parseFloat(depositAmount);
+                            if (isNaN(amt) || amt <= 0) {
+                              alert("Please specify a valid deposit amount.");
+                              return;
+                            }
+                            if (!depositTrxId) {
+                              alert("Please enter USDT Transaction Hash (TxHash).");
+                              return;
+                            }
+                            if (addDepositRequest) {
+                              addDepositRequest({
+                                email: user.email,
+                                amount: amt,
+                                gateway: 'USDT (TRC20)',
+                                transactionId: depositTrxId,
+                                details: `Sender Address: ${depositPhoneOrAccount || 'Not Specified'}`
+                              });
+                              alert(`🎉 Crypto Deposit request of $${amt.toFixed(2)} submitted successfully! It will be verified by our Admin team shortly.`);
+                              setDepositAmount('100');
+                              setDepositPhoneOrAccount('');
+                              setDepositTrxId('');
+                              setActiveTab('Transactions');
+                            }
+                          }}
+                          className="space-y-6"
                         >
-                          {language === 'en' ? 'SUBMIT CRYPTO DEPOSIT FOR VERIFICATION' : 'ক্রিপ্টো ডিপোজিট রিকোয়েস্ট পাঠান'}
-                        </button>
-                      </div>
-                    </form>
+                          {/* Amount Input */}
+                          <div>
+                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
+                              {language === 'en' ? 'Enter USDT Deposit Amount ($)' : 'USDT ডিপোজিট পরিমাণ লিখুন ($)'}
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={depositAmount}
+                              onChange={(e) => setDepositAmount(e.target.value)}
+                              className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-sm font-semibold outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all"
+                              required
+                            />
+                          </div>
+
+                          {/* Crypto details */}
+                          <div className="animate-fade-in space-y-5 bg-zinc-50 border border-zinc-200/60 p-5 rounded-2xl">
+                            <div className="bg-white border border-zinc-200/80 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                              <span className="text-[9px] font-black text-[#E52535] uppercase tracking-widest block mb-1">
+                                USDT (TRC20) Wallet Address:
+                              </span>
+                              <p className="font-mono text-xs sm:text-sm font-black text-zinc-950 select-all break-all mb-2">
+                                0x742d35Cc6634C0532925a3b844Bc454e4438f44e
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText('0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
+                                  alert("USDT Address Copied!");
+                                }}
+                                className="text-[9px] font-black tracking-widest uppercase bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-lg"
+                              >
+                                COPY ADDRESS / কপি করুন
+                              </button>
+                            </div>
+
+                            <div className="text-xs text-zinc-600 font-medium italic bg-white border border-zinc-150 p-4 rounded-xl">
+                              <p className="font-bold text-zinc-700 not-italic mb-1 uppercase tracking-wider text-[9px]">Instructions:</p>
+                              "Send USDT (TRC20) to our secure address above. Enter your Sender Wallet Address and Transaction Hash (TxHash/TxID) below for instant audit & verification."
+                            </div>
+
+                            {/* Inputs: User Wallet, TxHash */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                                  {language === 'en' ? 'Your Sender Wallet Address' : 'আপনার প্রেরক ওয়ালেট অ্যাড্রেস'}
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. T9yD14NjX..."
+                                  value={depositPhoneOrAccount}
+                                  onChange={(e) => setDepositPhoneOrAccount(e.target.value)}
+                                  className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 font-mono"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                                  {language === 'en' ? 'Transaction Hash (TxID) *' : 'ট্রানজেকশন হ্যাশ (TxID) *'} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. f8319a27b9c9d..."
+                                  value={depositTrxId}
+                                  onChange={(e) => setDepositTrxId(e.target.value)}
+                                  className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 font-mono"
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            <button
+                              type="submit"
+                              className="w-full bg-[#E52535] hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                            >
+                              {language === 'en' ? 'SUBMIT CRYPTO DEPOSIT FOR VERIFICATION' : 'ক্রিপ্টো ডিপোজিট রিকোয়েস্ট পাঠান'}
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

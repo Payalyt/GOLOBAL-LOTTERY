@@ -318,7 +318,7 @@ export function Login() {
       <div className="max-w-md w-full mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 font-roboto-sans">
         
         {/* Luxury Banner with Gilded App Logo */}
-        <div className="bg-gradient-to-b from-zinc-900 to-zinc-950 text-white p-8 text-center relative overflow-hidden font-roboto-sans">
+        <div className="bg-gradient-to-b from-zinc-900 to-zinc-950 text-white p-6 sm:p-8 text-center relative overflow-hidden font-roboto-sans">
           <div className="absolute top-4 right-4 bg-white/10 border border-white/10 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider text-yellow-400 uppercase select-none">
             {t('secureSsl')}
           </div>
@@ -340,7 +340,7 @@ export function Login() {
         </div>
 
         {/* Regular Login Form & Forgot Password Form */}
-        <div className="p-8 font-roboto-sans">
+        <div className="p-6 sm:p-8 font-roboto-sans">
           {errorMsg && (
             <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-750 text-xs font-semibold leading-relaxed">
               ⚠️ {errorMsg}
