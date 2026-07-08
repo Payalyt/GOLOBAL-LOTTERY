@@ -225,6 +225,17 @@ export interface NewsArticle {
   isActive: boolean;
 }
 
+export interface MenuPage {
+  id: string;
+  menuTitle: string;
+  pageTitle: string;
+  pageSubtitle?: string;
+  bannerUrl?: string;
+  content: string;
+  isActive: boolean;
+  order: number;
+}
+
 export interface VideoWinner {
   id: string;
   title: string;
@@ -378,6 +389,12 @@ interface AuthContextType {
   addNewsArticle: (news: Omit<NewsArticle, 'id'>) => Promise<void>;
   updateNewsArticle: (id: string, fields: Partial<NewsArticle>) => Promise<void>;
   deleteNewsArticle: (id: string) => Promise<void>;
+  // Dynamic Menu Pages
+  menuPages: MenuPage[];
+  setMenuPages: React.Dispatch<React.SetStateAction<MenuPage[]>>;
+  addMenuPage: (page: Omit<MenuPage, 'id'>) => Promise<void>;
+  updateMenuPage: (id: string, fields: Partial<MenuPage>) => Promise<void>;
+  deleteMenuPage: (id: string) => Promise<void>;
   // Withdrawal requests
   withdrawalRequests: WithdrawalRequest[];
   setWithdrawalRequests: React.Dispatch<React.SetStateAction<WithdrawalRequest[]>>;
@@ -388,7 +405,7 @@ interface AuthContextType {
   setDepositRequests: React.Dispatch<React.SetStateAction<DepositRequest[]>>;
   addDepositRequest: (req: Omit<DepositRequest, 'id' | 'date' | 'status'>) => void;
   addApprovedDeposit: (req: Omit<DepositRequest, 'id' | 'date' | 'status'>) => void;
-  updateDepositStatus: (id: string, status: 'Approved' | 'Rejected') => void;
+  updateDepositStatus: (id: string, status: 'Approved' | 'Rejected', customEmail?: string) => void;
   // Theme management
   theme: 'light' | 'dark';
   toggleTheme: () => void;
@@ -791,6 +808,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [raffleWinners, setRaffleWinners] = useState<DailyRaffleWinner[]>([]);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
+  const [menuPages, setMenuPages] = useState<MenuPage[]>([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [depositRequests, setDepositRequests] = useState<DepositRequest[]>([]);
 
@@ -1242,6 +1260,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setNewsArticles(list);
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'newsArticles'));
 
+    const unsubMenuPages = onSnapshot(collection(db, 'menuPages'), async (snap) => {
+      const list: MenuPage[] = [];
+      snap.forEach((d) => {
+        const p = d.data() as MenuPage;
+        list.push({ ...p, id: d.id });
+      });
+      if (list.length === 0) {
+        const defaults: MenuPage[] = [
+          {
+            id: 'rules',
+            menuTitle: 'Rules',
+            pageTitle: 'Official Lottery Rules & Regulations',
+            pageSubtitle: 'Please read the terms and rules of play before purchasing tickets.',
+            content: `### 1. General Rules\n- Players must be at least 18 years of age to participate.\n- All ticket sales are final and cannot be cancelled or modified once purchased.\n- It is the player's responsibility to verify the accuracy of the numbers printed on their tickets.\n\n### 2. Draw Schedule\n- Draws are conducted daily, weekly, or monthly according to the specific lottery game schedule.\n- Winning numbers are drawn using a certified Random Number Generator (RNG) and published on the Results page.\n\n### 3. Claiming Prizes\n- Prizes are automatically credited to the winner's balance after the official draw is completed.\n- Winnings can be withdrawn via any available payment gateway in the Withdrawal tab.\n- Government fees or service charges will be deducted as specified in the site settings.`,
+            isActive: true,
+            order: 1
+          },
+          {
+            id: 'faq',
+            menuTitle: 'FAQ',
+            pageTitle: 'Frequently Asked Questions',
+            pageSubtitle: 'Find quick answers to common questions about our platform.',
+            content: `### Q1: How do I purchase a ticket?\nTo purchase a ticket, register an account, make a deposit through any payment gateway (bKash, Nagad, Rocket, or USDT), go to the Dashboard, pick your lucky numbers, and click "Buy Ticket".\n\n### Q2: How are draws conducted?\nAll draws are conducted transparently using certified cryptographic algorithms to ensure absolute fairness. Results are instantly published on the platform.\n\n### Q3: How do I withdraw my winnings?\nGo to My Account -> Cashout. Enter the amount, select your payment method (such as Rocket, bKash, or local bank), fill in your account details, and submit. The admin panel reviews and approves requests within 24 hours.\n\n### Q4: Is there a fee for deposit or withdrawal?\nNo hidden deposit fees! Withdrawal requests have a standard service or government tax fee deducted automatically as defined in our site settings.`,
+            isActive: true,
+            order: 2
+          },
+          {
+            id: 'support',
+            menuTitle: 'Support',
+            pageTitle: 'Customer Care & Support',
+            pageSubtitle: 'We are here to help you 24/7. Get in touch with our live agents.',
+            content: `### Need Assistance?\nOur support team is available round-the-clock to assist you with deposits, withdrawals, ticket purchases, or account verification.\n\n### Contact Channels\n- **WhatsApp Support**: Click the floating WhatsApp button or contact our official support agent directly.\n- **IMO Helpline**: Reach out via IMO for instant audio and video messaging assistance.\n- **Telegram Channel**: Join our official Telegram channel for daily result updates, promos, and news bulletins.\n\n### Safety Warning\nNever share your password, OTP, or personal account credentials with anyone, including our support agents. We will never ask for your password.`,
+            isActive: true,
+            order: 3
+          }
+        ];
+        for (const p of defaults) {
+          try {
+            await setDoc(doc(db, 'menuPages', p.id), p);
+          } catch (e) {
+            console.error('Failed to seed default menuPage', e);
+          }
+        }
+      } else {
+        list.sort((a, b) => (a.order || 0) - (b.order || 0));
+        setMenuPages(list);
+      }
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'menuPages'));
+
     const unsubAllUsersCount = onSnapshot(collection(db, 'users'), (snap) => {
       setAllUsersCount(snap.size);
     }, (err) => console.log('unsubAllUsersCount err', err));
@@ -1308,6 +1375,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unsubDraws();
       unsubPromotions();
       unsubNews();
+      unsubMenuPages();
       unsubAllUsersCount();
       unsubAllTicketsCount();
       unsubAuth();
@@ -1675,6 +1743,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const addMenuPage = async (page: Omit<MenuPage, 'id'>) => {
+    try {
+      const id = page.menuTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'page-' + Date.now();
+      const newPage = { ...page, id };
+      await setDoc(doc(db, 'menuPages', id), newPage);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'menuPages');
+    }
+  };
+
+  const deleteMenuPage = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'menuPages', id));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `menuPages/${id}`);
+    }
+  };
+
+  const updateMenuPage = async (id: string, fields: Partial<MenuPage>) => {
+    try {
+      await setDoc(doc(db, 'menuPages', id), fields, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `menuPages/${id}`);
+    }
+  };
+
   const addWithdrawalRequest = async (req: Omit<WithdrawalRequest, 'id' | 'date' | 'status'>) => {
     try {
       const id = 'WD-' + Math.floor(1000 + Math.random() * 9000);
@@ -1753,25 +1847,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateDepositStatus = async (id: string, status: 'Approved' | 'Rejected') => {
+  const updateDepositStatus = async (id: string, status: 'Approved' | 'Rejected', customEmail?: string) => {
     try {
       const reqRef = doc(db, 'depositRequests', id);
       const reqSnap = await getDoc(reqRef);
       if (reqSnap.exists()) {
         const req = reqSnap.data() as DepositRequest;
+        const finalEmail = (customEmail || req.email).trim().toLowerCase();
+        
         if (status === 'Approved' && req.status === 'Pending') {
           // Check if it's a commission deposit based on gateway or details
           const isCommission = req.gateway.toLowerCase().includes('commission') || req.details?.toLowerCase().includes('commission');
           
           if (isCommission) {
-            const userTarget = allUsers.find(u => u.email === req.email);
+            const userTarget = allUsers.find(u => u.email === finalEmail);
             const currentComm = userTarget?.commissionBalance || 0;
-            await updateUserProfileFields(req.email, { commissionBalance: currentComm + req.amount });
+            await updateUserProfileFields(finalEmail, { commissionBalance: currentComm + req.amount });
           } else {
-            await updateUserBalance(req.email, req.amount);
+            await updateUserBalance(finalEmail, req.amount);
           }
         }
-        await setDoc(reqRef, { status }, { merge: true });
+        await setDoc(reqRef, { status, email: finalEmail }, { merge: true });
       }
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `depositRequests/${id}`);
@@ -1819,6 +1915,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       addNewsArticle,
       deleteNewsArticle,
       updateNewsArticle,
+      // Dynamic Menu Pages
+      menuPages,
+      setMenuPages,
+      addMenuPage,
+      deleteMenuPage,
+      updateMenuPage,
       // Withdrawal requests
       withdrawalRequests,
       setWithdrawalRequests,

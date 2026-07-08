@@ -220,7 +220,7 @@ export function Winners() {
     : videoWinners;
 
   return (
-    <div id="winners-root-view" className="bg-[#FAF9FC] min-h-screen text-zinc-900 font-sans pb-16">
+    <div id="winners-root-view" className="bg-[#FAF9FC] dark:bg-zinc-950 min-h-screen text-zinc-900 dark:text-zinc-100 font-sans pb-16">
       
       {/* Decorative Golden Graphic Header Banner */}
       <div id="winners-golden-banner" className="relative overflow-hidden bg-gradient-to-r from-[#FBC02D] via-[#F9A825] to-[#F57F17] py-12 text-center text-white shadow-md">
@@ -241,29 +241,29 @@ export function Winners() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         
         {/* Main Content Box wrapped with beautiful borders */}
-        <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-gray-150 space-y-8">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-10 shadow-sm border border-gray-150 dark:border-zinc-850 space-y-8">
           
           {/* Back breadcrumb container */}
-          <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-zinc-800">
             <Link 
               to="/" 
-              className="text-xs font-extrabold text-[#7e7e8d] hover:text-zinc-950 flex items-center gap-1.5 transition-colors uppercase tracking-wider"
+              className="text-xs font-extrabold text-[#7e7e8d] hover:text-zinc-950 dark:hover:text-white flex items-center gap-1.5 transition-colors uppercase tracking-wider"
             >
               <ArrowLeft className="w-4 h-4 text-[#7e7e8d]" /> Back to Homepage
             </Link>
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-[#EEF2F6] text-[#334155] text-[10px] font-extrabold rounded-full uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-[#EEF2F6] dark:bg-zinc-800 text-[#334155] dark:text-zinc-300 text-[10px] font-extrabold rounded-full uppercase tracking-wider">
               <Sparkles className="w-3 h-3 text-amber-500" /> Guaranteed Draws
             </div>
           </div>
 
           {/* Elegant Tabs Selection */}
-          <div className="flex flex-wrap items-center gap-2 p-1.5 bg-[#FAF9FC] border border-gray-150 rounded-2xl">
+          <div className="flex flex-wrap items-center gap-2 p-1.5 bg-[#FAF9FC] dark:bg-zinc-950 border border-gray-150 dark:border-zinc-850 rounded-2xl">
             <button
               onClick={() => setActiveTab('grand')}
-              className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 ${
+              className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === 'grand'
-                  ? 'bg-[#1E1B4B] text-white shadow-md scale-[1.02]'
-                  : 'text-[#475569] hover:bg-gray-100 hover:text-zinc-950'
+                  ? 'bg-[#1E1B4B] dark:bg-zinc-800 text-white shadow-md scale-[1.02]'
+                  : 'text-[#475569] dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-white'
               }`}
             >
               👑 Grand Prize Hall
@@ -273,20 +273,20 @@ export function Winners() {
                 setActiveTab('live');
                 setGameFilter('ALL');
               }}
-              className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 ${
+              className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === 'live'
-                  ? 'bg-[#1E1B4B] text-white shadow-md scale-[1.02]'
-                  : 'text-[#475569] hover:bg-gray-100 hover:text-zinc-950'
+                  ? 'bg-[#1E1B4B] dark:bg-zinc-800 text-white shadow-md scale-[1.02]'
+                  : 'text-[#475569] dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-white'
               }`}
             >
               🎫 Live Game Winners
             </button>
             <button
               onClick={() => setActiveTab('video')}
-              className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 ${
+              className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === 'video'
-                  ? 'bg-[#1E1B4B] text-white shadow-md scale-[1.02]'
-                  : 'text-[#475569] hover:bg-gray-100 hover:text-zinc-950'
+                  ? 'bg-[#1E1B4B] dark:bg-zinc-800 text-white shadow-md scale-[1.02]'
+                  : 'text-[#475569] dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-white'
               }`}
             >
               📹 Video Stories
@@ -297,19 +297,19 @@ export function Winners() {
           {activeTab === 'grand' && (
             <div className="space-y-8 animate-fade-in">
               <div className="flex items-center gap-4">
-                <h2 className="text-2xl font-black text-[#1E1B4B] tracking-tight shrink-0">
+                <h2 className="text-2xl font-black text-[#1E1B4B] dark:text-zinc-100 tracking-tight shrink-0">
                   Hall of Fame
                 </h2>
-                <div className="flex-1 h-[2px] bg-[#E2E8F0] self-center" />
+                <div className="flex-1 h-[2px] bg-[#E2E8F0] dark:bg-zinc-800 self-center" />
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
                 {grandWinners.map((winner, idx) => (
                   <div 
                     key={idx} 
-                    className="flex flex-col items-center text-center p-4 rounded-3xl hover:bg-zinc-50/50 hover:shadow-xs transition-all duration-200"
+                    className="flex flex-col items-center text-center p-4 rounded-3xl hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 hover:shadow-xs transition-all duration-200"
                   >
-                    <div className="relative w-32 h-32 rounded-full p-0.5 border-2 border-gray-200 shadow-sm shrink-0 bg-white group overflow-hidden">
+                    <div className="relative w-32 h-32 rounded-full p-0.5 border-2 border-gray-200 dark:border-zinc-800 shadow-sm shrink-0 bg-white dark:bg-zinc-900 group overflow-hidden">
                       <div className="w-full h-full rounded-full overflow-hidden relative">
                         <img 
                           src={winner.avatarUrl} 
@@ -355,10 +355,10 @@ export function Winners() {
                       Draw Winner
                     </span>
 
-                    <h4 className="font-extrabold text-zinc-900 text-sm mt-1 mb-0.5 truncate max-w-[150px]">
+                    <h4 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm mt-1 mb-0.5 truncate max-w-[150px]">
                       {winner.name}
                     </h4>
-                    <p className="text-lg font-black text-[#1E1B4B] tracking-tight leading-none my-1">
+                    <p className="text-lg font-black text-[#1E1B4B] dark:text-yellow-400 tracking-tight leading-none my-1">
                       {winner.prize}
                     </p>
                     <p className="text-[10px] font-bold text-zinc-400 block tracking-wide">
@@ -375,10 +375,10 @@ export function Winners() {
             <div className="space-y-6 animate-fade-in">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-black text-[#1E1B4B] tracking-tight flex items-center gap-2">
+                  <h2 className="text-2xl font-black text-[#1E1B4B] dark:text-zinc-100 tracking-tight flex items-center gap-2">
                     🏆 Live Winners Ledger
                   </h2>
-                  <p className="text-xs text-zinc-500 mt-0.5">Real-time certified declarations added instantly from the admin panel.</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Real-time certified declarations added instantly from the admin panel.</p>
                 </div>
 
                 {/* Live Search and filters */}
@@ -391,7 +391,7 @@ export function Winners() {
                     placeholder="Search by name, ticket or country..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-zinc-50 border border-gray-150 rounded-xl pl-9 pr-4 py-2.5 text-xs text-zinc-800 placeholder-zinc-450 focus:outline-none focus:border-[#1E1B4B] transition-all"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-gray-150 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-450 focus:outline-none focus:border-[#1E1B4B] dark:focus:border-zinc-700 transition-all"
                   />
                   {searchQuery && (
                     <button
@@ -405,19 +405,19 @@ export function Winners() {
               </div>
 
               {/* Game Pills Filter Selector */}
-              <div className="flex items-center gap-2 overflow-x-auto py-2 no-scrollbar border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-2 overflow-x-auto py-2 no-scrollbar border-b border-gray-100 dark:border-zinc-800 pb-4">
                 {availableGames.map((game) => {
                   const isSelected = gameFilter.toUpperCase() === game.toUpperCase();
-                  const pillColor = game === 'ALL' ? 'bg-[#1E1B4B] text-white' : getGameColor(game);
+                  const pillColor = game === 'ALL' ? 'bg-[#1E1B4B] dark:bg-zinc-850 text-white' : getGameColor(game);
 
                   return (
                     <button
                       key={game}
                       onClick={() => setGameFilter(game)}
-                      className={`shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-150 flex items-center gap-1.5 border ${
+                      className={`shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-150 flex items-center gap-1.5 border cursor-pointer ${
                         isSelected 
                           ? `${pillColor} border-transparent shadow-sm scale-105` 
-                          : 'bg-zinc-50 text-zinc-500 hover:bg-gray-100 hover:text-zinc-900 border-gray-200'
+                          : 'bg-zinc-50 dark:bg-zinc-950 text-zinc-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white border-gray-200 dark:border-zinc-800'
                       }`}
                     >
                       {game === 'ALL' ? '🌟 All Winners' : game}
@@ -436,17 +436,17 @@ export function Winners() {
 
               {/* Winners Grid */}
               {filteredWinners.length === 0 ? (
-                <div className="text-center py-16 bg-[#FAF9FC] rounded-3xl border border-dashed border-gray-200">
+                <div className="text-center py-16 bg-[#FAF9FC] dark:bg-zinc-900/20 rounded-3xl border border-dashed border-gray-200 dark:border-zinc-800">
                   <Gift className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
-                  <h3 className="text-sm font-black text-zinc-700 uppercase tracking-wider">No Winners Found</h3>
-                  <p className="text-xs text-zinc-400 mt-1">Try changing your filters or add new entries from the admin panel!</p>
+                  <h3 className="text-sm font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">No Winners Found</h3>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Try changing your filters or add new entries from the admin panel!</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   {filteredWinners.map((w, index) => (
                     <div 
                       key={w.id || index}
-                      className="bg-white rounded-2xl p-5 border border-gray-150 hover:shadow-md transition-shadow relative overflow-hidden flex flex-col justify-between"
+                      className="bg-white dark:bg-zinc-900/40 rounded-2xl p-5 border border-gray-150 dark:border-zinc-800 hover:shadow-md transition-shadow relative overflow-hidden flex flex-col justify-between"
                     >
                       <div>
                         <div className="flex items-center gap-3">
@@ -465,10 +465,10 @@ export function Winners() {
                           </div>
                           
                           <div className="leading-tight min-w-0 flex-1">
-                            <h4 className="font-extrabold text-zinc-900 text-sm truncate">{w.name}</h4>
+                            <h4 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm truncate">{w.name}</h4>
                             <div className="flex items-center gap-1 mt-0.5">
                               <span className="text-xs">{w.flag}</span>
-                              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider truncate">{w.country}</span>
+                              <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider truncate">{w.country}</span>
                             </div>
                           </div>
                         </div>
@@ -482,10 +482,10 @@ export function Winners() {
                       </div>
 
                       {/* Ticket and Prize */}
-                      <div className="mt-5 pt-3 border-t border-gray-100 flex items-center justify-between">
+                      <div className="mt-5 pt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between">
                         <div>
-                          <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block">Ticket Code</span>
-                          <span className="text-xs font-mono font-black text-zinc-850 uppercase tracking-widest">{w.ticket}</span>
+                          <span className="text-[9px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider block">Ticket Code</span>
+                          <span className="text-xs font-mono font-black text-zinc-850 dark:text-zinc-200 uppercase tracking-widest">{w.ticket}</span>
                         </div>
                         <div className="text-right">
                           <span className="text-[9px] text-emerald-600 font-extrabold uppercase tracking-wider block">Won Amount</span>
@@ -503,10 +503,10 @@ export function Winners() {
           {activeTab === 'video' && (
             <div className="space-y-8 animate-fade-in">
               <div className="flex items-center gap-4">
-                <h2 className="text-2xl font-black text-[#1E1B4B] tracking-tight shrink-0">
+                <h2 className="text-2xl font-black text-[#1E1B4B] dark:text-zinc-100 tracking-tight shrink-0">
                   Winners Living the Dream
                 </h2>
-                <div className="flex-1 h-[2px] bg-[#E2E8F0] self-center" />
+                <div className="flex-1 h-[2px] bg-[#E2E8F0] dark:bg-zinc-800 self-center" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -514,7 +514,7 @@ export function Winners() {
                   <div 
                     key={i} 
                     onClick={() => setSelectedVideo(v)}
-                    className="bg-white rounded-2xl overflow-hidden border border-gray-150 shadow-sm flex flex-col hover:shadow-md transition-shadow group cursor-pointer"
+                    className="bg-white dark:bg-zinc-900/40 rounded-2xl overflow-hidden border border-gray-150 dark:border-zinc-800 shadow-sm flex flex-col hover:shadow-md transition-shadow group cursor-pointer"
                   >
                     <div className="relative aspect-video bg-black overflow-hidden select-none shrink-0 w-full">
                       <img 
@@ -545,17 +545,17 @@ export function Winners() {
 
                     <div className="p-5 flex-1 flex flex-col justify-between space-y-3.5">
                       <div className="space-y-2">
-                        <span className="inline-block px-2.5 py-0.5 bg-[#FFE4E6] text-[#E11D48] text-[9px] font-black rounded uppercase tracking-wider">
+                        <span className="inline-block px-2.5 py-0.5 bg-[#FFE4E6] dark:bg-red-950/40 text-[#E11D48] dark:text-red-450 text-[9px] font-black rounded uppercase tracking-wider">
                           Draw Winner
                         </span>
-                        <h4 className="font-extrabold text-zinc-950 text-base leading-snug">
+                        <h4 className="font-extrabold text-zinc-950 dark:text-zinc-100 text-base leading-snug">
                           {v.name}
                         </h4>
                       </div>
 
-                      <div className="space-y-1.5 pt-2 border-t border-gray-100">
-                        <p className="text-sm font-bold text-zinc-900 leading-none">
-                          <span className="text-[#0070BC] font-extrabold">Won</span> {v.prizeText}
+                      <div className="space-y-1.5 pt-2 border-t border-gray-100 dark:border-zinc-800">
+                        <p className="text-sm font-bold text-zinc-900 dark:text-zinc-200 leading-none">
+                          <span className="text-[#0070BC] dark:text-blue-400 font-extrabold">Won</span> {v.prizeText}
                         </p>
                         <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wide">
                           {v.date}
@@ -569,7 +569,7 @@ export function Winners() {
               {/* Pagination Controls */}
               <div className="flex justify-center items-center gap-2 pt-6">
                 <button 
-                  className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 active:scale-95 text-zinc-400 hover:text-zinc-700 transition-all duration-150" 
+                  className="w-8 h-8 rounded-full border border-gray-200 dark:border-zinc-850 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95 text-zinc-400 hover:text-zinc-700 transition-all duration-150" 
                   disabled
                 >
                   &lt;
@@ -577,10 +577,10 @@ export function Winners() {
                 <button className="w-8 h-8 rounded-full bg-zinc-950 text-[#FFEB4A] font-bold text-xs flex items-center justify-center shadow-md select-none">
                   01
                 </button>
-                <button className="w-8 h-8 rounded-full border border-gray-200 text-zinc-500 hover:text-zinc-950 font-bold text-xs flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all select-none">
+                <button className="w-8 h-8 rounded-full border border-gray-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white font-bold text-xs flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95 transition-all select-none cursor-pointer">
                   02
                 </button>
-                <button className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 active:scale-95 text-zinc-500 hover:text-zinc-950 transition-all duration-150">
+                <button className="w-8 h-8 rounded-full border border-gray-200 dark:border-zinc-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95 text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-all duration-150 cursor-pointer">
                   &gt;
                 </button>
               </div>

@@ -179,74 +179,111 @@ async function startServer() {
       console.log("[NOWPayments IPN] Callback received. Signature:", signature);
       console.log("[NOWPayments IPN] Body:", JSON.stringify(payload));
 
-      const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET;
-      if (!ipnSecret) {
-        console.error("[NOWPayments IPN] IPN Secret is not configured on the server.");
-        return res.status(500).send("IPN Secret not configured");
-      }
-
-      // Verify the cryptographic signature sent by NOWPayments
-      const isVerified = verifyNowPaymentsSignature(payload, signature, ipnSecret);
-      if (!isVerified) {
-        console.warn("[NOWPayments IPN] Signature validation FAILED. Rejecting request.");
-        return res.status(400).send("Invalid signature");
-      }
-
-      console.log("[NOWPayments IPN] Signature validation SUCCESS.");
-
       const { payment_id, payment_status, price_amount, order_id } = payload;
+      const paymentIdStr = payment_id ? payment_id.toString() : `NP-${Date.now()}`;
 
-      // Filter for successful payment status
+      const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET;
+      
+      // Verify the cryptographic signature sent by NOWPayments
+      let isVerified = false;
+      if (ipnSecret && signature) {
+        isVerified = verifyNowPaymentsSignature(payload, signature, ipnSecret);
+      } else {
+        console.warn("[NOWPayments IPN] No IPN Secret or signature provided. Automatic verification bypassed.");
+      }
+
+      console.log(`[NOWPayments IPN] Signature validation: ${isVerified ? "SUCCESS" : "FAILED/BYPASSED"}`);
+
+      // 1. Log Raw IPN to Firestore for Admin Auditing
+      try {
+        const rawLogRef = doc(db, 'nowpayments_raw_ipns', paymentIdStr);
+        await setDoc(rawLogRef, {
+          payment_id: paymentIdStr,
+          order_id: order_id || '',
+          price_amount: price_amount ? parseFloat(price_amount) : 0,
+          payment_status: payment_status || '',
+          is_verified: isVerified,
+          payload: payload,
+          received_at: new Date().toISOString()
+        }, { merge: true });
+      } catch (logErr) {
+        console.error("[NOWPayments IPN] Failed to write raw IPN log to Firestore:", logErr);
+      }
+
+      // 2. Process Successful Payments
       if (payment_status === "finished" || payment_status === "partially_paid") {
-        if (!order_id || !order_id.startsWith("NP_")) {
-          console.warn("[NOWPayments IPN] Received success status but order_id is not in expected format:", order_id);
-          return res.status(200).send("Ignored due to invalid order_id format");
-        }
-
-        // Parse email from our unique order ID: NP_timestamp_email
-        const parts = order_id.split("_");
-        if (parts.length < 3) {
-          console.warn("[NOWPayments IPN] Unable to parse email from order_id:", order_id);
-          return res.status(200).send("Ignored due to invalid order_id format");
-        }
+        const amount = price_amount ? parseFloat(price_amount) : 0;
         
-        const email = parts[2];
-        const amount = parseFloat(price_amount);
-
-        if (isNaN(amount) || amount <= 0) {
-          console.warn("[NOWPayments IPN] Invalid price_amount:", price_amount);
-          return res.status(200).send("Invalid amount");
+        // Attempt to extract user email
+        let email = "";
+        if (order_id && order_id.startsWith("NP_")) {
+          const parts = order_id.split("_");
+          if (parts.length >= 3) {
+            email = parts[2];
+          }
         }
 
         // Check if this payment has already been credited (idempotency check)
-        const txRef = doc(db, 'nowpayments_transactions', payment_id.toString());
+        const txRef = doc(db, 'nowpayments_transactions', paymentIdStr);
         const txSnap = await getDoc(txRef);
         
         if (txSnap.exists() && txSnap.data().status === 'completed') {
-          console.log(`[NOWPayments IPN] Payment ${payment_id} has already been credited to ${email}. Skipping duplicate.`);
+          console.log(`[NOWPayments IPN] Payment ${paymentIdStr} has already been credited. Skipping duplicate.`);
           return res.status(200).send("Already processed");
         }
 
-        // Update database (credit user balance and log as approved deposit)
-        const updated = await creditUserBalance(email, amount, payment_id.toString());
-        if (updated) {
-          // Log completion inside the nowpayments_transactions tracking collection
+        let autoCredited = false;
+        if (isVerified && email && amount > 0) {
+          // Automatic credit to user balance
+          autoCredited = await creditUserBalance(email, amount, paymentIdStr);
+        }
+
+        if (autoCredited) {
+          // Log completion in nowpayments_transactions
           await setDoc(txRef, {
-            payment_id: payment_id.toString(),
-            order_id: order_id,
+            payment_id: paymentIdStr,
+            order_id: order_id || '',
             email: email,
             amount: amount,
             status: 'completed',
             payment_status: payment_status,
             processed_at: new Date().toISOString()
           });
-          console.log(`[NOWPayments IPN] Processing finished successfully for payment ${payment_id}.`);
+          console.log(`[NOWPayments IPN] Successful auto-credit for ${paymentIdStr}.`);
         } else {
-          console.error(`[NOWPayments IPN] Processing failed during user database credit for payment ${payment_id}.`);
-          return res.status(500).send("Database update failed");
+          // FALLBACK: Log as a PENDING deposit request so the admin gets notified!
+          const depId = `DEP-NP-${paymentIdStr}`;
+          const depRef = doc(db, 'depositRequests', depId);
+          
+          // Only create if it doesn't already exist
+          const depSnap = await getDoc(depRef);
+          if (!depSnap.exists()) {
+            const finalEmail = email || 'pending_crypto@lottery.com';
+            let details = `Automated NOWPayments IPN payment. Status: ${payment_status}.`;
+            if (!isVerified) {
+              details += " [WARNING: IPN signature failed verification]";
+            }
+            if (!email) {
+              details += " [WARNING: No user email linked to this payment]";
+            }
+
+            const pendingReq = {
+              id: depId,
+              email: finalEmail,
+              amount: isNaN(amount) ? 0 : amount,
+              gateway: 'NOWPayments Crypto',
+              transactionId: paymentIdStr,
+              details: details,
+              date: new Date().toLocaleDateString('en-GB'),
+              status: 'Pending' // Requires admin review & approval!
+            };
+
+            await setDoc(depRef, pendingReq);
+            console.log(`[NOWPayments IPN] Logged PENDING deposit request ${depId} for admin manual verification.`);
+          }
         }
       } else {
-        console.log(`[NOWPayments IPN] Payment status is '${payment_status}'. Skipping database update.`);
+        console.log(`[NOWPayments IPN] Payment status is '${payment_status}'. Skipping processing.`);
       }
 
       return res.status(200).send("OK");

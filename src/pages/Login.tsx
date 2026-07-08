@@ -314,8 +314,8 @@ export function Login() {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen py-16 px-4 text-gray-900 flex flex-col justify-center font-roboto-sans">
-      <div className="max-w-md w-full mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 font-roboto-sans">
+    <div className="bg-gray-100 dark:bg-zinc-950 min-h-screen py-16 px-4 text-gray-900 dark:text-zinc-100 flex flex-col justify-center font-roboto-sans">
+      <div className="max-w-md w-full mx-auto bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-zinc-850 font-roboto-sans">
         
         {/* Luxury Banner with Gilded App Logo */}
         <div className="bg-gradient-to-b from-zinc-900 to-zinc-950 text-white p-6 sm:p-8 text-center relative overflow-hidden font-roboto-sans">
@@ -342,13 +342,13 @@ export function Login() {
         {/* Regular Login Form & Forgot Password Form */}
         <div className="p-6 sm:p-8 font-roboto-sans">
           {errorMsg && (
-            <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-750 text-xs font-semibold leading-relaxed">
+            <div className="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-750 dark:text-red-400 text-xs font-semibold leading-relaxed">
               ⚠️ {errorMsg}
             </div>
           )}
 
           {successMsg && (
-            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-850 text-xs font-semibold leading-relaxed">
+            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 text-emerald-850 dark:text-emerald-400 text-xs font-semibold leading-relaxed">
               ✅ {successMsg}
             </div>
           )}
@@ -356,7 +356,7 @@ export function Login() {
           {!isForgotMode ? (
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500">{t('emailAddress')}</label>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400">{t('emailAddress')}</label>
                 <div className="mt-1.5 relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 font-bold">@</span>
                   <input 
@@ -364,7 +364,7 @@ export function Login() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder=""
-                    className="pl-9 bg-white text-zinc-950 block w-full border border-gray-250 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all font-semibold" 
+                    className="pl-9 bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 block w-full border border-gray-250 dark:border-zinc-800 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all font-semibold" 
                     required 
                   />
                 </div>
@@ -372,7 +372,7 @@ export function Login() {
 
               <div>
                 <div className="flex justify-between items-center">
-                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500">{t('password')}</label>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400">{t('password')}</label>
                   <button 
                     type="button"
                     onClick={() => {
@@ -381,7 +381,7 @@ export function Login() {
                       setForgotEmail(email);
                       setIsForgotMode(true);
                     }}
-                    className="text-[10px] font-bold text-red-600 hover:underline tracking-wide uppercase cursor-pointer"
+                    className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:underline tracking-wide uppercase cursor-pointer"
                   >
                     {t('forgotPassword')}
                   </button>
@@ -395,7 +395,7 @@ export function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder=""
-                    className="pl-9 pr-10 bg-white text-zinc-950 block w-full border border-gray-250 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all font-mono" 
+                    className="pl-9 pr-10 bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 block w-full border border-gray-250 dark:border-zinc-800 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all font-mono" 
                     required 
                   />
                   <button
@@ -426,14 +426,14 @@ export function Login() {
                 )}
               </button>
 
-              <p className="mt-6 text-xs text-center text-gray-500 font-medium uppercase tracking-wider">
+              <p className="mt-6 text-xs text-center text-gray-500 dark:text-zinc-400 font-medium uppercase tracking-wider">
                 {t('newToLottery')} <Link to="/register" className="text-[#E52535] font-black hover:underline ml-1">{t('registerAccount')}</Link>
               </p>
             </form>
           ) : (
             <form onSubmit={handleForgotPassword} className="space-y-5">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500">{t('emailAddress')}</label>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400">{t('emailAddress')}</label>
                 <div className="mt-1.5 relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 font-bold">@</span>
                   <input 
@@ -441,11 +441,11 @@ export function Login() {
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
                     placeholder={t('enterRegisteredEmail')}
-                    className="pl-9 bg-white text-gray-950 block w-full border border-gray-250 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all font-semibold" 
+                    className="pl-9 bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 block w-full border border-gray-250 dark:border-zinc-800 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all font-semibold" 
                     required 
                   />
                 </div>
-                <span className="text-[10px] text-gray-400 mt-1 block font-medium leading-relaxed">
+                <span className="text-[10px] text-gray-400 dark:text-zinc-500 mt-1 block font-medium leading-relaxed">
                   {t('resetInstructions')}
                 </span>
               </div>
@@ -458,7 +458,7 @@ export function Login() {
                     setSuccessMsg('');
                     setIsForgotMode(false);
                   }}
-                  className="flex-1 border border-gray-200 text-gray-700 py-3.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-50 transition-all text-center cursor-pointer bg-white"
+                  className="flex-1 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300 py-3.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all text-center cursor-pointer bg-white dark:bg-zinc-900"
                 >
                   {t('backToSignIn')}
                 </button>

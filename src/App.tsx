@@ -14,6 +14,7 @@ import { Results } from './pages/Results';
 import { Winners } from './pages/Winners';
 import { Admin } from './pages/Admin';
 import { RaffleDetail } from './pages/RaffleDetail';
+import { CustomPage } from './pages/CustomPage';
 
 
 export default function App() {
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/results/:id" element={<Results />} />
         <Route path="/winners" element={<Winners />} />
         <Route path="/winners/:id" element={<Winners />} />
+        <Route path="/pages/:id" element={<CustomPage />} />
 
       </Routes>
     </Layout>

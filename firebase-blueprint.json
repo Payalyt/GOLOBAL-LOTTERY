@@ -158,6 +158,22 @@
         "maxBallValue": { "type": "number" }
       },
       "required": ["name", "prize", "price", "drawTime", "targetDateStr", "bgHex", "isSolidStyle"]
+    },
+    "MenuPage": {
+      "title": "MenuPage",
+      "description": "Editable menu pages managed directly from Admin Panel.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "menuTitle": { "type": "string" },
+        "pageTitle": { "type": "string" },
+        "pageSubtitle": { "type": "string" },
+        "bannerUrl": { "type": "string" },
+        "content": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "order": { "type": "number" }
+      },
+      "required": ["id", "menuTitle", "pageTitle", "content"]
     }
   },
   "firestore": {
@@ -192,6 +208,10 @@
     "/dynamicGames/{gameName}": {
       "schema": "DynamicGame",
       "description": "Dynamic game configuration collection."
+    },
+    "/menuPages/{pageId}": {
+      "schema": "MenuPage",
+      "description": "Dynamic menu pages configuration collection."
     }
   }
 }

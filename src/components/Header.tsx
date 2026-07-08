@@ -91,7 +91,7 @@ const menuData = {
 export function Header() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isLoggedIn, user, logout, siteConfig, theme, toggleTheme, language, toggleLanguage, setLanguage } = useAuth();
+  const { isLoggedIn, user, logout, siteConfig, theme, toggleTheme, language, toggleLanguage, setLanguage, menuPages } = useAuth();
   const { tickets } = useCart();
   const headerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -128,12 +128,12 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 border-b border-[#E5E5EB] dark:border-zinc-850 shadow-sm" ref={headerRef}>
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14 sm:h-16">
+        <div className="flex justify-between items-center h-16 sm:h-20">
           <div className="flex items-center shrink overflow-hidden">
             <Link to="/" className="flex items-center gap-1.5 sm:gap-3 leading-none select-none shrink">
               {/* Premium App Logo */}
               {siteConfig.logoImageUrl ? (
-                <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-zinc-250 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900 flex items-center justify-center p-1">
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl overflow-hidden shrink-0 border border-zinc-250 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900 flex items-center justify-center p-1">
                   <img 
                     src={resolveBannerImage(siteConfig.logoImageUrl)} 
                     alt={siteConfig.primaryLogoText || 'Logo'} 
@@ -142,8 +142,8 @@ export function Header() {
                   />
                 </div>
               ) : (
-                <div className="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-600 to-[#E52535] flex items-center justify-center shadow-md shadow-red-200/50 overflow-hidden shrink-0">
-                  <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <div className="relative w-11 h-11 md:w-14 md:h-14 rounded-xl bg-gradient-to-tr from-rose-600 to-[#E52535] flex items-center justify-center shadow-md shadow-red-200/50 overflow-hidden shrink-0">
+                  <svg className="w-6 h-6 md:w-8 md:h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                   </svg>
                   <div className="absolute inset-0 bg-white/10 opacity-50 mix-blend-overlay" />
@@ -160,7 +160,7 @@ export function Header() {
             </Link>
           </div>
 
-          <nav className="hidden md:flex space-x-6 text-xs font-bold tracking-wider text-zinc-700 dark:text-zinc-300">
+          <nav className="hidden lg:flex space-x-6 text-xs font-bold tracking-wider text-zinc-700 dark:text-zinc-300">
             {Object.keys(menuData).map((menu) => {
               const data = menuData[menu as keyof typeof menuData] as any;
               return (
@@ -213,6 +213,11 @@ export function Header() {
             })}
             <Link to="/promotions" className="hover:text-red-600 dark:hover:text-red-500 transition-colors uppercase self-center pt-px">{t('promotions', language)}</Link>
             <Link to="/news" className="hover:text-red-600 dark:hover:text-red-500 transition-colors uppercase self-center pt-px">{t('news', language)}</Link>
+            {(menuPages || []).filter(p => p.isActive !== false).map(p => (
+              <Link key={p.id} to={`/pages/${p.id}`} className="hover:text-[#E52535] dark:hover:text-red-500 transition-colors uppercase self-center pt-px">
+                {p.menuTitle}
+              </Link>
+            ))}
           </nav>
 
           <div className="flex items-center space-x-0.5 sm:space-x-3">
@@ -269,7 +274,7 @@ export function Header() {
               <div className="flex items-center gap-2 sm:gap-3">
                 {/* User Info Text - Hidden on mobile */}
                 <div 
-                  className="hidden md:flex items-center gap-2 bg-black border border-zinc-800 rounded-xl px-3 py-1.5 shadow-md text-white"
+                  className="hidden lg:flex items-center gap-2 bg-black border border-zinc-800 rounded-xl px-3 py-1.5 shadow-md text-white"
                 >
                   <div className="flex flex-col text-right">
                     <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wide">{t('wallet_balance', language)}</span>
@@ -280,7 +285,7 @@ export function Header() {
                 {/* Purple initials avatar circle - Hidden on mobile, only in drawer */}
                 <div 
                   onClick={() => navigate('/my-account')}
-                  className="hidden md:flex w-8 h-8 rounded-full bg-[#E9E4FA] text-[#6944BA] items-center justify-center font-black text-xs cursor-pointer select-none transition-transform active:scale-95 shadow-inner overflow-hidden"
+                  className="hidden lg:flex w-8 h-8 rounded-full bg-[#E9E4FA] text-[#6944BA] items-center justify-center font-black text-xs cursor-pointer select-none transition-transform active:scale-95 shadow-inner overflow-hidden"
                   title="My Account"
                 >
                   {user.profileImage ? (
@@ -292,7 +297,7 @@ export function Header() {
 
                 <button 
                   onClick={logout} 
-                  className="hidden md:block text-[9px] font-extrabold text-[#E52535] hover:underline cursor-pointer uppercase font-sans border border-red-100/40 px-2 py-1.5 rounded hover:bg-red-50"
+                  className="hidden lg:block text-[9px] font-extrabold text-[#E52535] hover:underline cursor-pointer uppercase font-sans border border-red-100/40 px-2 py-1.5 rounded hover:bg-red-50"
                 >
                   {t('logout', language)}
                 </button>
@@ -311,7 +316,7 @@ export function Header() {
             {/* Premium Custom Animated Hamburger Button (Morphic Lines) */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden flex flex-col justify-center items-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-colors focus:outline-none cursor-pointer group"
+              className="lg:hidden flex flex-col justify-center items-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-colors focus:outline-none cursor-pointer group"
               aria-label="Toggle Menu"
             >
               <div className="w-4 h-3.5 sm:w-5 sm:h-4 flex flex-col justify-between relative">
@@ -349,8 +354,8 @@ export function Header() {
                 {/* Drawer Header with Logo & Close Icon */}
                 <div className="flex justify-between items-center pb-4 border-b border-zinc-100 dark:border-zinc-800">
                   <Link to="/" className="flex items-center gap-3" onClick={() => setIsMobileMenuOpen(false)}>
-                    {siteConfig.logoImageUrl ? (
-                      <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900 flex items-center justify-center p-0.5">
+                     {siteConfig.logoImageUrl ? (
+                      <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900 flex items-center justify-center p-1">
                         <img 
                           src={resolveBannerImage(siteConfig.logoImageUrl)} 
                           alt={siteConfig.primaryLogoText || 'Logo'} 
@@ -359,8 +364,8 @@ export function Header() {
                         />
                       </div>
                     ) : (
-                      <div className="relative w-8 h-8 rounded-lg bg-gradient-to-tr from-rose-600 to-[#E52535] flex items-center justify-center shadow-md overflow-hidden shrink-0">
-                        <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <div className="relative w-11 h-11 rounded-xl bg-gradient-to-tr from-rose-600 to-[#E52535] flex items-center justify-center shadow-md overflow-hidden shrink-0">
+                        <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                         </svg>
                       </div>
@@ -490,6 +495,22 @@ export function Header() {
                       {language === 'en' ? '📰 NEWS' : '📰 খবর'}
                     </Link>
                   </div>
+
+                  {/* Dynamic Custom Pages */}
+                  {(menuPages || []).filter(p => p.isActive !== false).length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {(menuPages || []).filter(p => p.isActive !== false).map(p => (
+                        <Link
+                          key={p.id}
+                          to={`/pages/${p.id}`}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex-1 min-w-[45%] py-2.5 px-3 rounded-lg bg-zinc-150 dark:bg-zinc-800/80 hover:bg-zinc-250 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 text-[10px] font-black uppercase text-center tracking-wider transition-colors"
+                        >
+                          📄 {p.menuTitle}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

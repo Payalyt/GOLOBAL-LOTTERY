@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Shuffle, Heart, Trash2, Plus, ChevronDown, Check, HelpCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, getInitialGames } from '../context/AuthContext';
 import { resolveBannerImage } from '../components/Hero';
 
 interface Ticket {
@@ -238,9 +238,22 @@ export function GameDetail() {
   const { isLoggedIn, user, dynamicGames, siteConfig } = useAuth();
   
   const gameNormalized = id?.replace(/-/g, '').replace(/\s+/g, '').toUpperCase() || 'EASY6';
-  const game = dynamicGames.find(g => g.name.replace(/\s+/g, '').toUpperCase() === gameNormalized) || dynamicGames.find(g => g.name === 'EASY6') || dynamicGames[0];
+  
+  // Robust game matching falling back to hardcoded presets if not in database
+  let game = dynamicGames.find(g => g.name.replace(/\s+/g, '').toUpperCase() === gameNormalized);
+  if (!game) {
+    const initialGames = getInitialGames();
+    game = initialGames.find(g => g.name.replace(/\s+/g, '').toUpperCase() === gameNormalized);
+  }
+  if (!game) {
+    game = dynamicGames.find(g => g.name === 'EASY6') || dynamicGames[0];
+  }
 
-  const config = gameConfigs[game.name] || gameConfigs['EASY6'];
+  // Robust config mapping to prevent falling back to EASY6 when game name casing or spacing differs (e.g., MEGA7 vs MEGA 7)
+  const configKey = Object.keys(gameConfigs).find(
+    k => k.replace(/\s+/g, '').toUpperCase() === game.name.replace(/\s+/g, '').toUpperCase()
+  );
+  const config = (configKey ? gameConfigs[configKey] : null) || gameConfigs['EASY6'];
   const maxSelections = game.ballCount || config.maxSelections;
   const numRange = game.maxBallValue || config.numRange;
   const brandBg = config.brandBg;
@@ -414,7 +427,7 @@ export function GameDetail() {
   };
 
   return (
-    <div className="bg-[#FAF9FC] min-h-screen text-zinc-900 font-sans pb-16">
+    <div className="bg-[#FAF9FC] dark:bg-zinc-950 min-h-screen text-zinc-900 dark:text-zinc-100 font-sans pb-16">
       
       {/* Maximum Container Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -515,12 +528,12 @@ export function GameDetail() {
           <div className="lg:col-span-9 space-y-8">
             
             {/* Play Selection Container */}
-            <div className="bg-white border border-[#E5E5EB] rounded-[28px] p-6 sm:p-8 shadow-sm">
+            <div className="bg-white dark:bg-zinc-900 border border-[#E5E5EB] dark:border-zinc-800 rounded-[28px] p-6 sm:p-8 shadow-sm">
               
               {/* Headline */}
-              <div className="pb-4 border-b border-zinc-100 flex justify-between items-center mb-6">
+              <div className="pb-4 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center mb-6">
                 <div>
-                  <h2 className="text-xl font-black text-[#0F0D24] uppercase tracking-wide">
+                  <h2 className="text-xl font-black text-[#0F0D24] dark:text-white uppercase tracking-wide">
                     Play {game.name}
                   </h2>
                   <div className="h-[2px] bg-zinc-800 w-12 mt-1.5 rounded-full" />
@@ -535,27 +548,27 @@ export function GameDetail() {
               {/* Tickets Iterator Layout */}
               <div className="space-y-6">
                 {tickets.map((ticket, idx) => (
-                  <div key={ticket.id} className="border border-zinc-200 rounded-[20px] p-5 sm:p-6 bg-white hover:border-zinc-300 transition-colors relative">
+                  <div key={ticket.id} className="border border-zinc-200 dark:border-zinc-800 rounded-[20px] p-5 sm:p-6 bg-white dark:bg-zinc-900/40 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors relative">
                     
                     {/* Header bar of ticket */}
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-zinc-100 mb-5">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-zinc-100 dark:border-zinc-800 mb-5">
                       <div className="flex items-center gap-3">
-                        <span className="font-black text-zinc-950 text-sm">Ticket {idx + 1}</span>
+                        <span className="font-black text-zinc-950 dark:text-zinc-100 text-sm">Ticket {idx + 1}</span>
                         
                         {/* Favorites Selector Dropdown */}
                         {favoriteSets.length > 0 && (
                           <div className="relative group">
-                            <button className="bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg px-2.5 py-1.5 text-[10px] font-bold flex items-center gap-1">
+                            <button className="bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg px-2.5 py-1.5 text-[10px] font-bold flex items-center gap-1">
                               My Favorites <ChevronDown className="w-3 h-3 text-zinc-400" />
                             </button>
                             {/* Hidden Dropdown list */}
-                            <div className="absolute left-0 mt-1 bg-white border border-zinc-200 rounded-xl shadow-lg p-2 py-1 z-20 hidden group-hover:block min-w-[140px] text-xs">
+                            <div className="absolute left-0 mt-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg p-2 py-1 z-20 hidden group-hover:block min-w-[140px] text-xs">
                               {favoriteSets.map((set, setIdx) => (
                                 <button
                                   key={setIdx}
                                   type="button"
                                   onClick={() => loadFavoriteSet(ticket.id, set)}
-                                  className="w-full text-left font-mono font-bold py-1.5 px-2 rounded-lg hover:bg-zinc-50 tracking-wider flex items-center justify-between"
+                                  className="w-full text-left font-mono font-bold py-1.5 px-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900 tracking-wider flex items-center justify-between"
                                 >
                                   <span>
                                     {ticketType === 'flags' 
@@ -572,11 +585,11 @@ export function GameDetail() {
 
                       <div className="flex items-center gap-4">
                         <span className="text-xs font-bold text-zinc-500">
-                          Price per Ticket: <span className="text-zinc-950 font-black">${game.price}</span>
+                          Price per Ticket: <span className="text-zinc-950 dark:text-zinc-100 font-black">${game.price}</span>
                         </span>
 
                         {/* Interactive toolbox */}
-                        <div className="flex items-center gap-2 border-l border-zinc-200 pl-3">
+                        <div className="flex items-center gap-2 border-l border-zinc-200 dark:border-zinc-800 pl-3">
                           {/* Shuffle Select */}
                           <button 
                             type="button" 
@@ -601,7 +614,7 @@ export function GameDetail() {
                           <button 
                             type="button" 
                             onClick={() => removeTicket(ticket.id)}
-                            className="p-2 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-650 hover:text-red-600 transition-colors"
+                            className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-zinc-400 hover:text-red-650 hover:text-red-600 transition-colors"
                             title="Remove Ticket Slot"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -611,7 +624,7 @@ export function GameDetail() {
                     </div>
 
                     {/* Pre-selection circle indices summary with ? placeholders */}
-                    <div className="flex flex-wrap gap-2.5 mb-6 justify-center bg-zinc-50 p-4 rounded-xl">
+                    <div className="flex flex-wrap gap-2.5 mb-6 justify-center bg-zinc-50 dark:bg-zinc-950/40 p-4 rounded-xl">
                       {Array.from({ length: maxSelections }).map((_, placeholderIdx) => {
                         const hasNum = ticket.numbers[placeholderIdx] !== undefined;
                         const sortedNumbers = [...ticket.numbers].sort((a,b) => a-b);
@@ -633,7 +646,7 @@ export function GameDetail() {
                         return (
                           <span 
                             key={placeholderIdx}
-                            className="w-11 h-11 rounded-full font-mono font-bold text-sm text-zinc-400 bg-white border border-zinc-200 flex items-center justify-center select-none"
+                          className="w-11 h-11 rounded-full font-mono font-bold text-sm text-zinc-400 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center select-none"
                           >
                             ?
                           </span>
@@ -656,13 +669,13 @@ export function GameDetail() {
                                 className={`p-2 rounded-xl flex flex-col items-center justify-center transition-all border ${
                                   isSelected
                                     ? `${brandBg} text-white font-extrabold shadow-md border-transparent scale-102`
-                                    : 'bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300'
+                                    : 'bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700'
                                 }`}
                               >
                                 <span className="text-2xl mb-1">{option?.flag}</span>
                                 <span className="text-[10px] font-bold tracking-tight text-center leading-none truncate w-full mb-1">{option?.name}</span>
                                 <span className={`text-[9px] font-mono font-black px-1.5 py-0.5 rounded ${
-                                  isSelected ? 'bg-black/25 text-white' : 'bg-zinc-100 text-zinc-500'
+                                  isSelected ? 'bg-black/25 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
                                 }`}>
                                   #{value}
                                 </span>
@@ -682,7 +695,7 @@ export function GameDetail() {
                                 className={`w-11 h-11 rounded-full flex items-center justify-center text-sm font-extrabold font-sans transition-all active:scale-95 duration-100 ${
                                   isSelected
                                     ? `${brandBg} text-white font-black shadow-md transform scale-[1.05]`
-                                    : 'bg-white text-zinc-800 border border-zinc-200 hover:bg-zinc-50 hover:border-zinc-350/80'
+                                    : 'bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:border-zinc-350/80 dark:hover:border-zinc-700'
                                 }`}
                               >
                                 {value}
@@ -701,7 +714,7 @@ export function GameDetail() {
               <button 
                 type="button"
                 onClick={addTicketUI}
-                className="mt-6 flex items-center justify-center gap-2 border border-zinc-350/80 hover:bg-zinc-50 text-zinc-900 font-black text-xs uppercase px-6 py-3.5 rounded-xl tracking-wider select-none leading-none shadow-sm transition-all active:scale-95 mx-auto"
+                className="mt-6 flex items-center justify-center gap-2 border border-zinc-350/80 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-900 dark:text-zinc-100 font-black text-xs uppercase px-6 py-3.5 rounded-xl tracking-wider select-none leading-none shadow-sm transition-all active:scale-95 mx-auto"
               >
                 <Plus className={`w-4 h-4 ${brandText} stroke-[3]`} />
                 ADD MORE
@@ -712,17 +725,17 @@ export function GameDetail() {
               {/* Draw Date Summary Portion */}
               <div className="mb-6">
                 <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-extrabold block mb-1">Draw Date</p>
-                <div className="flex items-center gap-2.5 text-zinc-800 font-semibold text-xs leading-none">
+                <div className="flex items-center gap-2.5 text-zinc-800 dark:text-zinc-350 font-semibold text-xs leading-none">
                   <span className={`w-2.5 h-2.5 rounded-full ${brandBg} inline-block shadow-sm`} />
                   <span>Next Draw: 19 June 2026 at 10:00 am</span>
                 </div>
               </div>
 
               {/* Purchase Details Bar */}
-              <div className="bg-[#F8F9FA] border border-zinc-200/50 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="bg-[#F8F9FA] dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="space-y-0.5 text-center sm:text-left">
                   <span className="text-[10px] text-zinc-400 font-black uppercase tracking-wider block">Total Cart Price</span>
-                  <div className="text-xl font-black text-zinc-950 font-sans">
+                  <div className="text-xl font-black text-zinc-950 dark:text-zinc-100 font-sans">
                     ${(tickets.filter(t => t.numbers.length === maxSelections).length * game.price).toFixed(2) || '0.00'}
                   </div>
                 </div>
@@ -739,10 +752,10 @@ export function GameDetail() {
             </div>
 
             {/* Prizes Matching List Block matching Screenshots exactly */}
-            <div className="bg-white border border-[#E5E5EB] rounded-[28px] p-6 sm:p-8 shadow-sm">
-              <div className="pb-4 border-b border-zinc-100 flex justify-between items-center mb-6">
+            <div className="bg-white dark:bg-zinc-900 border border-[#E5E5EB] dark:border-zinc-800 rounded-[28px] p-6 sm:p-8 shadow-sm">
+              <div className="pb-4 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center mb-6">
                 <div>
-                  <h3 className="text-sm font-black text-zinc-900 uppercase tracking-widest block">
+                  <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest block">
                     Prizes breakdown
                   </h3>
                   <div className="h-[2px] bg-zinc-400 w-8 mt-1 rounded-full" />
@@ -752,13 +765,13 @@ export function GameDetail() {
               <span className="text-[10px] tracking-wider text-zinc-400 font-black uppercase block mb-4">Main Draw</span>
 
               {/* Custom Sphere matches mockup list */}
-              <div className="space-y-4 font-semibold text-xs sm:text-sm text-zinc-800 leading-none">
+              <div className="space-y-4 font-semibold text-xs sm:text-sm text-zinc-800 dark:text-zinc-300 leading-none">
                 {displayPrizes.map((p, idx) => (
-                  <div key={idx} className="flex justify-between items-center bg-zinc-50 rounded-xl p-3.5 hover:bg-zinc-100/50 transition-colors">
+                  <div key={idx} className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-950 rounded-xl p-3.5 hover:bg-zinc-100/50 dark:hover:bg-zinc-900 transition-colors">
                     
                     {/* Display match text and balls row */}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                      <span className="text-zinc-[#0F0D24] font-bold shrink-0">{p.label}</span>
+                      <span className="text-zinc-[#0F0D24] dark:text-white font-bold shrink-0">{p.label}</span>
                       
                       <div className="flex gap-1 items-center">
                         {Array.from({ length: Math.max(5, maxSelections) }).map((_, ballIdx) => {
@@ -782,13 +795,13 @@ export function GameDetail() {
             </div>
 
             {/* Embedded Mini Latest Results block matching screen 1 exactly */}
-            <div className="bg-white border border-[#E5E5EB] rounded-[28px] p-6 sm:p-8 shadow-sm">
+            <div className="bg-white dark:bg-zinc-900 border border-[#E5E5EB] dark:border-zinc-800 rounded-[28px] p-6 sm:p-8 shadow-sm">
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h3 className="text-sm font-black text-[#0F0D24] uppercase tracking-wide">
+                  <h3 className="text-sm font-black text-[#0F0D24] dark:text-zinc-100 uppercase tracking-wide">
                     {game.name} Latest Results
                   </h3>
-                  <div className="h-[2px] bg-zinc-800 w-8 mt-1.5 rounded-full" />
+                  <div className="h-[2px] bg-zinc-800 dark:bg-zinc-700 w-8 mt-1.5 rounded-full" />
                 </div>
 
                 <Link 
@@ -799,7 +812,7 @@ export function GameDetail() {
                 </Link>
               </div>
 
-              <div className="border border-zinc-200/80 rounded-2xl p-5 hover:bg-zinc-50/50 transition-colors">
+              <div className="border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-5 hover:bg-zinc-50/50 dark:hover:bg-zinc-950 transition-colors">
                 <span className="text-[10px] text-zinc-400 font-black uppercase tracking-wider block mb-3">Winning Combination</span>
                 
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
@@ -811,7 +824,7 @@ export function GameDetail() {
                         return (
                           <span 
                             key={i}
-                            className={`w-12 h-12 rounded-xl bg-zinc-100 border border-zinc-200 text-2xl flex items-center justify-center shadow-sm select-none`}
+                            className={`w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-850 text-2xl flex items-center justify-center shadow-sm select-none`}
                             title={opt?.name}
                           >
                             {opt?.flag}
@@ -832,7 +845,7 @@ export function GameDetail() {
 
                   <div className="text-right flex flex-col justify-center sm:text-right leading-none">
                     <span className="text-xs text-zinc-400 font-bold block">12 June 2026</span>
-                    <span className="text-xs font-black text-[#0F0D24] block mt-1">214 Winners</span>
+                    <span className="text-xs font-black text-[#0F0D24] dark:text-zinc-100 block mt-1">214 Winners</span>
                   </div>
                 </div>
               </div>
@@ -861,10 +874,10 @@ export function GameDetail() {
             </div>
 
             {/* Know More Collapsible section matching Screenshot 1 exactly */}
-            <div className="bg-white border border-[#E5E5EB] rounded-[28px] p-6 sm:p-8 shadow-sm">
-              <div className="pb-4 border-b border-zinc-100 flex justify-between items-center mb-6">
+            <div className="bg-white dark:bg-zinc-900 border border-[#E5E5EB] dark:border-zinc-800 rounded-[28px] p-6 sm:p-8 shadow-sm">
+              <div className="pb-4 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center mb-6">
                 <div>
-                  <h3 className="text-sm font-black text-zinc-900 uppercase tracking-widest block">
+                  <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest block">
                     Know More About {game.name}
                   </h3>
                   <div className="h-[2px] bg-zinc-400 w-8 mt-1 rounded-full" />
@@ -872,11 +885,11 @@ export function GameDetail() {
               </div>
 
               {/* Interactive Accordion Panel */}
-              <div className="border border-zinc-200 rounded-xl overflow-hidden shadow-sm">
+              <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
                 <button
                   type="button"
                   onClick={() => setIsFaqOpen(!isFaqOpen)}
-                  className="w-full text-left p-4 bg-zinc-50 border-b border-transparent hover:bg-zinc-100/80 transition-all font-black text-xs uppercase flex items-center justify-between text-zinc-800"
+                  className="w-full text-left p-4 bg-zinc-50 dark:bg-zinc-950 border-b border-transparent hover:bg-zinc-100/80 dark:hover:bg-zinc-900 transition-all font-black text-xs uppercase flex items-center justify-between text-zinc-800 dark:text-zinc-200"
                 >
                   <div className="flex items-center gap-2">
                     <HelpCircle className="w-4 h-4 text-zinc-500" />
@@ -886,7 +899,7 @@ export function GameDetail() {
                 </button>
 
                 {isFaqOpen && (
-                  <div className="p-4 bg-white text-zinc-500 text-xs leading-relaxed font-semibold space-y-2 select-text">
+                  <div className="p-4 bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed font-semibold space-y-2 select-text">
                     <p>
                       1. Select {maxSelections} {ticketType === 'flags' ? 'flags from the 36-nation map' : `different numbers out of the ${numRange} options`}.
                     </p>

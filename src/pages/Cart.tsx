@@ -44,23 +44,23 @@ export function Cart() {
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           <div className="flex-grow w-full lg:w-2/3">
             {tickets.length === 0 ? (
-              <div className="bg-white p-12 rounded-2xl text-center border border-gray-205 border-gray-100 shadow-sm flex flex-col items-center justify-center">
-                <p className="text-lg font-bold text-gray-400">Your cart is currently empty.</p>
-                <p className="text-sm text-gray-500 mt-1 mb-6">You haven't selected any tickets yet.</p>
-                <Link to="/" className="bg-black hover:bg-gray-800 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition-all uppercase tracking-wider">
+              <div className="bg-white dark:bg-zinc-900 p-12 rounded-2xl text-center border border-gray-150 dark:border-zinc-800 shadow-sm flex flex-col items-center justify-center">
+                <p className="text-lg font-bold text-gray-400 dark:text-zinc-400">Your cart is currently empty.</p>
+                <p className="text-sm text-gray-500 dark:text-zinc-500 mt-1 mb-6">You haven't selected any tickets yet.</p>
+                <Link to="/" className="bg-black dark:bg-zinc-100 hover:bg-gray-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 font-bold px-6 py-2.5 rounded-lg text-sm transition-all uppercase tracking-wider">
                   Browse Active Games
                 </Link>
               </div>
             ) : (
               <div className="space-y-4">
                 {tickets.map((ticket, index) => (
-                  <div key={ticket.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-md transition-shadow">
+                  <div key={ticket.id} className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-850 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-md transition-shadow">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black tracking-wider uppercase px-2.5 py-1 bg-red-100 text-red-600 rounded">
+                        <span className="text-xs font-black tracking-wider uppercase px-2.5 py-1 bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded">
                           {ticket.gameName}
                         </span>
-                        <span className="text-xs font-semibold text-gray-400">#Ticket {index + 1}</span>
+                        <span className="text-xs font-semibold text-gray-400 dark:text-zinc-500">#Ticket {index + 1}</span>
                       </div>
                       
                       {/* Picked Numbers list */}
@@ -68,7 +68,7 @@ export function Cart() {
                         {ticket.numbers.map((n, idx) => (
                           <span 
                             key={idx} 
-                            className="bg-black text-yellow-300 font-mono font-bold w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm border border-white/10"
+                            className="bg-black dark:bg-zinc-950 text-yellow-300 font-mono font-bold w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm border border-white/10 dark:border-zinc-800"
                           >
                             {n}
                           </span>
@@ -77,12 +77,12 @@ export function Cart() {
                     </div>
                     
                     <div className="flex items-center gap-6 sm:self-center self-end">
-                      <span className="font-mono font-extrabold text-xl text-gray-900">${ticket.price.toFixed(2)}</span>
+                      <span className="font-mono font-extrabold text-xl text-gray-900 dark:text-zinc-100">${ticket.price.toFixed(2)}</span>
                       
                       <div className="flex gap-2">
                         <button
                           onClick={() => toggleFavorite(ticket.id)}
-                          className="p-2 border rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                          className="p-2 border border-gray-200 dark:border-zinc-850 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
                           title="Save as Favorite"
                         >
                           <Heart 
@@ -92,7 +92,7 @@ export function Cart() {
                         </button>
                         <button
                           onClick={() => removeTicket(ticket.id)}
-                          className="p-2 border rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
+                          className="p-2 border border-gray-200 dark:border-zinc-850 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
                           title="Remove from Cart"
                         >
                           <Trash2 size={18} />
@@ -107,68 +107,68 @@ export function Cart() {
           
           {/* Summary Sidebar */}
           <div className="w-full lg:w-80 shrink-0 sticky top-24">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-gray-950 space-y-6">
-              <h2 className="font-extrabold text-lg tracking-tight uppercase border-b pb-3">ESTIMATED SUMMARY</h2>
+            <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-850 text-gray-950 dark:text-zinc-100 space-y-6">
+              <h2 className="font-extrabold text-lg tracking-tight uppercase border-b border-gray-100 dark:border-zinc-850 pb-3">ESTIMATED SUMMARY</h2>
               
               {/* Wallet Integration */}
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Available Balance</span>
+              <div className="bg-gray-50 dark:bg-zinc-950 rounded-xl p-4 border border-gray-100 dark:border-zinc-850">
+                <span className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest block">Available Balance</span>
                 {isLoggedIn && user ? (
                   <div className="flex justify-between items-center mt-1">
-                    <span className="font-mono font-extrabold text-2xl text-green-600">${user.balance.toFixed(2)}</span>
-                    <Link to="/dashboard" className="text-[10px] font-bold bg-white text-gray-800 px-2 py-1 rounded border border-gray-300 hover:bg-gray-50">
+                    <span className="font-mono font-extrabold text-2xl text-green-600 dark:text-green-450">${user.balance.toFixed(2)}</span>
+                    <Link to="/dashboard" className="text-[10px] font-bold bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 px-2 py-1 rounded border border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800">
                       + ADD FUND
                     </Link>
                   </div>
                 ) : (
-                  <div className="mt-2 text-xs text-gray-500">
-                    <Link to="/login" className="font-bold text-black underline">Log in</Link> to check your dynamic credits.
+                  <div className="mt-2 text-xs text-gray-500 dark:text-zinc-400">
+                    <Link to="/login" className="font-bold text-black dark:text-white underline">Log in</Link> to check your dynamic credits.
                   </div>
                 )}
               </div>
 
               {/* Coupon Field */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-600 block">Promo Code</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-400 block">Promo Code</label>
                 <div className="flex gap-2">
                   <input 
                     type="text" 
                     placeholder="" 
                     value={coupon}
                     onChange={(e) => setCoupon(e.target.value)}
-                    className="w-full border border-gray-300 rounded-xl p-2 text-sm bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-black" 
+                    className="w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2 text-sm bg-white dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-zinc-750" 
                   />
                   <button 
                     onClick={handleApplyCoupon}
-                    className="bg-black hover:bg-gray-800 text-white font-bold px-4 py-2 rounded-xl text-xs transition-colors uppercase tracking-wider shrink-0"
+                    className="bg-black dark:bg-zinc-100 hover:bg-gray-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 font-bold px-4 py-2 rounded-xl text-xs transition-colors uppercase tracking-wider shrink-0 cursor-pointer"
                   >
                     Apply
                   </button>
                 </div>
                 {couponSuccess && (
-                  <p className="text-[10px] font-bold text-green-600">🎉 Code loaded! 50% Discount applied.</p>
+                  <p className="text-[10px] font-bold text-green-600 dark:text-green-400">🎉 Code loaded! 50% Discount applied.</p>
                 )}
               </div>
 
               {/* Subtotal Breakdowns */}
-              <div className="border-t pt-4 space-y-2.5 text-sm">
-                <div className="flex justify-between text-gray-500">
+              <div className="border-t border-gray-100 dark:border-zinc-850 pt-4 space-y-2.5 text-sm">
+                <div className="flex justify-between text-gray-500 dark:text-zinc-400">
                   <span>Subtotal</span>
-                  <span className="font-mono font-semibold">${subtotal.toFixed(2)}</span>
+                  <span className="font-mono font-semibold text-gray-900 dark:text-zinc-100">${subtotal.toFixed(2)}</span>
                 </div>
                 {discount > 0 && (
-                  <div className="flex justify-between text-green-600 font-semibold">
+                  <div className="flex justify-between text-green-600 dark:text-green-400 font-semibold">
                     <span>Voucher Discount</span>
                     <span className="font-mono">-${discount.toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-gray-500">
+                <div className="flex justify-between text-gray-500 dark:text-zinc-400">
                   <span>VAT (Digital Rules)</span>
                   <span className="font-mono">$0.00</span>
                 </div>
-                <div className="border-t pt-3 flex justify-between font-extrabold text-lg tracking-tight">
+                <div className="border-t border-gray-100 dark:border-zinc-850 pt-3 flex justify-between font-extrabold text-lg tracking-tight">
                   <span className="uppercase">Final Amount</span>
-                  <span className="font-mono text-xl text-gray-900">${finalTotal.toFixed(2)}</span>
+                  <span className="font-mono text-xl text-gray-900 dark:text-zinc-100">${finalTotal.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -177,13 +177,12 @@ export function Cart() {
                 <button 
                   onClick={() => {
                     if (!isLoggedIn) {
-                      alert("Please log in to complete your transaction.");
                       navigate('/login');
                       return;
                     }
                     navigate('/checkout', { state: { discount } });
                   }}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md shadow-red-100 uppercase tracking-widest text-xs flex items-center justify-center gap-1.5"
+                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md uppercase tracking-widest text-xs flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   Proceed to Checkout <ArrowRight className="w-4 h-4" />
                 </button>

@@ -1845,6 +1845,53 @@ export function Dashboard() {
                                 </>
                               )}
                             </button>
+
+                            <div className="mt-6 pt-6 border-t border-emerald-200/40 space-y-4">
+                              <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-sm space-y-4">
+                                <div className="text-center">
+                                  <h4 className="text-xs font-black text-zinc-900 uppercase tracking-wider flex items-center justify-center gap-1.5">
+                                    🎁 {language === 'en' ? 'Support Golobal Lottery' : 'গ্লোবাল লটারি প্রজেক্ট সাপোর্ট করুন'}
+                                  </h4>
+                                  <p className="text-[9px] text-zinc-500 font-semibold mt-1">
+                                    {language === 'en' ? 'Choose your preferred instant secure checkout below:' : 'নিচের যেকোনো একটি নিরাপদ পেমেন্ট মেথড বেছে নিন:'}
+                                  </p>
+                                </div>
+
+                                <div className="border border-zinc-100 rounded-xl overflow-hidden bg-zinc-50 p-1 flex justify-center shadow-inner">
+                                  <iframe 
+                                    src="https://nowpayments.io/embeds/donation-widget?api_key=46939299-dcc1-403d-9c4b-13c833682370&theme=light" 
+                                    width="100%" 
+                                    height="320" 
+                                    frameBorder="0" 
+                                    scrolling="no" 
+                                    style={{ borderRadius: "10px", overflow: "hidden" }}
+                                    title="NOWPayments Donation Widget"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col items-center justify-center gap-2 pt-1">
+                                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">
+                                    {language === 'en' ? 'Or use direct checkout page:' : 'অথবা সরাসরি পে করুন:'}
+                                  </span>
+                                  <a href="https://nowpayments.io/donation?api_key=46939299-dcc1-403d-9c4b-13c833682370" target="_blank" rel="noreferrer noopener" className="inline-block hover:scale-105 transition-all">
+                                    <img src="https://nowpayments.io/images/embeds/donation-button-white.svg" alt="Cryptocurrency & Bitcoin donation button by NOWPayments" className="h-10" referrerPolicy="no-referrer" />
+                                  </a>
+                                </div>
+
+                                <div className="pt-3 border-t border-zinc-100 flex flex-col items-center gap-2">
+                                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">
+                                    🔒 {language === 'en' ? 'Accepted Payment Methods' : 'স্বীকৃত পেমেন্ট পদ্ধতিসমূহ'}
+                                  </span>
+                                  <div className="flex flex-wrap justify-center gap-1.5">
+                                    {['VISA', 'Mastercard', 'BTC', 'USDT', 'ETH', 'TRX', 'LTC'].map((method) => (
+                                      <span key={method} className="text-[8px] font-black tracking-widest uppercase bg-zinc-100 text-zinc-700 px-2 py-1 rounded border border-zinc-200/60 shadow-xs">
+                                        {method}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </form>
                       ) : (
@@ -1954,6 +2001,53 @@ export function Dashboard() {
                             >
                               {language === 'en' ? 'SUBMIT CRYPTO DEPOSIT FOR VERIFICATION' : 'ক্রিপ্টো ডিপোজিট রিকোয়েস্ট পাঠান'}
                             </button>
+
+                            <div className="mt-6 pt-6 border-t border-zinc-200/40 space-y-4">
+                              <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-sm space-y-4">
+                                <div className="text-center">
+                                  <h4 className="text-xs font-black text-zinc-900 uppercase tracking-wider flex items-center justify-center gap-1.5">
+                                    🎁 {language === 'en' ? 'Support Golobal Lottery' : 'গ্লোবাল লটারি প্রজেক্ট সাপোর্ট করুন'}
+                                  </h4>
+                                  <p className="text-[9px] text-zinc-500 font-semibold mt-1">
+                                    {language === 'en' ? 'Choose your preferred instant secure checkout below:' : 'নিচের যেকোনো একটি নিরাপদ পেমেন্ট মেথড বেছে নিন:'}
+                                  </p>
+                                </div>
+
+                                <div className="border border-zinc-100 rounded-xl overflow-hidden bg-zinc-50 p-1 flex justify-center shadow-inner">
+                                  <iframe 
+                                    src="https://nowpayments.io/embeds/donation-widget?api_key=46939299-dcc1-403d-9c4b-13c833682370&theme=light" 
+                                    width="100%" 
+                                    height="320" 
+                                    frameBorder="0" 
+                                    scrolling="no" 
+                                    style={{ borderRadius: "10px", overflow: "hidden" }}
+                                    title="NOWPayments Donation Widget"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col items-center justify-center gap-2 pt-1">
+                                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">
+                                    {language === 'en' ? 'Or use direct checkout page:' : 'অথবা সরাসরি পে করুন:'}
+                                  </span>
+                                  <a href="https://nowpayments.io/donation?api_key=46939299-dcc1-403d-9c4b-13c833682370" target="_blank" rel="noreferrer noopener" className="inline-block hover:scale-105 transition-all">
+                                    <img src="https://nowpayments.io/images/embeds/donation-button-white.svg" alt="Cryptocurrency & Bitcoin donation button by NOWPayments" className="h-10" referrerPolicy="no-referrer" />
+                                  </a>
+                                </div>
+
+                                <div className="pt-3 border-t border-zinc-100 flex flex-col items-center gap-2">
+                                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">
+                                    🔒 {language === 'en' ? 'Accepted Payment Methods' : 'স্বীকৃত পেমেন্ট পদ্ধতিসমূহ'}
+                                  </span>
+                                  <div className="flex flex-wrap justify-center gap-1.5">
+                                    {['VISA', 'Mastercard', 'BTC', 'USDT', 'ETH', 'TRX', 'LTC'].map((method) => (
+                                      <span key={method} className="text-[8px] font-black tracking-widest uppercase bg-zinc-100 text-zinc-700 px-2 py-1 rounded border border-zinc-200/60 shadow-xs">
+                                        {method}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </form>
                       )}

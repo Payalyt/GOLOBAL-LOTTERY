@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Calendar, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { Calendar, ArrowLeft, ChevronLeft, ChevronRight, Trophy, Sparkles } from 'lucide-react';
+import { useAuth, getInitialGames } from '../context/AuthContext';
 
 interface GameConfig {
   maxSelections: number;
@@ -184,19 +184,36 @@ export function Results() {
   const { dynamicGames, siteConfig } = useAuth();
   
   const gameNormalized = id?.replace(/-/g, '').replace(/\s+/g, '').toUpperCase() || 'EASY6';
-  const initialGame = dynamicGames.find(g => g.name.replace(/\s+/g, '').toUpperCase() === gameNormalized) || dynamicGames.find(g => g.name === 'EASY6') || dynamicGames[0];
+  
+  // Robust game matching falling back to hardcoded presets if not in database
+  let initialGame = dynamicGames.find(g => g.name.replace(/\s+/g, '').toUpperCase() === gameNormalized);
+  if (!initialGame) {
+    const initialGames = getInitialGames();
+    initialGame = initialGames.find(g => g.name.replace(/\s+/g, '').toUpperCase() === gameNormalized);
+  }
+  if (!initialGame) {
+    initialGame = dynamicGames.find(g => g.name === 'EASY6') || dynamicGames[0];
+  }
 
   const [activeGame, setActiveGame] = useState(initialGame);
 
   // Sync state if param changes
   useEffect(() => {
-    const matched = dynamicGames.find(g => g.name.replace(/\s+/g, '').toUpperCase() === gameNormalized);
+    let matched = dynamicGames.find(g => g.name.replace(/\s+/g, '').toUpperCase() === gameNormalized);
+    if (!matched) {
+      const initialGames = getInitialGames();
+      matched = initialGames.find(g => g.name.replace(/\s+/g, '').toUpperCase() === gameNormalized);
+    }
     if (matched) {
       setActiveGame(matched);
     }
   }, [gameNormalized, dynamicGames]);
 
-  const config = gameConfigs[activeGame.name] || gameConfigs['EASY6'];
+  // Robust config mapping to prevent falling back to EASY6 when game name casing or spacing differs (e.g., MEGA7 vs MEGA 7)
+  const configKey = Object.keys(gameConfigs).find(
+    k => k.replace(/\s+/g, '').toUpperCase() === activeGame.name.replace(/\s+/g, '').toUpperCase()
+  );
+  const config = (configKey ? gameConfigs[configKey] : null) || gameConfigs['EASY6'];
   const maxSelections = config.maxSelections;
   const numRange = config.numRange;
   const brandBg = config.brandBg;
@@ -304,16 +321,19 @@ export function Results() {
   const pastDraws = currentDrawList.slice(1);
 
   return (
-    <div className="bg-[#FAF9FC] min-h-screen text-zinc-900 font-sans pb-16">
+    <div className="bg-[#FAF9FC] dark:bg-zinc-950 min-h-screen text-zinc-900 dark:text-zinc-100 font-sans pb-16">
       
       {/* Maximum Container Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         
         {/* Quick Game Tabs Selector: Now listing ALL available games styled elegantly! */}
-        <div className="flex gap-2 p-2 bg-zinc-200/50 rounded-2xl overflow-x-auto mb-8 shadow-inner max-w-full">
+        <div className="flex gap-2 p-2 bg-zinc-200/50 dark:bg-zinc-900 rounded-2xl overflow-x-auto mb-8 shadow-inner max-w-full">
           {dynamicGames.map((g) => {
             const isSelected = activeGame.name === g.name;
-            const liveConfig = gameConfigs[g.name] || gameConfigs['EASY6'];
+            const configKey = Object.keys(gameConfigs).find(
+              k => k.replace(/\s+/g, '').toUpperCase() === g.name.replace(/\s+/g, '').toUpperCase()
+            );
+            const liveConfig = (configKey ? gameConfigs[configKey] : null) || gameConfigs['EASY6'];
             const tabColor = liveConfig.brandBg;
             return (
               <button
@@ -328,7 +348,7 @@ export function Results() {
                   }
                 }}
                 className={`py-2 px-5 rounded-xl text-xs font-black tracking-wide whitespace-nowrap transition-all uppercase ${
-                  isSelected ? `${tabColor} text-white shadow-md scale-102` : 'bg-transparent text-zinc-650 hover:bg-zinc-200 text-zinc-600'
+                  isSelected ? `${tabColor} text-white shadow-md scale-102` : 'bg-transparent text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'
                 }`}
               >
                 {g.name}
@@ -353,14 +373,18 @@ export function Results() {
                   {activeGame.drawTime} DRAW
                 </span>
 
-                {/* Styled Badgelike Pill exactly matching branding */}
-                <div className="inline-flex bg-white text-zinc-950 font-sans font-black tracking-tighter rounded-full pl-5 pr-4 py-2 items-center gap-1.5 shadow-md">
-                  <span className={`${brandText} text-sm tracking-widest uppercase font-extrabold italic`}>
-                    {activeGame.name.substring(0, activeGame.name.length - 2)}
-                  </span>
-                  <span className={`w-5.5 h-5.5 rounded-full ${brandBg} text-white flex items-center justify-center font-bold text-xs font-mono select-none`}>
-                    {activeGame.name.slice(-1)}
-                  </span>
+                {/* Stylized Logo: Beautiful star/trophy symbol, no container background box/shadow */}
+                <div className="flex items-center gap-2 select-none">
+                  <Trophy className="w-6 h-6 text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.7)] shrink-0 animate-bounce" style={{ animationDuration: '3s' }} />
+                  <div className="flex flex-col">
+                    <span className="text-xl font-black tracking-tighter uppercase font-sans text-white leading-none flex items-center gap-1">
+                      {activeGame.name}
+                      <Sparkles className="w-3.5 h-3.5 text-yellow-300 inline" />
+                    </span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-white/60 mt-0.5">
+                      OFFICIAL DRAW
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -426,7 +450,7 @@ export function Results() {
                 {/* PLAY NOW BUTTON */}
                 <Link
                   to={`/games/${activeGame.name}`}
-                  className="bg-[#0f0d24] text-white hover:bg-[#1a1738] tracking-widest uppercase text-[10.5px] font-black py-4 px-6 rounded-full w-full block text-center shadow-md transition-transform active:scale-95 duration-100 mt-6"
+                  className="bg-[#0f0d24] dark:bg-zinc-950 text-white hover:bg-[#1a1738] dark:hover:bg-zinc-900 tracking-widest uppercase text-[10.5px] font-black py-4 px-6 rounded-full w-full block text-center shadow-md transition-transform active:scale-95 duration-100 mt-6 border border-transparent dark:border-zinc-800"
                 >
                   PLAY FOR ${activeGame.price}
                 </Link>
@@ -442,7 +466,7 @@ export function Results() {
             <div className="flex justify-start">
               <Link 
                 to={`/games/${activeGame.name}`}
-                className="inline-flex items-center gap-1.5 text-xs font-black text-zinc-500 hover:text-zinc-950 uppercase tracking-wider transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs font-black text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white uppercase tracking-wider transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 text-zinc-400 stroke-[3]" />
                 Back to Game Selection
@@ -450,21 +474,21 @@ export function Results() {
             </div>
 
             {/* Results Display Area Card Container */}
-            <div className="bg-white border border-[#E5E5EB] rounded-[28px] p-6 sm:p-8 shadow-sm">
+            <div className="bg-white dark:bg-zinc-900 border border-[#E5E5EB] dark:border-zinc-800 rounded-[28px] p-6 sm:p-8 shadow-sm">
               
               {/* Headline */}
-              <div className="pb-4 border-b border-zinc-100 flex justify-between items-center mb-6">
+              <div className="pb-4 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center mb-6">
                 <div>
-                  <h2 className="text-xl font-black text-[#0F0D24] uppercase tracking-wide">
+                  <h2 className="text-xl font-black text-[#0F0D24] dark:text-white uppercase tracking-wide">
                     {activeGame.name} Draw Results
                   </h2>
-                  <div className="h-[2px] bg-zinc-800 w-12 mt-1.5 rounded-full" />
+                  <div className="h-[2px] bg-zinc-800 dark:bg-zinc-600 w-12 mt-1.5 rounded-full" />
                 </div>
               </div>
 
               {/* Winning Combination box */}
-              <div className="border border-zinc-200/80 rounded-2xl p-6 sm:p-8 bg-white shadow-sm hover:shadow-md transition-shadow">
-                <span className="text-[10.5px] text-zinc-400 font-black uppercase tracking-wider block mb-4">LATEST COMBINATION</span>
+              <div className="border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 bg-white dark:bg-zinc-900/40 shadow-sm hover:shadow-md transition-shadow">
+                <span className="text-[10.5px] text-zinc-400 dark:text-zinc-500 font-black uppercase tracking-wider block mb-4">LATEST COMBINATION</span>
                 
                 <div className="flex flex-col md:flex-row justify-between md:items-center gap-6">
                   {/* Big winning range balls */}
@@ -473,9 +497,9 @@ export function Results() {
                       latestDraw.numbers.map((val, i) => {
                         const opt = flagOptions.find(f => f.code === val);
                         return (
-                          <div key={i} className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 p-3 rounded-xl shadow-sm animate-fadeIn">
+                          <div key={i} className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-3 rounded-xl shadow-sm animate-fadeIn">
                             <span className="text-3xl">{opt?.flag}</span>
-                            <span className="text-xs font-black text-zinc-850 uppercase">{opt?.name}</span>
+                            <span className="text-xs font-black text-zinc-850 dark:text-zinc-200 uppercase">{opt?.name}</span>
                           </div>
                         );
                       })
@@ -493,29 +517,29 @@ export function Results() {
 
                   {/* Draw date context and counts */}
                   <div className="text-left md:text-right shrink-0">
-                    <span className="text-zinc-400 font-bold text-xs flex items-center md:justify-end gap-1 font-sans">
-                      <Calendar className="w-4 h-4 text-zinc-400" />
+                    <span className="text-zinc-400 dark:text-zinc-500 font-bold text-xs flex items-center md:justify-end gap-1 font-sans">
+                      <Calendar className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
                       {latestDraw.date}
                     </span>
-                    <div className="mt-2 text-xs font-black text-[#0F0D24]">
+                    <div className="mt-2 text-xs font-black text-[#0F0D24] dark:text-zinc-300">
                       Total Winners: <span className="font-sans font-extrabold text-[#12A054] text-sm ml-0.5">{latestDraw.totalWinners}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Bottom Border Row with total sum payouts */}
-                <div className="mt-6 pt-5 border-t border-zinc-100/80 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-semibold text-zinc-500">
-                  <span>Guaranteed Drawing Matching Ref: <span className="font-mono text-zinc-900 font-extrabold select-all">EMD-2941-XQ9</span></span>
-                  <span>Total Prizes Disbursed: <span className="text-green-650 font-black text-sm text-zinc-950">{latestDraw.totalPaid}</span></span>
+                <div className="mt-6 pt-5 border-t border-zinc-100/80 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                  <span>Guaranteed Drawing Matching Ref: <span className="font-mono text-zinc-900 dark:text-zinc-100 font-extrabold select-all">EMD-2941-XQ9</span></span>
+                  <span>Total Prizes Disbursed: <span className="text-green-650 dark:text-green-400 font-black text-sm text-zinc-950 dark:text-zinc-100">{latestDraw.totalPaid}</span></span>
                 </div>
               </div>
 
               {/* Past Results list */}
               <div className="mt-12 mb-6">
-                <h3 className="text-sm font-black text-zinc-950 uppercase tracking-widest block">
+                <h3 className="text-sm font-black text-zinc-950 dark:text-zinc-100 uppercase tracking-widest block">
                   Past Drawing Records
                 </h3>
-                <div className="h-[2px] bg-zinc-400 w-8 mt-1.5 rounded-full" />
+                <div className="h-[2px] bg-zinc-400 dark:bg-zinc-600 w-8 mt-1.5 rounded-full" />
               </div>
 
               {/* Preceding past draws sequence listing */}
@@ -523,11 +547,11 @@ export function Results() {
                 {pastDraws.map((past, i) => (
                   <div 
                     key={i} 
-                    className="border border-zinc-200 hover:border-zinc-350/80 rounded-[20px] p-5 sm:p-6 bg-white hover:bg-zinc-50/20 transition-all flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5"
+                    className="border border-zinc-200 dark:border-zinc-800 hover:border-zinc-350/80 dark:hover:border-zinc-700 rounded-[20px] p-5 sm:p-6 bg-white dark:bg-zinc-900/40 hover:bg-zinc-50/20 dark:hover:bg-zinc-800/20 transition-all flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5"
                   >
                     
                     {/* Left: Drawn date */}
-                    <div className="flex items-center gap-2 font-sans font-bold text-xs text-zinc-500 min-w-[120px]">
+                    <div className="flex items-center gap-2 font-sans font-bold text-xs text-zinc-500 dark:text-zinc-400 min-w-[120px]">
                       <Calendar className="w-4 h-4 text-zinc-400" />
                       <span>{past.date}</span>
                     </div>
@@ -554,9 +578,9 @@ export function Results() {
                     </div>
 
                     {/* Right: Stats values */}
-                    <div className="flex items-center gap-5 text-[11px] font-bold text-zinc-505 shrink-0 border-t lg:border-t-0 pt-3 lg:pt-0 w-full lg:w-auto justify-between lg:justify-end">
-                      <span>Total Winners: <span className="text-zinc-900 font-extrabold">{past.totalWinners}</span></span>
-                      <span>Total Paid: <span className="text-zinc-900 font-black">{past.totalPaid}</span></span>
+                    <div className="flex items-center gap-5 text-[11px] font-bold text-zinc-500 dark:text-zinc-400 shrink-0 border-t lg:border-t-0 dark:border-zinc-800 pt-3 lg:pt-0 w-full lg:w-auto justify-between lg:justify-end">
+                      <span>Total Winners: <span className="text-zinc-900 dark:text-zinc-200 font-extrabold">{past.totalWinners}</span></span>
+                      <span>Total Paid: <span className="text-zinc-900 dark:text-zinc-100 font-black">{past.totalPaid}</span></span>
                     </div>
 
                   </div>
@@ -565,17 +589,17 @@ export function Results() {
 
               {/* Flat Pagination Controls exactly matching mockup */}
               <div className="flex items-center justify-center gap-1.5 mt-8 select-none">
-                <button type="button" className="w-7 h-7 rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 flex items-center justify-center text-xs">
+                <button type="button" className="w-7 h-7 rounded-lg border border-zinc-200 dark:border-zinc-850 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center justify-center text-xs">
                   <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
                 
-                <button type="button" className="w-7 h-7 rounded-lg bg-[#0F0D24] text-white font-black text-xs">01</button>
-                <button type="button" className="w-7 h-7 rounded-lg text-zinc-650 font-bold hover:bg-zinc-100/50 text-xs">02</button>
-                <button type="button" className="w-7 h-7 rounded-lg text-zinc-650 font-bold hover:bg-zinc-100/50 text-xs">03</button>
-                <span className="text-zinc-350 text-xs px-1">...</span>
-                <button type="button" className="w-7 h-7 rounded-lg text-zinc-650 font-bold hover:bg-zinc-100/50 text-xs">09</button>
+                <button type="button" className="w-7 h-7 rounded-lg bg-[#0F0D24] dark:bg-zinc-800 text-white font-black text-xs">01</button>
+                <button type="button" className="w-7 h-7 rounded-lg text-zinc-600 dark:text-zinc-400 font-bold hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 text-xs">02</button>
+                <button type="button" className="w-7 h-7 rounded-lg text-zinc-600 dark:text-zinc-400 font-bold hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 text-xs">03</button>
+                <span className="text-zinc-350 dark:text-zinc-500 text-xs px-1">...</span>
+                <button type="button" className="w-7 h-7 rounded-lg text-zinc-600 dark:text-zinc-400 font-bold hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 text-xs">09</button>
 
-                <button type="button" className="w-7 h-7 rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 flex items-center justify-center text-xs">
+                <button type="button" className="w-7 h-7 rounded-lg border border-zinc-200 dark:border-zinc-850 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center justify-center text-xs">
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>

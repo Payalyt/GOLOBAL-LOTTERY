@@ -218,18 +218,18 @@ export function RaffleDetail() {
   );
 
   return (
-    <div className="bg-[#FAF9FC] min-h-screen text-zinc-900 font-sans pb-16">
+    <div className="bg-[#FAF9FC] dark:bg-zinc-950 min-h-screen text-zinc-900 dark:text-zinc-100 font-sans pb-16">
       
       {/* Upper breadcrumb & quick info */}
-      <div className="bg-white border-b border-gray-150 py-3 mb-6">
+      <div className="bg-white dark:bg-zinc-900 border-b border-gray-150 dark:border-zinc-800 py-3 mb-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <Link to="/" className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 flex items-center gap-1.5 transition-colors">
+          <Link to="/" className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1.5 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </Link>
           <div className="flex gap-4">
-            <Link to="/raffles/sure1" className={`text-xs font-bold px-3 py-1 rounded transition-colors ${config.name === 'SURE 1' ? 'bg-pink-100 text-pink-700' : 'text-zinc-500 hover:bg-gray-100'}`}>SURE 1</Link>
-            <Link to="/raffles/sure2" className={`text-xs font-bold px-3 py-1 rounded transition-colors ${config.name === 'SURE 2' ? 'bg-purple-100 text-purple-700' : 'text-zinc-500 hover:bg-gray-100'}`}>SURE 2</Link>
-            <Link to="/raffles/sure3" className={`text-xs font-bold px-3 py-1 rounded transition-colors ${config.name === 'SURE 3' ? 'bg-teal-100 text-teal-700' : 'text-zinc-500 hover:bg-gray-100'}`}>SURE 3</Link>
+            <Link to="/raffles/sure1" className={`text-xs font-bold px-3 py-1 rounded transition-colors ${config.name === 'SURE 1' ? 'bg-pink-100 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300' : 'text-zinc-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}>SURE 1</Link>
+            <Link to="/raffles/sure2" className={`text-xs font-bold px-3 py-1 rounded transition-colors ${config.name === 'SURE 2' ? 'bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300' : 'text-zinc-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}>SURE 2</Link>
+            <Link to="/raffles/sure3" className={`text-xs font-bold px-3 py-1 rounded transition-colors ${config.name === 'SURE 3' ? 'bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300' : 'text-zinc-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}>SURE 3</Link>
           </div>
         </div>
       </div>
@@ -295,7 +295,7 @@ export function RaffleDetail() {
                     >
                       -
                     </button>
-                    <div className="bg-white rounded-xl text-zinc-950 font-mono font-black text-lg px-6 py-3 shrink-0 flex items-center justify-center min-w-[70px] shadow-inner">
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl text-zinc-950 dark:text-zinc-100 font-mono font-black text-lg px-6 py-3 shrink-0 flex items-center justify-center min-w-[70px] shadow-inner">
                       {ticketCount}
                     </div>
                     <button 
@@ -312,7 +312,7 @@ export function RaffleDetail() {
                   <span className="text-[10px] font-black tracking-widest text-white/85 uppercase block">YOUR ASSIGNED CODES:</span>
                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1">
                     {generateTicketCodes().map((code) => (
-                      <span key={code} className="bg-white/90 px-3 py-1.5 rounded-lg text-sm font-mono font-black text-zinc-950 border border-white/20 uppercase shadow-md">
+                      <span key={code} className="bg-white/90 dark:bg-zinc-900/90 px-3 py-1.5 rounded-lg text-sm font-mono font-black text-zinc-950 dark:text-zinc-100 border border-white/20 dark:border-zinc-800 uppercase shadow-md">
                         {code}
                       </span>
                     ))}
@@ -417,20 +417,20 @@ export function RaffleDetail() {
           <div className="lg:col-span-8 w-full space-y-8">
             
             {/* Top White Card: Header and Profile Showcase */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-150">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-150 dark:border-zinc-800">
               
               {/* Slogan details and ribbon */}
               <div className="space-y-4 mb-6">
                 <span className="text-xs font-black tracking-widest text-zinc-400 uppercase font-mono">GUARANTEED TO DRAW WINNER</span>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-zinc-900 leading-tight">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 leading-tight">
                   {config.title}
                 </h2>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-pink-100/60 text-pink-700 font-extrabold text-xs  uppercase tracking-wide rounded-full font-sans">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-pink-100/60 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 font-extrabold text-xs  uppercase tracking-wide rounded-full font-sans">
                   <Sparkles className="w-3.5 h-3.5" /> 1 WINNER OF {config.prizeAmount} EACH TIME
                 </div>
               </div>
 
-              <hr className="border-gray-100 my-6" />
+              <hr className="border-gray-100 dark:border-zinc-800 my-6" />
 
               {/* Winners profile block */}
               <div>
@@ -444,7 +444,7 @@ export function RaffleDetail() {
                 {/* Grid model circles */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
                   {config.winners.map((win, idx) => (
-                    <div key={idx} className="flex flex-col items-center text-center p-3 rounded-2xl bg-gray-50 border border-gray-100 hover:shadow-sm transition-shadow">
+                    <div key={idx} className="flex flex-col items-center text-center p-3 rounded-2xl bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-850 hover:shadow-sm transition-shadow">
                       {/* Initials circle */}
                       <div className={`w-12 h-12 rounded-full ${win.avatarBg} flex items-center justify-center font-black text-sm uppercase shadow-inner mb-2.5`}>
                         {win.initials}
@@ -456,7 +456,7 @@ export function RaffleDetail() {
                       </span>
                       
                       {/* Details text */}
-                      <p className="text-[11px] font-bold text-zinc-900 truncate w-full mb-0.5 leading-tight">{win.name}</p>
+                      <p className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 truncate w-full mb-0.5 leading-tight">{win.name}</p>
                       <p className="text-[10px] font-black text-emerald-600 block leading-none mb-1">{win.prize}</p>
                       <p className="text-[9px] text-zinc-400 block leading-none truncate w-full">{win.date}</p>
                     </div>
@@ -467,12 +467,12 @@ export function RaffleDetail() {
             </div>
 
             {/* Bottom White Card: Draw History Results Table */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-150">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-150 dark:border-zinc-800">
               
               {/* Section Header with searching */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h2 className="text-lg font-black tracking-tight uppercase">Draw Results</h2>
+                  <h2 className="text-lg font-black tracking-tight uppercase text-zinc-900 dark:text-zinc-100">Draw Results</h2>
                   <p className="text-xs text-zinc-500 font-medium">Verify official entries from preceding draws</p>
                 </div>
                 
@@ -484,15 +484,15 @@ export function RaffleDetail() {
                     placeholder="Search results..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-gray-50 text-zinc-900 border border-zinc-200 pl-9 pr-4 py-2 text-xs rounded-xl focus:outline-none focus:ring-1 focus:ring-black"
+                    className="w-full bg-gray-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800 pl-9 pr-4 py-2 text-xs rounded-xl focus:outline-none focus:ring-1 focus:ring-black"
                   />
                 </div>
               </div>
 
               {/* Table rendering */}
-              <div className="overflow-x-auto rounded-xl border border-gray-150 shadow-inner">
-                <table className="min-w-full divide-y divide-gray-150 text-left">
-                  <thead className="bg-gray-50 text-[10px] font-black text-zinc-500 uppercase tracking-widest text-center">
+              <div className="overflow-x-auto rounded-xl border border-gray-150 dark:border-zinc-800 shadow-inner">
+                <table className="min-w-full divide-y divide-gray-150 dark:divide-zinc-800 text-left">
+                  <thead className="bg-gray-50 dark:bg-zinc-950 text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest text-center">
                     <tr>
                       <th className="px-4 py-3 text-left">Raffle</th>
                       <th className="px-4 py-3">Raffle ID</th>
@@ -503,14 +503,14 @@ export function RaffleDetail() {
                       <th className="px-4 py-3 text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-150 text-xs font-semibold text-zinc-700 bg-white">
+                  <tbody className="divide-y divide-gray-150 dark:divide-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900">
                     {filteredResults.length > 0 ? (
                       filteredResults.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                        <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-zinc-950 transition-colors">
                           <td className={`px-4 py-3.5 font-black text-left font-mono ${config.textColor}`}>{row.raffle}</td>
-                          <td className="px-4 py-3.5 font-mono text-zinc-500 text-center">{row.raffleId}</td>
-                          <td className="px-4 py-3.5 text-zinc-400 text-center">{row.date}</td>
-                          <td className="px-4 py-3.5 font-bold text-zinc-900 text-left truncate max-w-[120px]">{row.winnerName}</td>
+                          <td className="px-4 py-3.5 font-mono text-zinc-500 dark:text-zinc-400 text-center">{row.raffleId}</td>
+                          <td className="px-4 py-3.5 text-zinc-400 dark:text-zinc-500 text-center">{row.date}</td>
+                          <td className="px-4 py-3.5 font-bold text-zinc-900 dark:text-zinc-100 text-left truncate max-w-[120px]">{row.winnerName}</td>
                           <td className="px-4 py-3.5 text-center">
                             <span className="inline-flex items-center gap-1">
                               <span className="text-base leading-none select-none">{row.flag}</span>
@@ -540,19 +540,19 @@ export function RaffleDetail() {
               </div>
 
               {/* Table pagination controller */}
-              <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-150">
+              <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-150 dark:border-zinc-800">
                 <span className="text-[11px] text-zinc-400 font-bold">Showing {filteredResults.length} records</span>
                 <div className="flex gap-1.5">
-                  <button className="p-2 border rounded-xl hover:bg-gray-50 text-zinc-400 hover:text-zinc-600 transition-colors disabled:opacity-40" disabled>
+                  <button className="p-2 border dark:border-zinc-800 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 transition-colors disabled:opacity-40" disabled>
                     <ArrowLeft className="w-4 h-4" />
                   </button>
-                  <button className="w-8 h-8 rounded-xl bg-black text-yellow-300 font-mono font-bold text-xs flex items-center justify-center shadow">
+                  <button className="w-8 h-8 rounded-xl bg-black dark:bg-zinc-950 text-yellow-300 font-mono font-bold text-xs flex items-center justify-center shadow">
                     01
                   </button>
-                  <button className="w-8 h-8 rounded-xl text-zinc-400 font-mono font-semibold text-xs hover:bg-gray-150/40 flex items-center justify-center">
+                  <button className="w-8 h-8 rounded-xl text-zinc-400 font-mono font-semibold text-xs hover:bg-gray-150/40 dark:hover:bg-zinc-850 flex items-center justify-center">
                     02
                   </button>
-                  <button className="p-2 border rounded-xl hover:bg-gray-50 text-zinc-450 text-zinc-400 hover:text-zinc-650 transition-colors">
+                  <button className="p-2 border dark:border-zinc-800 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 text-zinc-455 text-zinc-400 hover:text-zinc-650 transition-colors">
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -568,15 +568,15 @@ export function RaffleDetail() {
       {/* Lightbox / Modal for detailed view */}
       {selectedResult && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 transition-all animate-fade-in">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative border border-gray-100">
-            <h3 className="text-lg font-black tracking-tight uppercase text-zinc-950 mb-1 flex items-center gap-1.5 border-b pb-3">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-zinc-800">
+            <h3 className="text-lg font-black tracking-tight uppercase text-zinc-950 dark:text-white mb-1 flex items-center gap-1.5 border-b dark:border-zinc-800 pb-3">
               <Trophy className="w-5 h-5 text-yellow-500" /> Certificate of winning
             </h3>
             
             <div className="space-y-4 pt-1">
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Lottery Name</label>
-                <p className="text-sm font-extrabold text-zinc-900">{config.name} Raffle Draw</p>
+                <p className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">{config.name} Raffle Draw</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -585,30 +585,30 @@ export function RaffleDetail() {
                 </div>
                 <div>
                   <label className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Ticket ID</label>
-                  <p className="text-sm font-mono font-extrabold text-zinc-800">{selectedResult.raffleId}</p>
+                  <p className="text-sm font-mono font-extrabold text-zinc-800 dark:text-zinc-200">{selectedResult.raffleId}</p>
                 </div>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Winner Holder</label>
-                <p className="text-sm font-black text-zinc-950">{selectedResult.winnerName}</p>
+                <p className="text-sm font-black text-zinc-950 dark:text-zinc-100">{selectedResult.winnerName}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Draw Date</label>
-                  <p className="text-sm font-semibold text-zinc-700">{selectedResult.date}</p>
+                  <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{selectedResult.date}</p>
                 </div>
                 <div>
                   <label className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Nationality</label>
-                  <p className="text-sm font-bold text-zinc-700 flex items-center gap-1">
+                  <p className="text-sm font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
                     <span>{selectedResult.flag}</span> {selectedResult.nationality}
                   </p>
                 </div>
               </div>
               
-              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
-                <label className="text-[10px] uppercase tracking-wider text-emerald-700 font-bold block mb-0.5">Prize Amount</label>
-                <p className="text-3xl font-black text-emerald-600 font-sans leading-none">{selectedResult.prize}</p>
-                <span className="text-[9px] text-emerald-700 font-semibold block mt-1.5 uppercase tracking-wide">Verified by Golobal Lottery System</span>
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 text-center">
+                <label className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-bold block mb-0.5">Prize Amount</label>
+                <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-sans leading-none">{selectedResult.prize}</p>
+                <span className="text-[9px] text-emerald-700 dark:text-emerald-400 font-semibold block mt-1.5 uppercase tracking-wide">Verified by Golobal Lottery System</span>
               </div>
             </div>
 

@@ -321,31 +321,31 @@ export function Register() {
 
   return (
     <div className="max-w-md mx-auto mt-6 sm:mt-10 p-4 font-roboto-sans">
-      <div className="bg-white p-6 sm:p-8 border border-gray-200 rounded-3xl shadow-xl text-gray-950 relative font-roboto-sans">
+      <div className="bg-white dark:bg-zinc-900 p-6 sm:p-8 border border-gray-200 dark:border-zinc-800 rounded-3xl shadow-xl text-gray-950 dark:text-zinc-100 relative font-roboto-sans">
         <button
           onClick={() => navigate('/')}
-          className="absolute right-4 top-4 p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+          className="absolute right-4 top-4 p-2 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-full transition-colors cursor-pointer"
           aria-label="Close"
         >
-          <X className="w-5 h-5 text-gray-600" />
+          <X className="w-5 h-5 text-gray-600 dark:text-zinc-400" />
         </button>
-        <h2 className="text-2xl font-black tracking-tight mb-2 uppercase text-gray-900">
+        <h2 className="text-2xl font-black tracking-tight mb-2 uppercase text-gray-900 dark:text-zinc-100">
           {language === 'en' ? 'Sign Up' : 'নিবন্ধন করুন'}
         </h2>
-        <p className="text-xs text-gray-500 mb-6 uppercase tracking-wider font-bold">
+        <p className="text-xs text-gray-500 dark:text-zinc-400 mb-6 uppercase tracking-wider font-bold">
           {language === 'en' 
             ? 'Create your player account with mixed-case support' 
             : 'আপনার প্লেয়ার অ্যাকাউন্ট তৈরি করুন'}
         </p>
         
         {successMsg && (
-          <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm font-semibold border border-green-100 font-roboto-sans">
+          <div className="mb-4 p-3 bg-green-50 dark:bg-emerald-950/20 text-green-700 dark:text-emerald-450 rounded-lg text-sm font-semibold border border-green-100 dark:border-emerald-900/30 font-roboto-sans">
             ✅ {successMsg}
           </div>
         )}
         
         {errorMsg && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm font-semibold border border-red-100 font-roboto-sans">
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-450 rounded-lg text-sm font-semibold border border-red-100 dark:border-red-900/30 font-roboto-sans">
             ⚠️ {errorMsg}
           </div>
         )}
@@ -353,17 +353,17 @@ export function Register() {
         <form className="space-y-4 font-roboto-sans" onSubmit={handleSubmit}>
           <div>
             <div className="flex justify-between items-center">
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
                 {language === 'en' ? 'Username' : 'ইউজারনেম'}
               </label>
-              <span className="text-[10px] text-gray-400">
+              <span className="text-[10px] text-gray-400 dark:text-zinc-500">
                 {language === 'en' ? 'Accepts small & capital letters' : 'ছোট এবং বড় ইংরেজি অক্ষর গ্রহণ করে'}
               </span>
             </div>
             <input 
               type="text" 
               placeholder={language === 'en' ? "e.g. RobinHood_21" : "যেমন: RobinHood_21"}
-              className="mt-1 block bg-white text-zinc-950 w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-black focus:outline-none font-roboto-sans" 
+              className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans" 
               required 
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -386,13 +386,13 @@ export function Register() {
           </div>
           
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
               {language === 'en' ? 'Email Address' : 'ইমেইল ঠিকানা'}
             </label>
             <input 
               type="email" 
               placeholder="example@gmail.com"
-              className="mt-1 block bg-white text-zinc-950 w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-black focus:outline-none font-roboto-sans" 
+              className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans" 
               required 
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -413,13 +413,13 @@ export function Register() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
               {language === 'en' ? 'Phone Number' : 'মোবাইল নম্বর'}
             </label>
             <input 
               type="text" 
               placeholder="+8801700000000"
-              className="mt-1 block bg-white text-zinc-950 w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-black focus:outline-none font-roboto-sans" 
+              className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans" 
               required 
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -443,30 +443,30 @@ export function Register() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
                 {language === 'en' ? 'NID Card Number' : 'এনআইডি কার্ড নম্বর'}
               </label>
               <input 
                 type="text" 
                 placeholder={language === 'en' ? "10, 13 or 17 digits" : "১০, ১৩ অথবা ১৭ সংখ্যা"}
-                className="mt-1 block bg-white text-zinc-950 w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-black focus:outline-none font-roboto-sans" 
+                className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans" 
                 value={formData.nidNumber}
                 onChange={(e) => setFormData({ ...formData, nidNumber: e.target.value })}
               />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
                 {language === 'en' ? 'Passport Number' : 'পাসপোর্ট নম্বর'}
               </label>
               <input 
                 type="text" 
                 placeholder={language === 'en' ? "Alphanumeric number" : "অ্যালফানিউমেরিক নম্বর"}
-                className="mt-1 block bg-white text-zinc-950 w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-black focus:outline-none font-roboto-sans" 
+                className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans" 
                 value={formData.passportNumber}
                 onChange={(e) => setFormData({ ...formData, passportNumber: e.target.value })}
               />
             </div>
-            <div className="col-span-1 sm:col-span-2 text-[10px] text-gray-500 font-roboto-sans mt-[-6px]">
+            <div className="col-span-1 sm:col-span-2 text-[10px] text-gray-500 dark:text-zinc-400 font-roboto-sans mt-[-6px]">
               {language === 'en' 
                 ? '* Either NID or Passport is required.' 
                 : '* এনআইডি অথবা পাসপোর্ট নম্বরের যেকোনো একটি আবশ্যক।'}
@@ -474,11 +474,11 @@ export function Register() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
               {language === 'en' ? 'Country of Residence' : 'বসবাসের দেশ'}
             </label>
             <select 
-              className="mt-1 block bg-white text-zinc-950 w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-black focus:outline-none font-roboto-sans"
+              className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans"
               value={formData.country}
               onChange={(e) => setFormData({ ...formData, country: e.target.value })}
             >
@@ -489,14 +489,14 @@ export function Register() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
               {language === 'en' ? 'Password' : 'পাসওয়ার্ড'}
             </label>
             <div className="relative mt-1">
               <input 
                 type={showPassword ? "text" : "password"} 
                 placeholder={language === 'en' ? "Strong Password" : "শক্তিশালী পাসওয়ার্ড"}
-                className="block bg-white text-zinc-950 w-full border border-gray-300 rounded-xl p-2.5 pr-10 focus:ring-2 focus:ring-black focus:outline-none font-roboto-sans" 
+                className="block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 pr-10 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans" 
                 required 
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -504,7 +504,7 @@ export function Register() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -512,9 +512,9 @@ export function Register() {
             
             {/* Real-time Password Strength Check */}
             {formData.password && (
-              <div className="mt-2 space-y-2 text-xs text-gray-600 bg-gray-50 p-3.5 rounded-xl border border-gray-100 font-roboto-sans">
+              <div className="mt-2 space-y-2 text-xs text-gray-600 dark:text-zinc-300 bg-gray-50 dark:bg-zinc-950 p-3.5 rounded-xl border border-gray-100 dark:border-zinc-850 font-roboto-sans">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-500">
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-500 dark:text-zinc-400">
                     {language === 'en' ? 'Password Strength:' : 'পাসওয়ার্ডের শক্তি:'}
                   </span>
                   <span className={`font-extrabold text-[10px] uppercase ${
