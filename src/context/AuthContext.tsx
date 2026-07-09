@@ -70,6 +70,7 @@ export interface DynamicGame {
   cardBgImage?: string;
   cardBgGradient?: string;
   prizeBreakdown?: { label: string; count: number; prize: string }[];
+  isActive?: boolean;
 }
 
 export interface PaymentGateway {
@@ -347,6 +348,7 @@ export interface SiteThemeConfig {
   totalMetricTicketsPurchasedRate?: string;
   videoWinners?: VideoWinner[];
   drawResults?: DrawResult[];
+  navMenuData?: any; // To store dynamic header menus
 }
 
 interface AuthContextType {
@@ -459,7 +461,7 @@ const DEFAULT_USERS: UserProfile[] = [
 
 const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
   primaryHex: '#E52535',
-  primaryLogoText: 'GOLOBAL',
+  primaryLogoText: 'GLOBAL',
   logoImageUrl: '',
   heroHeadline: 'Reach for the skies with',
   heroJackpotAmount: '$50,000,000',
@@ -529,7 +531,7 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
     {
       id: "b-2",
       title: "DAILY SURE RAFFLE EXTRAVAGANZA",
-      subtitle: "Get free simulated entry multiplier coupon using GOLOBAL50",
+      subtitle: "Get free simulated entry multiplier coupon using GLOBAL50",
       imageUrl: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&q=80&w=1200",
       linkUrl: "/promotions",
       isActive: false,
@@ -778,6 +780,7 @@ export const getInitialGames = (): DynamicGame[] => [
   { name: 'EASY6', prize: '$4,000,000', price: 6, drawTime: 'Friday', targetDateStr: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#12A054', isSolidStyle: false, ballCount: 6, maxBallValue: 39 },
   { name: 'FAST5', prize: '$6,000', price: 8, drawTime: 'Saturday', targetDateStr: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#1AA3E5', isSolidStyle: false, ballCount: 5, maxBallValue: 39 },
   { name: 'LOTTERY', prize: '$1,000,000', price: 5, drawTime: 'Daily', targetDateStr: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#F9A825', isSolidStyle: false, ballCount: 6, maxBallValue: 45 },
+  { name: 'THAI GOVE KOTTERY', prize: '16,000,000 Baht', price: 10, drawTime: 'Twice Monthly', targetDateStr: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#4F46E5', isSolidStyle: true, ballCount: 6, maxBallValue: 9, isActive: true },
   { name: 'SCRATCH CARDS', prize: 'INSTANT WIN', price: 5, drawTime: 'Play Now', targetDateStr: new Date().toISOString(), bgHex: '#9C27B0', isSolidStyle: false, ballCount: 0, maxBallValue: 0 },
   { name: 'SURE 1', prize: '$10,000', price: 10, drawTime: 'Daily', targetDateStr: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#EC4899', isSolidStyle: false, ballCount: 1, maxBallValue: 10 },
   { name: 'SURE 2', prize: '$25,000', price: 15, drawTime: 'Weekly', targetDateStr: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#8B5CF6', isSolidStyle: false, ballCount: 2, maxBallValue: 20 },
@@ -1573,20 +1576,122 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const triggerDraw = (gameName: string, winningNumbers: number[]) => {
     let payoutTotal = 0;
-    const matchedIds: number[] = [];
+    const matchedIds: any[] = [];
 
     // Evaluate won tickets
     tickets.forEach(async (t) => {
       if (t.gameName.toUpperCase() === gameName.toUpperCase() && t.status === 'Pending') {
-        const matchesCount = t.numbers.filter(num => winningNumbers.includes(num)).length;
         let won = false;
         let payout = 0;
 
-        if (matchesCount >= 3) {
-          won = true;
-          payout = t.price * (matchesCount === 3 ? 5 : matchesCount === 4 ? 20 : matchesCount === 5 ? 100 : 1000);
-          payoutTotal += payout;
-          matchedIds.push(t.id);
+        if (gameName.toUpperCase() === 'THAI GOVT LOTTERY' || gameName.toUpperCase() === 'THAI LOTTERY' || gameName.toUpperCase() === 'THAI GOVE KOTTERY') {
+          // Thai Lottery Automatic Matching Algorithm
+          const winningSeq = winningNumbers.join('');
+          const ticketNum = t.thaiLotteryNumber || '';
+          
+          if (t.thaiLotteryType === '1st Prize Category') {
+            if (ticketNum === winningSeq) {
+              won = true;
+              payout = (t.directBet || t.price || 3) * 66666.66;
+            }
+          } else if (t.thaiLotteryType === 'Front 3-Digit Category') {
+            const winFront3 = winningSeq.slice(0, 3);
+            if (ticketNum === winFront3) {
+              won = true;
+              payout = (t.directBet || t.price || 3) * 40;
+            }
+          } else if (t.thaiLotteryType === 'Rear 3-Digit Category') {
+            const winRear3 = winningSeq.slice(-3);
+            if (ticketNum === winRear3) {
+              won = true;
+              payout = (t.directBet || t.price || 3) * 40;
+            }
+          } else if (t.thaiLotteryType === 'Last 2-Digit Category') {
+            const winLast2 = winningSeq.slice(-2);
+            if (ticketNum === winLast2) {
+              won = true;
+              payout = (t.directBet || t.price || 3) * 20;
+            }
+          } else if (t.thaiLotteryType === 'Consolation Category') {
+            // Check if ticket is off by 1 digit (adjacent to first prize) as a consolation
+            const ticketInt = parseInt(ticketNum);
+            const winInt = parseInt(winningSeq);
+            if (!isNaN(ticketInt) && !isNaN(winInt) && Math.abs(ticketInt - winInt) === 1) {
+              won = true;
+              payout = (t.directBet || t.price || 3) * 1000;
+            }
+          } else if (t.thaiLotteryType === '3Up Direct + Rumble') {
+            const isDirectMatch = ticketNum === winningSeq;
+            
+            // Check rumble match (permutation)
+            const sortedWin = winningSeq.split('').sort().join('');
+            const sortedTicket = ticketNum.split('').sort().join('');
+            const isRumbleMatch = sortedTicket === sortedWin;
+            
+            if (isDirectMatch) {
+              won = true;
+              payout = (t.directBet || 0) * 500 + (t.rumbleBet || 0) * 100;
+            } else if (isRumbleMatch) {
+              won = true;
+              payout = (t.rumbleBet || 0) * 100;
+            }
+          } else if (t.thaiLotteryType === '3Up Single Digit') {
+            // Check if any digit in ticket matches any digit in winningSeq
+            const ticketDigits = ticketNum.split('');
+            const matches = ticketDigits.filter(d => winningSeq.includes(d)).length;
+            if (matches > 0) {
+              won = true;
+              payout = (t.directBet || t.price || 0) * 10 * matches;
+            }
+          } else if (t.thaiLotteryType === '3Up Total Sum') {
+            // Check if sum of winningSeq matches the ticket total
+            const winningSum = winningSeq.split('').reduce((sum, d) => sum + parseInt(d), 0);
+            if (parseInt(ticketNum) === winningSum) {
+              won = true;
+              payout = (t.directBet || t.price || 0) * 15;
+            }
+          } else if (t.thaiLotteryType === '2Up Direct') {
+            // Matches last 2 digits of 3Up winningSeq
+            const winning2Up = winningSeq.slice(-2);
+            if (ticketNum === winning2Up) {
+              won = true;
+              payout = (t.directBet || t.price || 0) * 90;
+            }
+          } else if (t.thaiLotteryType === 'Down Direct') {
+            // Down direct match (we can compare with the winningSeq last 2 digits as well)
+            const winningDown = winningSeq.slice(-2);
+            if (ticketNum === winningDown) {
+              won = true;
+              payout = (t.directBet || t.price || 0) * 90;
+            }
+          } else if (t.thaiLotteryType === 'Down Single Digit') {
+            const winningDown = winningSeq.slice(-2);
+            if (winningDown.includes(ticketNum)) {
+              won = true;
+              payout = (t.directBet || t.price || 0) * 8;
+            }
+          } else if (t.thaiLotteryType === 'Down Total Sum') {
+            const winningDown = winningSeq.slice(-2);
+            const downSum = winningDown.split('').reduce((sum, d) => sum + parseInt(d), 0);
+            if (parseInt(ticketNum) === downSum) {
+              won = true;
+              payout = (t.directBet || t.price || 0) * 15;
+            }
+          }
+          
+          if (won) {
+            payoutTotal += payout;
+            matchedIds.push(t.id);
+          }
+        } else {
+          // Standard games
+          const matchesCount = t.numbers.filter(num => winningNumbers.includes(num)).length;
+          if (matchesCount >= 3) {
+            won = true;
+            payout = t.price * (matchesCount === 3 ? 5 : matchesCount === 4 ? 20 : matchesCount === 5 ? 100 : 1000);
+            payoutTotal += payout;
+            matchedIds.push(t.id);
+          }
         }
 
         const updatedStatus = (won ? 'Won' : 'Lost') as 'Won' | 'Lost';
@@ -1600,7 +1705,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }, { merge: true });
 
           // If won, update balance in user profiles
-          if (won) {
+          if (won && payout > 0) {
             const userRef = doc(db, 'users', t.email.toLowerCase());
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {

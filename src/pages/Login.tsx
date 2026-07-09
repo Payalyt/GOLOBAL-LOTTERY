@@ -48,7 +48,7 @@ export function Login() {
       userAccountNotFound: "User account not found.",
       unexpectedError: "An unexpected error occurred during login. Please try again.",
       secureSsl: "Secure SSL Gateway",
-      globalLottery: "GOLOBAL LOTTERY"
+      globalLottery: "GLOBAL LOTTERY"
     },
     bn: {
       signIn: "লগইন করুন",

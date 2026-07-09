@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export function CountdownTimer({ targetDate }: { targetDate: Date }) {
+  const { language } = useAuth();
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -11,12 +13,18 @@ export function CountdownTimer({ targetDate }: { targetDate: Date }) {
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date().getTime();
-      const distance = targetDate.getTime() - now;
+      let targetTime = targetDate.getTime();
 
-      if (distance < 0) {
-        clearInterval(interval);
-        return;
+      // If the target date is in the past, roll it forward dynamically so a countdown is always active
+      if (targetTime < now) {
+        const diffMs = now - targetTime;
+        // Roll forward in intervals of 1 day (86400000 ms) until it is in the future
+        const oneDayMs = 24 * 60 * 60 * 1000;
+        const daysToAddToFuture = Math.ceil(diffMs / oneDayMs) + 1;
+        targetTime = targetTime + daysToAddToFuture * oneDayMs;
       }
+
+      const distance = targetTime - now;
 
       setTimeLeft({
         days: Math.floor(distance / (1000 * 60 * 60 * 24)),
@@ -28,15 +36,22 @@ export function CountdownTimer({ targetDate }: { targetDate: Date }) {
     return () => clearInterval(interval);
   }, [targetDate]);
 
+  const labels = {
+    DAYS: language === 'en' ? 'DAYS' : 'দিন',
+    HOURS: language === 'en' ? 'HOURS' : 'ঘণ্টা',
+    MINS: language === 'en' ? 'MINS' : 'মিনিট',
+    SECS: language === 'en' ? 'SECS' : 'সেকেন্ড',
+  };
+
   return (
     <div className="flex gap-2 justify-center text-white">
       {[
-        { label: 'DAYS', value: timeLeft.days },
-        { label: 'HOURS', value: timeLeft.hours },
-        { label: 'MINS', value: timeLeft.mins },
-        { label: 'SECS', value: timeLeft.secs },
+        { label: labels.DAYS, value: timeLeft.days },
+        { label: labels.HOURS, value: timeLeft.hours },
+        { label: labels.MINS, value: timeLeft.mins },
+        { label: labels.SECS, value: timeLeft.secs },
       ].map((item, idx) => (
-        <React.Fragment key={item.label}>
+        <React.Fragment key={idx}>
           {idx > 0 && <span className="self-center text-white/50 text-xs font-bold -mt-3.5">:</span>}
           <div className="flex flex-col items-center">
             <div className="bg-black/25 text-white font-black px-2.5 py-1.5 rounded-xl text-center text-sm font-mono min-w-[38px] tracking-wide border border-white/5 shadow-inner">

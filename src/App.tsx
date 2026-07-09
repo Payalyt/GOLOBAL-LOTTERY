@@ -15,6 +15,7 @@ import { Winners } from './pages/Winners';
 import { Admin } from './pages/Admin';
 import { RaffleDetail } from './pages/RaffleDetail';
 import { CustomPage } from './pages/CustomPage';
+import ThaiLottery from './pages/ThaiLottery';
 
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/my-account" element={<Dashboard />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/thai-lottery" element={<ThaiLottery />} />
         <Route path="/games/:id" element={<GameDetail />} />
         <Route path="/raffles/:id" element={<RaffleDetail />} />
         <Route path="/rush/:id" element={<GameDetail />} />

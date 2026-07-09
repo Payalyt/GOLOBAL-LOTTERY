@@ -44,8 +44,9 @@ export interface FirestoreErrorInfo {
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errMsg = error instanceof Error ? error.message : String(error);
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errMsg,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -61,7 +62,13 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     path
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  
+  // Only throw if the error represents a permission/security rule block,
+  // preventing standard connection or offline-unavailability messages from crashing the application.
+  const lowerMsg = errMsg.toLowerCase();
+  if (lowerMsg.includes('permission') || lowerMsg.includes('denied') || lowerMsg.includes('unauthorized')) {
+    throw new Error(JSON.stringify(errInfo));
+  }
 }
 
 async function testConnection() {

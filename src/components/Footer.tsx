@@ -49,7 +49,7 @@ export function Footer() {
               )}
               <div className="flex flex-col text-left">
                 <span className="text-[10px] font-black tracking-[0.25em] text-[#E52535] uppercase leading-none">
-                  {language === 'en' ? (siteConfig.primaryLogoText || 'GOLOBAL') : (siteConfig.primaryLogoText === 'GOLOBAL' ? 'গ্লোবাল' : siteConfig.primaryLogoText)}
+                  {language === 'en' ? (siteConfig.primaryLogoText || 'GLOBAL') : (siteConfig.primaryLogoText === 'GLOBAL' ? 'গ্লোবাল' : siteConfig.primaryLogoText)}
                 </span>
                 <span className="text-xl font-black tracking-[0.08em] text-white leading-none mt-1 uppercase font-bold-font">
                   {language === 'en' ? 'LOTTERY' : 'লটারি'}
@@ -143,7 +143,7 @@ export function Footer() {
                       </p>
                       <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-2 font-mono text-xs">
                         <div className="flex justify-between border-b border-zinc-800 pb-2">
-                          <span className="text-green-400 font-extrabold">GOLOBAL50</span>
+                          <span className="text-green-400 font-extrabold">GLOBAL50</span>
                           <span className="text-zinc-300">Get 50% discount on cart checkout tickets</span>
                         </div>
                         <div className="flex justify-between pt-1">

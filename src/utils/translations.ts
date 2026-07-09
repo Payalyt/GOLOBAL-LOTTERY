@@ -1,8 +1,8 @@
 export const translations = {
   en: {
     // Header & Navigation
-    logo_text: 'GOLOBAL',
-    thai_lottery: 'THAI LOTTERY',
+    logo_text: 'GLOBAL',
+    thai_lottery: 'LOTTERY',
     raffles: 'RAFFLES',
     rush_draws: 'RUSH DRAWS',
     results: 'RESULTS',
@@ -96,7 +96,7 @@ export const translations = {
   bn: {
     // Header & Navigation
     logo_text: 'গ্লোবাল',
-    thai_lottery: 'থাই লটারি',
+    thai_lottery: 'লটারি',
     raffles: 'র‌্যাফেল ড্র',
     rush_draws: 'রাশ ড্র',
     results: 'ফলাফল',

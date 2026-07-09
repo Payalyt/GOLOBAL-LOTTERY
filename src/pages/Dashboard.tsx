@@ -1016,7 +1016,7 @@ export function Dashboard() {
                       ].map((item) => (
                         <div key={item.name} className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 flex flex-col justify-between hover:border-red-500 dark:hover:border-red-500 transition-all bg-zinc-50/50 dark:bg-zinc-900/40">
                           <div>
-                            <span className="text-xs font-black tracking-wide text-zinc-500 dark:text-zinc-400 block mb-1">GOLOBAL</span>
+                            <span className="text-xs font-black tracking-wide text-zinc-500 dark:text-zinc-400 block mb-1">GLOBAL</span>
                             <h4 className="text-base font-black text-zinc-900 dark:text-white">{item.name}</h4>
                             <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 leading-tight">{item.desc}</p>
                           </div>
@@ -2725,16 +2725,42 @@ export function Dashboard() {
                       {userTickets.map((t) => (
                         <div key={t.id} className="p-5 border border-zinc-200 rounded-2xl bg-zinc-50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                           <div className="space-y-2">
-                            <span className="bg-zinc-900 text-yellow-300 text-[9px] font-black tracking-widest px-2.5 py-1 rounded-md uppercase">
-                              {t.gameName} DRAW
-                            </span>
-                            <div className="flex flex-wrap gap-1.5 pt-1.5">
-                              {t.numbers.map((num, i) => (
-                                <span key={i} className="bg-zinc-950 text-yellow-300 font-mono font-black text-xs w-7 h-7 rounded-full flex items-center justify-center shadow-lg border border-yellow-300/20">
-                                  {num}
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="bg-zinc-900 text-yellow-300 text-[9px] font-black tracking-widest px-2.5 py-1 rounded-md uppercase">
+                                {t.gameName} DRAW
+                              </span>
+                              {t.thaiLotteryType && (
+                                <span className="bg-blue-600 text-white text-[9px] font-extrabold tracking-wide px-2 py-0.5 rounded-md uppercase">
+                                  {t.thaiLotteryType}
                                 </span>
-                              ))}
+                              )}
                             </div>
+
+                            {t.isThaiLottery || t.gameName === 'THAI LOTTERY' ? (
+                              <div className="pt-2 space-y-2 text-xs text-zinc-650 font-semibold">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-zinc-400 font-black uppercase text-[9px] tracking-wider">Bet Number:</span>
+                                  <span className="font-mono font-black text-xs text-yellow-400 bg-zinc-950 px-2.5 py-1 rounded-md border border-yellow-500/20">
+                                    {t.thaiLotteryNumber || t.numbers.join('')}
+                                  </span>
+                                </div>
+                                <div className="flex gap-4 text-[10px] text-zinc-400 uppercase tracking-wide">
+                                  <span>Direct: <b className="font-mono text-zinc-900 dark:text-white">${t.directBet || t.price}</b></span>
+                                  {t.rumbleBet > 0 && (
+                                    <span>Rumble: <b className="font-mono text-zinc-900 dark:text-white">${t.rumbleBet}</b></span>
+                                  )}
+                                  <span>Total: <b className="font-mono text-zinc-900 dark:text-white">${t.price}</b></span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex flex-wrap gap-1.5 pt-1.5">
+                                {t.numbers.map((num, i) => (
+                                  <span key={i} className="bg-zinc-950 text-yellow-300 font-mono font-black text-xs w-7 h-7 rounded-full flex items-center justify-center shadow-lg border border-yellow-300/20">
+                                    {num}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <div>
                             {t.status === 'Pending' && (
@@ -3025,7 +3051,7 @@ export function Dashboard() {
                         <span className="text-[9px] text-zinc-400 font-bold">Yesterday</span>
                       </div>
                       <p className="text-zinc-500 text-[11px] leading-relaxed mt-1 font-semibold">
-                        Enjoy a 5% discount on Mega7 slips with discount code: GOLOBALWIN. Enjoy and Win Big!
+                        Enjoy a 5% discount on Mega7 slips with discount code: GLOBALWIN. Enjoy and Win Big!
                       </p>
                     </div>
                   </div>

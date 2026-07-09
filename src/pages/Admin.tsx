@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth, UserProfile, DynamicGame, getGameColor, extractYoutubeId, getYoutubeThumbnail, DailyRaffleWinner, PaymentGateway } from '../context/AuthContext';
-import { ShieldCheck, Moon, Sun, Users, Radio, History, Newspaper, Plus, DollarSign, Award, Trash2, Sliders, TrendingUp, Coins, Check, Calendar, Ticket, Gift, Edit2, X, Sparkles, Trophy, FileSpreadsheet, FileText } from 'lucide-react';
+import { db } from '../lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { ShieldCheck, Moon, Sun, Users, Radio, History, Newspaper, Plus, DollarSign, Award, Trash2, Sliders, TrendingUp, Coins, Check, Calendar, Ticket, Gift, Edit2, X, Sparkles, Trophy, FileSpreadsheet, FileText, List } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { resolveBannerImage } from '../components/Hero';
 import { ExcelSheet, ExcelColumn } from '../components/ExcelSheet';
@@ -132,6 +134,24 @@ export function Admin() {
   
   const navigate = useNavigate();
 
+  const handleManualTicketStatus = async (ticketId: any, status: 'Won' | 'Lost') => {
+    let payoutStr = '';
+    if (status === 'Won') {
+      const amt = prompt('Enter payout amount (e.g. 12000 Baht or $100):', '12000 Baht');
+      if (amt === null) return;
+      payoutStr = amt;
+    }
+    try {
+      await setDoc(doc(db, 'purchasedTickets', String(ticketId)), {
+        status: status,
+        payout: status === 'Won' ? payoutStr : undefined
+      }, { merge: true });
+      alert(`Ticket #${ticketId} status updated to ${status}!`);
+    } catch (e) {
+      alert('Failed to update ticket: ' + e);
+    }
+  };
+
   const getGatewayLogo = (gateway: string) => {
     const g = gateway.toLowerCase();
     if (g.includes('bkash')) {
@@ -180,9 +200,10 @@ export function Admin() {
       </span>
     );
   };
-  const [activeTab, setActiveTab] = useState<'users' | 'lottery' | 'announcements' | 'customizer' | 'raffle' | 'withdrawals' | 'deposits' | 'gateways' | 'menupages'>('lottery');
+  const [activeTab, setActiveTab] = useState<'users' | 'lottery' | 'announcements' | 'customizer' | 'raffle' | 'withdrawals' | 'deposits' | 'gateways' | 'menupages' | 'navmenus'>('lottery');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
   // Site Customizer State
   const [primaryHex, setPrimaryHex] = useState(siteConfig.primaryHex);
@@ -927,7 +948,8 @@ export function Admin() {
         isSolidStyle: true,
         ballCount: Number(newGameBallCount) || 5,
         maxBallValue: Number(newGameMaxBallValue) || 49,
-        cardBgType: 'color'
+        cardBgType: 'color',
+        isActive: true
       };
       await addDynamicGame(newGame);
       setSelectedGameToEdit(newGame.name);
@@ -1430,18 +1452,35 @@ export function Admin() {
       )}
 
       {/* Primary Admin Top Bar */}
-      <header className="sticky top-0 z-40 bg-white dark:bg-[#09090b]/90 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-200 dark:border-zinc-800/70 px-4 sm:px-8 py-4 flex justify-between items-center shadow-md">
+      <header className="sticky top-0 z-40 bg-white dark:bg-[#09090b]/90 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800/70 px-4 sm:px-8 py-4 flex justify-between items-center shadow-md">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/20">
             <ShieldCheck className="w-5.5 h-5.5 text-zinc-900 dark:text-white animate-pulse" />
           </div>
           <div>
-            <h2 className="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-white leading-none">System Core Interface</h2>
-            <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mt-1 block">Root Administrator Terminal (এডমিন কন্ট্রোল)</span>
+            <h2 className="text-sm font-black uppercase tracking-wider text-zinc-900 dark:text-white leading-none flex items-center gap-1.5">
+              <span className="text-red-600 dark:text-red-400 font-extrabold bg-red-100 dark:bg-red-950/40 px-2 py-0.5 rounded border border-red-200 dark:border-red-900/40 text-[10px] tracking-widest">
+                ADMIN
+              </span>
+              <span className="text-zinc-800 dark:text-zinc-200 font-black text-xs tracking-widest">
+                CORE PANEL
+              </span>
+            </h2>
+            <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mt-1 block">Root Administrator Terminal • এডমিন কন্ট্রোল</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Desktop Toggle Sidebar Button (3-Line Menu toggle) */}
+          <button 
+            onClick={() => setIsSidebarVisible(!isSidebarVisible)}
+            className="hidden lg:flex p-2.5 bg-zinc-50 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-850 rounded-xl transition-all cursor-pointer items-center gap-1.5 text-[9.5px] font-black uppercase tracking-widest px-3.5 shadow-sm hover:shadow active:scale-95"
+            title={isSidebarVisible ? "Hide Sidebar Menu" : "Show Sidebar Menu"}
+          >
+            <List className="w-4 h-4 text-red-500 shrink-0" />
+            <span>{isSidebarVisible ? "Hide Menu" : "Show Menu"}</span>
+          </button>
+
           <div className="hidden sm:flex flex-col items-end mr-2">
             <span className="text-[10px] font-black text-zinc-900 dark:text-white uppercase tracking-wider">{user?.name}</span>
             <span className="text-[9px] font-bold text-red-500 uppercase tracking-widest">Master Administrator</span>
@@ -1596,11 +1635,74 @@ export function Admin() {
           </div>
         </div>
 
+        {/* Game Winning Numbers At-a-Glance Panel */}
+        <div className="bg-white dark:bg-[#0e0e12] border border-zinc-200 dark:border-zinc-800 p-6 rounded-3xl shadow-sm dark:shadow-xl">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4 border-b border-zinc-100 dark:border-zinc-900 pb-3">
+            <div>
+              <h3 className="text-sm font-black uppercase text-zinc-900 dark:text-white tracking-wider flex items-center gap-2">
+                <span className="text-lg">🎯</span> Live Games &amp; Current Winning Numbers
+              </h3>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-500 mt-0.5">Quick status and most recent winning sequences configured across all lotteries.</p>
+            </div>
+            <span className="text-[9px] font-black tracking-widest text-zinc-500 dark:text-zinc-500 uppercase px-2 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg">Real-Time Monitor</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {dynamicGames.map((game) => {
+              // Find the latest draw record for this game name
+              const gameDraws = historicalDraws
+                .filter(d => d.gameName.toUpperCase() === game.name.toUpperCase())
+                .sort((a, b) => new Date(b.drawDate).getTime() - new Date(a.drawDate).getTime());
+              const latestDraw = gameDraws[0];
+
+              return (
+                <div 
+                  key={game.name}
+                  className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-850/60 flex flex-col justify-between transition hover:border-zinc-300 dark:hover:border-zinc-700"
+                >
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0">
+                      <span className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider block truncate">{game.name}</span>
+                      <span className="text-[8px] text-zinc-500 dark:text-zinc-500 font-bold uppercase tracking-widest block mt-0.5">{game.drawTime}</span>
+                    </div>
+                    <span className={`text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full ${
+                      game.isActive !== false 
+                        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/10' 
+                        : 'bg-zinc-500/10 text-zinc-500 border border-zinc-500/10'
+                    }`}>
+                      {game.isActive !== false ? '🟢 Active' : '🔴 OFF'}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-900/60">
+                    <span className="text-[9px] font-black tracking-wider text-zinc-500 dark:text-zinc-500 uppercase block mb-1.5">Latest Winning Sequence</span>
+                    {latestDraw ? (
+                      <div className="flex flex-wrap gap-1 items-center">
+                        {latestDraw.winningNumbers.map((num, i) => (
+                          <span 
+                            key={i} 
+                            className="w-6 h-6 rounded-full bg-red-600 dark:bg-red-950/80 text-white dark:text-red-300 text-[10px] font-black flex items-center justify-center border border-red-500/20 shadow-sm font-mono"
+                          >
+                            {num}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-[10px] font-bold text-zinc-400 italic">No drawing results yet</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Responsive Grid with Desktop Left Sidebar and Mobile Swiper */}
-        <div className="grid grid-cols-1 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           
           {/* Left Sidebar (Desktop Only) */}
-          <div className="hidden">
+          {isSidebarVisible && (
+          <div className="hidden lg:block lg:col-span-1">
             <div className="bg-[#0b0b0e] border border-zinc-200 dark:border-zinc-800 p-5 rounded-3xl space-y-6 shadow-sm dark:shadow-xl">
               
               <div className="space-y-3">
@@ -1775,6 +1877,24 @@ export function Admin() {
                     Manage frontend pages
                   </span>
                 </button>
+
+                <button 
+                  onClick={() => setActiveTab('navmenus')}
+                  className={`w-full text-left p-3.5 rounded-2xl flex flex-col gap-1 transition-all cursor-pointer group ${
+                    activeTab === 'navmenus' 
+                      ? 'text-zinc-900 dark:text-white border border-white/20' 
+                      : 'text-zinc-500 dark:text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:text-white hover:bg-zinc-50 dark:bg-zinc-900/50 bg-white dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-200 dark:border-zinc-900/80'
+                  }`}
+                  style={activeTab === 'navmenus' ? { background: `linear-gradient(to right, ${siteConfig.primaryHex}, ${siteConfig.primaryHex}dd)`, boxShadow: `0 8px 16px -3px ${siteConfig.primaryHex}40` } : {}}
+                >
+                  <div className="flex items-center gap-2.5 font-black text-xs uppercase tracking-wider">
+                    <List className={`w-4 h-4 shrink-0 ${activeTab === 'navmenus' ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-500 dark:text-zinc-400 group-hover:text-orange-500'}`} />
+                    <span>App Navigation</span>
+                  </div>
+                  <span className={`text-[10px] font-medium leading-relaxed text-left ${activeTab === 'navmenus' ? 'text-orange-100/80' : 'text-zinc-500 dark:text-zinc-500'}`}>
+                    Manage header dropdowns
+                  </span>
+                </button>
               </div>
             </div>
 
@@ -1790,8 +1910,9 @@ export function Admin() {
               </div>
             </div>
           </div>
+          )}
           {/* Right Content Column (Dynamic section container) */}
-          <div className="w-full bg-white dark:bg-[#0b0b0e] border-none p-6 sm:p-8 rounded-[32px] min-h-[500px] shadow-md dark:shadow-2xl">
+          <div className={`w-full ${isSidebarVisible ? 'lg:col-span-3' : 'lg:col-span-4'} bg-white dark:bg-[#0b0b0e] border-none p-6 sm:p-8 rounded-[32px] min-h-[500px] shadow-md dark:shadow-2xl`}>
           
           {/* TAB 8: Payment Gateways Manager */}
           {activeTab === 'gateways' && (
@@ -2308,7 +2429,11 @@ export function Admin() {
                               required
                             />
                             <span className="text-[9px] text-zinc-500 dark:text-zinc-500 block mt-1.5">
-                              Note: Requires <b className="text-[#FFD700]">{matchGame.ballCount || 5}</b> ball integers ranged <b className="text-[#FFD700]">1 to {matchGame.maxBallValue || 49}</b>
+                              {matchGame.name.toUpperCase() === 'THAI GOVT LOTTERY' || matchGame.name.toUpperCase() === 'THAI LOTTERY' ? (
+                                <span>Note: Enter the winning 3-digit number (e.g. <b className="text-[#FFD700]">1, 2, 3</b> for combination <b className="text-[#FFD700]">123</b>) which will resolve all tickets based on their Direct/Rumble configurations.</span>
+                              ) : (
+                                <span>Note: Requires <b className="text-[#FFD700]">{matchGame.ballCount || 5}</b> ball integers ranged <b className="text-[#FFD700]">1 to {matchGame.maxBallValue || 49}</b></span>
+                              )}
                             </span>
                           </div>
 
@@ -2336,17 +2461,55 @@ export function Admin() {
                                     <span className="text-zinc-550 block text-[10px] text-zinc-500 dark:text-zinc-500 mt-0.5">{t.purchaseDate}</span>
                                   </div>
                                   <div className="flex items-center gap-3">
-                                    <div className="flex gap-1">
-                                      {t.numbers.map((n, i) => (
-                                        <span key={i} className="bg-zinc-100 dark:bg-zinc-800 text-[10.5px] px-1.5 py-0.5 rounded font-bold text-zinc-900 dark:text-white font-mono">{n}</span>
-                                      ))}
+                                    {t.isThaiLottery || t.gameName.toUpperCase() === 'THAI GOVT LOTTERY' ? (
+                                      <div className="text-right mr-2 space-y-0.5">
+                                        <div className="flex items-center gap-1.5 justify-end">
+                                          <span className="bg-zinc-900 text-[8px] font-extrabold px-1.5 py-0.5 rounded text-white/80 uppercase">
+                                            {t.thaiLotteryType}
+                                          </span>
+                                          <span className="bg-zinc-950 text-yellow-300 font-mono font-black text-xs px-2 py-0.5 rounded border border-yellow-500/10">
+                                            {t.thaiLotteryNumber || t.numbers.join('')}
+                                          </span>
+                                        </div>
+                                        <div className="text-[9.5px] text-zinc-500 font-medium">
+                                          Direct: <b>${t.directBet || t.price}</b> {t.rumbleBet > 0 && <span>• Rumble: <b>${t.rumbleBet}</b></span>}
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="flex gap-1">
+                                        {t.numbers.map((n, i) => (
+                                          <span key={i} className="bg-zinc-100 dark:bg-zinc-800 text-[10.5px] px-1.5 py-0.5 rounded font-bold text-zinc-900 dark:text-white font-mono">{n}</span>
+                                        ))}
+                                      </div>
+                                    )}
+                                    <div className="flex items-center gap-1.5">
+                                      <span className={`px-2 py-0.5 rounded text-[8.5px] font-bold ${
+                                        t.status === 'Won' ? 'bg-green-950 text-green-400 border border-green-900/40' :
+                                        t.status === 'Lost' ? 'bg-red-950 text-red-400 border border-red-900/40' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500 dark:text-zinc-400'
+                                      }`}>
+                                        {t.status.toUpperCase()}
+                                      </span>
+                                      {t.status === 'Pending' && (
+                                        <div className="flex gap-1 ml-1 shrink-0">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleManualTicketStatus(t.id, 'Won')}
+                                            className="bg-green-600 hover:bg-green-700 text-white font-black text-[9px] px-1.5 py-0.5 rounded transition"
+                                            title="Mark Won"
+                                          >
+                                            W
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleManualTicketStatus(t.id, 'Lost')}
+                                            className="bg-red-650 hover:bg-red-750 text-white font-black text-[9px] px-1.5 py-0.5 rounded transition"
+                                            title="Mark Lost"
+                                          >
+                                            L
+                                          </button>
+                                        </div>
+                                      )}
                                     </div>
-                                    <span className={`px-2 py-0.5 rounded text-[8.5px] font-bold ${
-                                      t.status === 'Won' ? 'bg-green-950 text-green-400 border border-green-900/40' :
-                                      t.status === 'Lost' ? 'bg-red-950 text-red-400 border border-red-900/40' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500 dark:text-zinc-400'
-                                    }`}>
-                                      {t.status.toUpperCase()}
-                                    </span>
                                   </div>
                                 </div>
                               ))
@@ -3245,7 +3408,7 @@ export function Admin() {
                         type="text" 
                         value={primaryLogoText}
                         onChange={(e) => setPrimaryLogoText(e.target.value)}
-                        placeholder="GOLOBAL"
+                        placeholder="GLOBAL"
                         className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 w-full mt-1.5 text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-red-500 font-bold uppercase"
                         required
                       />
@@ -3809,6 +3972,24 @@ export function Admin() {
                               onChange={(e) => handleUpdateEditingGame({ isSolidStyle: e.target.checked })}
                               className="w-5 h-5 accent-red-600 rounded-lg cursor-pointer"
                             />
+                          </div>
+
+                          <div className="flex items-center justify-between py-3 px-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800/50">
+                            <div>
+                              <span className="text-[10px] font-black text-zinc-900 dark:text-white uppercase tracking-widest block">Game Status (ON / OFF)</span>
+                              <span className="text-[9px] text-zinc-500 dark:text-zinc-500 font-medium">When turned OFF, this game will be hidden from the website</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateEditingGame({ isActive: editingGame.isActive !== false ? false : true })}
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-200 cursor-pointer ${
+                                editingGame.isActive !== false 
+                                  ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/25' 
+                                  : 'bg-zinc-300 dark:bg-zinc-800 hover:bg-zinc-400 dark:hover:bg-zinc-750 text-zinc-700 dark:text-zinc-350'
+                              }`}
+                            >
+                              {editingGame.isActive !== false ? '🟢 Active (ON)' : '🔴 Disabled (OFF)'}
+                            </button>
                           </div>
 
                           {/* Card Background Style Type */}
@@ -5500,6 +5681,7 @@ export function Admin() {
                               <option value="EASY6">EASY6</option>
                               <option value="FAST5">FAST5</option>
                               <option value="LOTTERY">LOTTERY</option>
+                              <option value="THAI GOVT LOTTERY">THAI GOVT LOTTERY</option>
                               <option value="SCRATCH CARDS">SCRATCH CARDS</option>
                             </optgroup>
                             <optgroup label="Raffle Draws" className="bg-white dark:bg-zinc-950 text-zinc-500 dark:text-zinc-500 dark:text-zinc-400">
@@ -6055,6 +6237,90 @@ export function Admin() {
             </div>
           )}
 
+          {activeTab === 'menupages' && (
+            <div className="space-y-6 animate-fade-in text-left">
+              <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 relative overflow-hidden text-left mb-6">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/5 rounded-full blur-2xl" />
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-600/5 rounded-full blur-2xl" />
+                <div className="relative z-10 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-indigo-500" /> Menu Pages
+                    </h2>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-1.5 max-w-xl font-medium leading-relaxed">
+                      Create and manage custom frontend pages (e.g. Terms, Privacy Policy).
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-zinc-50 dark:bg-zinc-900/40 p-8 rounded-2xl border border-zinc-200 dark:border-zinc-800/60 text-center">
+                <FileText className="w-12 h-12 text-zinc-400 dark:text-zinc-600 mx-auto mb-4" />
+                <h3 className="text-sm font-bold text-zinc-900 dark:text-white mb-2">Menu Pages Manager</h3>
+                <p className="text-xs text-zinc-500 max-w-md mx-auto mb-4">You can easily map a JSON array of pages here in future iterations or connect it directly to your frontend router config.</p>
+                <div className="inline-block bg-white dark:bg-zinc-950 px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg text-xs font-mono text-zinc-600 dark:text-zinc-400">
+                  Coming soon...
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'navmenus' && (
+            <div className="space-y-6 animate-fade-in text-left">
+              <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 relative overflow-hidden text-left mb-6">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-600/5 rounded-full blur-2xl" />
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-yellow-600/5 rounded-full blur-2xl" />
+                <div className="relative z-10 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                      <List className="w-5 h-5 text-orange-500" /> App Navigation
+                    </h2>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-1.5 max-w-xl font-medium leading-relaxed">
+                      Configure main dropdown menus in the header navigation (THAI LOTTERY, RAFFLES, etc.). Paste JSON directly to update.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-[#121215] border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 text-left shadow-sm">
+                 <div className="border-b border-zinc-200 dark:border-zinc-800/60 pb-3 mb-5">
+                   <span className="text-[10px] font-black text-orange-400 tracking-widest uppercase flex items-center gap-1">
+                     <Edit2 className="w-3.5 h-3.5" /> Navigation Editor
+                   </span>
+                   <h2 className="text-base font-bold text-zinc-900 dark:text-white mt-1">Menu JSON Editor</h2>
+                   <p className="text-zinc-500 dark:text-zinc-500 text-xs mt-0.5">Edit the raw JSON data that powers your header navigation structure.</p>
+                 </div>
+                 
+                 <div className="flex flex-col gap-4">
+                    <textarea 
+                      className="w-full h-[400px] bg-zinc-50 dark:bg-[#0b0b0d] text-zinc-900 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-800 p-4 rounded-xl outline-none focus:border-zinc-500 font-mono text-xs shadow-inner whitespace-pre"
+                      value={siteConfig.navMenuData ? JSON.stringify(siteConfig.navMenuData, null, 2) : "{\n  \"THAI LOTTERY\": {\n    \"title\": \"LIFE CHANGING\",\n    \"items\": []\n  }\n}"}
+                      onChange={(e) => {
+                        try {
+                           const parsed = JSON.parse(e.target.value);
+                           updateSiteConfig({ navMenuData: parsed });
+                        } catch (err) {
+                           // Allow typing invalid json momentarily
+                        }
+                      }}
+                      onBlur={(e) => {
+                         try {
+                           const parsed = JSON.parse(e.target.value);
+                           updateSiteConfig({ navMenuData: parsed });
+                           alert("App Navigation saved successfully!");
+                         } catch (err) {
+                           alert("Invalid JSON format! Please check for syntax errors.");
+                         }
+                      }}
+                    />
+                    <div className="text-[10px] text-zinc-500 bg-orange-500/10 text-orange-600 dark:text-orange-400 p-3 rounded-lg border border-orange-500/20 font-medium">
+                      ⚠️ Note: Ensure your JSON structure precisely matches the expected MenuData interface: Record&lt;string, MenuCategory&gt;. Click away from the editor to save.
+                    </div>
+                 </div>
+              </div>
+            </div>
+          )}
+
           </div> {/* End Right Content Column */}
 
         </div> {/* End Responsive Grid */}
@@ -6104,7 +6370,9 @@ export function Admin() {
                         { id: 'customizer', icon: Sliders, text: '4. Live Customizer' },
                         { id: 'raffle', icon: Gift, text: '5. Raffle Winners' },
                         { id: 'withdrawals', icon: TrendingUp, text: '6. Withdrawals Ledger' },
-                        { id: 'deposits', icon: Coins, text: '7. Deposits Queue' }
+                        { id: 'deposits', icon: Coins, text: '7. Deposits Queue' },
+                        { id: 'menupages', icon: FileText, text: '8. Menu Pages' },
+                        { id: 'navmenus', icon: List, text: '9. App Navigation' }
                       ].map((item) => {
                         const Icon = item.icon;
                         return (

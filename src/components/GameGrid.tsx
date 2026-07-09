@@ -1,22 +1,24 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CountdownTimer } from './CountdownTimer';
 import { useCart } from '../context/CartContext';
 import { useAuth, DynamicGame } from '../context/AuthContext';
 import { resolveBannerImage } from './Hero';
 import { t } from '../utils/translations';
+import { LayoutGrid, Flame, Gift, Sparkles, Layers, Trophy, Zap, Timer, Activity } from 'lucide-react';
 
 export function GameGrid() {
   const navigate = useNavigate();
   const { addTickets } = useCart();
   const { dynamicGames, siteConfig, language } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'thai' | 'mega7' | 'wild5' | 'easy6' | 'fast5' | 'scratch' | 'raffle'>('all');
 
-  // Show all games in the carousel, sorted in original order, filtered to prevent crash on bad documents
+  // Show all games in the carousel, sorted in original order, filtered to prevent crash on bad documents and inactive games
   const listGames = [...dynamicGames]
-    .filter(g => g && g.name)
+    .filter(g => g && g.name && g.isActive !== false)
     .sort((a, b) => {
-      const order = ['MEGA7', 'WILD5', 'EASY6', 'FAST5', 'LOTTERY', 'SCRATCH CARDS', 'SURE 1', 'SURE 2', 'SURE 3', 'PICK 1', 'PICK 2'];
+      const order = ['MEGA7', 'WILD5', 'EASY6', 'FAST5', 'LOTTERY', 'THAI GOVT LOTTERY', 'THAI GOVE KOTTERY', 'SCRATCH CARDS', 'SURE 1', 'SURE 2', 'SURE 3', 'PICK 1', 'PICK 2'];
       const idxA = order.indexOf((a.name || '').trim().toUpperCase());
       const idxB = order.indexOf((b.name || '').trim().toUpperCase());
       if (idxA !== -1 && idxB !== -1) return idxA - idxB;
@@ -24,6 +26,33 @@ export function GameGrid() {
       if (idxB !== -1) return 1;
       return (a.name || '').localeCompare(b.name || '');
     });
+
+  const filteredGames = listGames.filter(game => {
+    const name = game.name.trim().toUpperCase();
+    if (selectedCategory === 'all') return true;
+    if (selectedCategory === 'thai') {
+      return name === 'THAI GOVT LOTTERY' || name === 'THAI GOVE KOTTERY' || name === 'LOTTERY' || name.includes('THAI');
+    }
+    if (selectedCategory === 'mega7') {
+      return name === 'MEGA7';
+    }
+    if (selectedCategory === 'wild5') {
+      return name === 'WILD5';
+    }
+    if (selectedCategory === 'easy6') {
+      return name === 'EASY6';
+    }
+    if (selectedCategory === 'fast5') {
+      return name === 'FAST5';
+    }
+    if (selectedCategory === 'scratch') {
+      return name === 'SCRATCH CARDS';
+    }
+    if (selectedCategory === 'raffle') {
+      return name.startsWith('SURE') || name.startsWith('PICK') || name.includes('RAFFLE');
+    }
+    return true;
+  });
 
   const handleScroll = (dir: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -90,12 +119,26 @@ export function GameGrid() {
       </div>
       
       {/* Slide / grid view */}
-      <div 
-        ref={scrollRef}
-        className="flex gap-5 overflow-x-auto pb-6 scrollbar-none snap-x snap-mandatory"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {listGames.map((game) => {
+      {filteredGames.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 px-4 rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/10 text-center">
+          <span className="text-2xl mb-2">🎯</span>
+          <p className="text-xs font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">
+            {language === 'en' ? 'No active games found in this category' : 'এই ক্যাটাগরিতে কোনো সক্রিয় গেম পাওয়া যায়নি'}
+          </p>
+          <button 
+            onClick={() => setSelectedCategory('all')}
+            className="mt-3 text-[10px] font-black tracking-widest text-[#E52535] uppercase hover:underline cursor-pointer"
+          >
+            {language === 'en' ? 'Show All Games' : 'সব গেম দেখুন'}
+          </button>
+        </div>
+      ) : (
+        <div 
+          ref={scrollRef}
+          className="flex gap-5 overflow-x-auto pb-6 scrollbar-none snap-x snap-mandatory"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {filteredGames.map((game) => {
           // Determine the game's theme color (consistent with WILD 5 style)
           let themeColor = '#1C2C80'; // fallback to WILD 5 blue
           if (game.name === 'MEGA7') themeColor = '#E52535';
@@ -159,7 +202,13 @@ export function GameGrid() {
           return (
             <div 
               key={game.name}
-              onClick={() => navigate(`/games/${game.name}`)}
+              onClick={() => {
+                if (game.name.trim().toUpperCase() === 'THAI GOVT LOTTERY' || game.name.trim().toUpperCase() === 'THAI GOVE KOTTERY') {
+                  navigate('/thai-lottery');
+                } else {
+                  navigate(`/games/${game.name}`);
+                }
+              }}
               className="cursor-pointer group flex-shrink-0 w-[270px] sm:w-[290px] snap-start rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform select-none flex flex-col justify-between"
               style={{ background: 'transparent' }}
             >
@@ -172,12 +221,16 @@ export function GameGrid() {
                 <div className="flex justify-between items-center w-full">
                   <div className="flex items-center gap-1">
                     <span className="font-extrabold text-base tracking-tighter uppercase">{game.name.split(' ')[0]}</span>
-                    <span 
-                      className={`w-5 h-5 rounded-full ${bulletCircle} font-black text-[11px] flex items-center justify-center`}
-                      style={{ color: themeColor }}
-                    >
-                      {circleContent}
-                    </span>
+                    {(game.name.trim().toUpperCase() === 'THAI GOVT LOTTERY' || game.name.trim().toUpperCase() === 'THAI GOVE KOTTERY' || game.name.trim().toUpperCase() === 'LOTTERY' || game.name.trim().toUpperCase().includes('THAI')) ? (
+                      <img src="https://i.postimg.cc/d0hfdLyv/THAI.webp" alt="THAI" className="w-5 h-5 rounded-full object-cover" />
+                    ) : (
+                      <span 
+                        className={`w-5 h-5 rounded-full ${bulletCircle} font-black text-[11px] flex items-center justify-center`}
+                        style={{ color: themeColor }}
+                      >
+                        {circleContent}
+                      </span>
+                    )}
                   </div>
                   <span className="text-[10px] font-bold opacity-80 uppercase tracking-widest">{game.drawTime}</span>
                 </div>
@@ -216,11 +269,15 @@ export function GameGrid() {
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/games/${game.name}`);
+                      if (game.name.trim().toUpperCase() === 'THAI GOVT LOTTERY' || game.name.trim().toUpperCase() === 'THAI GOVE KOTTERY') {
+                        navigate('/thai-lottery');
+                      } else {
+                        navigate(`/games/${game.name}`);
+                      }
                     }}
                     className="bg-black/25 hover:bg-black/45 border border-white/10 text-white font-extrabold text-[10px] tracking-wider uppercase py-2.5 px-6 rounded-full transition-all hover:scale-[1.03]"
                   >
-                    {language === 'en' ? `PLAY FOR $${game.price}` : `$${game.price}-এ খেলুন`}
+                    {game.name.trim().toUpperCase() === 'THAI GOVT LOTTERY' || game.name.trim().toUpperCase() === 'THAI GOVE KOTTERY' ? (language === 'en' ? 'PLAY NOW' : 'খেলুন এখনই') : (language === 'en' ? `PLAY FOR $${game.price}` : `$${game.price}-এ খেলুন`)}
                   </button>
                 </div>
 
@@ -229,6 +286,7 @@ export function GameGrid() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }

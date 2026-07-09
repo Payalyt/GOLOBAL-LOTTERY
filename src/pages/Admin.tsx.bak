@@ -3280,7 +3280,7 @@ export function Admin() {
                         type="text" 
                         value={primaryLogoText}
                         onChange={(e) => setPrimaryLogoText(e.target.value)}
-                        placeholder="GOLOBAL"
+                        placeholder="GLOBAL"
                         className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 w-full mt-1.5 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-red-500 font-bold uppercase"
                         required
                       />
