@@ -23,7 +23,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-[#0F0D24] text-zinc-400 py-16 border-t border-[#1E1A3C] text-xs relative z-50">
+    <footer className="bg-[#121D3D] text-zinc-400 py-16 border-t border-[#2C3B69] text-xs relative z-50">
       <div className="max-w-7xl mx-auto px-6 sm:px-10">
         
         {/* Upper Brand Section */}
@@ -41,14 +41,14 @@ export function Footer() {
                   />
                 </div>
               ) : (
-                <div className="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-600 to-[#E52535] flex items-center justify-center shadow-md overflow-hidden shrink-0">
+                <div className="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-[#E1BC4A] to-yellow-600 flex items-center justify-center shadow-md overflow-hidden shrink-0">
                   <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                   </svg>
                 </div>
               )}
               <div className="flex flex-col text-left">
-                <span className="text-[10px] font-black tracking-[0.25em] text-[#E52535] uppercase leading-none">
+                <span className="text-[10px] font-black tracking-[0.25em] text-[#E1BC4A] uppercase leading-none">
                   {language === 'en' ? (siteConfig.primaryLogoText || 'GLOBAL') : (siteConfig.primaryLogoText === 'GLOBAL' ? 'গ্লোবাল' : siteConfig.primaryLogoText)}
                 </span>
                 <span className="text-xl font-black tracking-[0.08em] text-white leading-none mt-1 uppercase font-bold-font">
@@ -58,8 +58,8 @@ export function Footer() {
             </div>
             <p className="text-zinc-500 text-[11px] max-w-md font-semibold">
               {language === 'en' 
-                ? 'The premier lottery and sweepstakes draw in the UAE and internationally. Raising hopes and changing lives, one dream ticket at a time.'
-                : 'সংযুক্ত আরব আমিরাত এবং আন্তর্জাতিকভাবে প্রধান লটারি ও সুইপস্টেক ড্র। একবারে একটি স্বপ্ন টিকিট কিনে মানুষের জীবন পরিবর্তন করা।'}
+                ? (siteConfig.footerDescEn || 'The premier lottery and sweepstakes draw in the UAE and internationally. Raising hopes and changing lives, one dream ticket at a time.') 
+                : (siteConfig.footerDescBn || 'সংযুক্ত আরব আমিরাত এবং আন্তর্জাতিকভাবে প্রধান লটারি ও সুইপস্টেক ড্র। একবারে একটি স্বপ্ন টিকিট কিনে মানুষের জীবন পরিবর্তন করা।')}
             </p>
           </div>
 
@@ -94,17 +94,17 @@ export function Footer() {
         {/* Links Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
-            <h4 className="font-extrabold text-white text-[10px] uppercase tracking-wider mb-4 border-l-2 border-[#E52535] pl-2.5 text-left">
+            <h4 className="font-extrabold text-white text-[10px] uppercase tracking-wider mb-4 border-l-2 border-[#E1BC4A] pl-2.5 text-left">
               {language === 'en' ? 'GET STARTED' : 'শুরু করুন'}
             </h4>
             <ul className="space-y-2.5 text-[11px] font-black text-left">
               <li>
-                <Link to="/games/MEGA7" className="hover:text-[#E52535] transition-colors uppercase block">
+                <Link to="/games/MEGA7" className="hover:text-[#E1BC4A] transition-colors uppercase block">
                   {language === 'en' ? 'MEGA7 Draw' : 'মেগা৭ ড্র'}
                 </Link>
               </li>
               <li>
-                <Link to="/games/EASY6" className="hover:text-[#E52535] transition-colors uppercase block">
+                <Link to="/games/EASY6" className="hover:text-[#E1BC4A] transition-colors uppercase block">
                   {language === 'en' ? 'EASY6 Draw' : 'ইজি৬ ড্র'}
                 </Link>
               </li>
@@ -127,7 +127,7 @@ export function Footer() {
                       </p>
                     </div>
                   )}
-                  className="hover:text-[#E52535] transition-colors uppercase text-left block w-full"
+                  className="hover:text-[#E1BC4A] transition-colors uppercase text-left block w-full"
                 >
                   {language === 'en' ? 'Sure 1-3 Raffles' : 'নিশ্চিত ১-৩ র‌্যাফেলস'}
                 </button>
@@ -156,7 +156,7 @@ export function Footer() {
                       </p>
                     </div>
                   )}
-                  className="hover:text-[#E52535] transition-colors uppercase text-left block w-full"
+                  className="hover:text-[#E1BC4A] transition-colors uppercase text-left block w-full"
                 >
                   {language === 'en' ? 'Discount Coupon Codes' : 'ডিসকাউন্ট কুপন কোড'}
                 </button>
@@ -165,7 +165,7 @@ export function Footer() {
           </div>
           
           <div>
-            <h4 className="font-extrabold text-white text-[10px] uppercase tracking-wider mb-4 border-l-2 border-[#E52535] pl-2.5 text-left">
+            <h4 className="font-extrabold text-white text-[10px] uppercase tracking-wider mb-4 border-l-2 border-[#E1BC4A] pl-2.5 text-left">
               {language === 'en' ? 'PARTICIPATION HELP' : 'অংশগ্রহণ সহায়তা'}
             </h4>
             <ul className="space-y-2.5 text-[11px] font-black text-left">
@@ -185,7 +185,7 @@ export function Footer() {
                       </ol>
                     </div>
                   )}
-                  className="hover:text-[#E52535] transition-colors text-left block w-full"
+                  className="hover:text-[#E1BC4A] transition-colors text-left block w-full"
                 >
                   {language === 'en' ? 'How to choose Numbers' : 'কীভাবে নম্বর চয়ন করবেন'}
                 </button>
@@ -232,7 +232,7 @@ export function Footer() {
                       </p>
                     </div>
                   )}
-                  className="hover:text-[#E52535] transition-colors text-left block w-full"
+                  className="hover:text-[#E1BC4A] transition-colors text-left block w-full"
                 >
                   {language === 'en' ? 'Raffle Probability Rules' : 'র‌্যাফেল সম্ভাবনার নিয়মাবলী'}
                 </button>
@@ -256,7 +256,7 @@ export function Footer() {
                       </div>
                     </div>
                   )}
-                  className="hover:text-[#E52535] transition-colors text-left block w-full"
+                  className="hover:text-[#E1BC4A] transition-colors text-left block w-full"
                 >
                   {language === 'en' ? 'Winners & Claims Guide' : 'বিজয়ী এবং দাবি নির্দেশিকা'}
                 </button>
@@ -280,7 +280,7 @@ export function Footer() {
                       </div>
                     </div>
                   )}
-                  className="hover:text-[#E52535] transition-colors text-left block w-full"
+                  className="hover:text-[#E1BC4A] transition-colors text-left block w-full"
                 >
                   {language === 'en' ? 'Responsible Gaming Council' : 'দায়িত্বশীল গেমিং কাউন্সিল'}
                 </button>
@@ -289,7 +289,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-extrabold text-white text-[10px] uppercase tracking-wider mb-4 border-l-2 border-[#E52535] pl-2.5 text-left">
+            <h4 className="font-extrabold text-white text-[10px] uppercase tracking-wider mb-4 border-l-2 border-[#E1BC4A] pl-2.5 text-left">
               {language === 'en' ? 'LEGALITY & SAFETY' : 'আইন ও নিরাপত্তা'}
             </h4>
             <ul className="space-y-2.5 text-[11px] font-black text-left">
@@ -309,7 +309,7 @@ export function Footer() {
                       </ul>
                     </div>
                   )}
-                  className="hover:text-[#E52535] transition-colors text-left block w-full"
+                  className="hover:text-[#E1BC4A] transition-colors text-left block w-full"
                 >
                   {language === 'en' ? 'Terms of Purchase & Draw' : 'ক্রয় ও ড্র শর্তাবলী'}
                 </button>
@@ -330,7 +330,7 @@ export function Footer() {
                       </ul>
                     </div>
                   )}
-                  className="hover:text-[#E52535] transition-colors text-left block w-full"
+                  className="hover:text-[#E1BC4A] transition-colors text-left block w-full"
                 >
                   {language === 'en' ? 'Privacy & Cookie Declarations' : 'গোপনীয়তা ও কুকি ঘোষণা'}
                 </button>
@@ -367,7 +367,7 @@ export function Footer() {
                       </div>
                     </div>
                   )}
-                  className="hover:text-[#E52535] transition-colors text-left block w-full"
+                  className="hover:text-[#E1BC4A] transition-colors text-left block w-full"
                 >
                   {language === 'en' ? 'Regulated License Details' : 'নিয়ন্ত্রিত লাইসেন্স বিবরণ'}
                 </button>
@@ -395,7 +395,7 @@ export function Footer() {
                       </ul>
                     </div>
                   )}
-                  className="hover:text-[#E52535] transition-colors text-left block w-full"
+                  className="hover:text-[#E1BC4A] transition-colors text-left block w-full"
                 >
                   {language === 'en' ? 'Anti-Fraud Disclosures' : 'প্রতারণা প্রতিরোধ ডিসক্লোজার'}
                 </button>
@@ -404,11 +404,11 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-extrabold text-white text-[10px] uppercase tracking-wider mb-4 border-l-2 border-[#E52535] pl-2.5 text-left font-bold">
+            <h4 className="font-extrabold text-white text-[10px] uppercase tracking-wider mb-4 border-l-2 border-[#E1BC4A] pl-2.5 text-left font-bold">
               {language === 'en' ? 'CONTACT SUPPORT' : 'গ্রাহক সেবা'}
             </h4>
             <div className="flex flex-col gap-2.5">
-              <a href={`mailto:${siteConfig.footerEmail || 'support@draw.com'}`} className="bg-zinc-900 border border-zinc-800 hover:border-[#E52535] p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
+              <a href={`mailto:${siteConfig.footerEmail || 'support@draw.com'}`} className="bg-zinc-900 border border-zinc-800 hover:border-[#E1BC4A] p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'Email Support' : 'ইমেইল সাপোর্ট'}
                 </span>
@@ -445,17 +445,21 @@ export function Footer() {
         {/* Corporate bottom lines */}
         <div className="mt-12 pt-8 border-t border-zinc-800/65 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] text-zinc-500">
           <div className="space-y-1 text-center md:text-left font-semibold">
-            <p>&copy; 2026 Golobal Lottery Registered Platform. All corporate marks, logos & licenses are properties of their respective governing entities.</p>
+            <p>
+              {language === 'en'
+                ? (siteConfig.footerCopyrightEn || '© 2026 Golobal Lottery Registered Platform. All corporate marks, logos & licenses are properties of their respective governing entities.')
+                : (siteConfig.footerCopyrightBn || '© ২০২৬ গ্লোবাল লটারি রেজিস্টার্ড প্ল্যাটফর্ম। সমস্ত কর্পোরেট চিহ্ন, লোগো এবং লাইসেন্স তাদের নিজ নিজ গভর্নিং সত্তার সম্পত্তি।')}
+            </p>
             <p className="opacity-75">
               {language === 'en' 
-                ? 'This platform stimulates raffle draws, lottery statistics tracking, and lucky pick purchases with verified secure payments.'
-                : 'এই প্ল্যাটফর্মটি যাচাইকৃত নিরাপদ পেমেন্টের মাধ্যমে র‌্যাফেল ড্র, লটারির পরিসংখ্যান ট্র্যাকিং এবং লাকি পিক ক্রয় সিমুলেট করে।'}
+                ? (siteConfig.footerSubDescEn || 'This platform stimulates raffle draws, lottery statistics tracking, and lucky pick purchases with verified secure payments.')
+                : (siteConfig.footerSubDescBn || 'এই প্ল্যাটফর্মটি যাচাইকৃত নিরাপদ পেমেন্টের মাধ্যমে র‌্যাফেল ড্র, লটারির পরিসংখ্যান ট্র্যাকিং এবং লাকি পিক ক্রয় সিমুলেট করে।')}
             </p>
           </div>
 
           <div className="flex gap-4 items-center shrink-0">
             <span className="flex items-center gap-1 font-extrabold text-zinc-400 select-none">
-              <Globe className="w-3 h-3 text-[#E52535]" />
+              <Globe className="w-3 h-3 text-[#E1BC4A]" />
               {language === 'en' ? 'English (UAE)' : 'বাংলা (বাংলাদেশ)'}
             </span>
             <span className="text-zinc-700">|</span>
@@ -472,7 +476,7 @@ export function Footer() {
             {/* Modal Header */}
             <div className="p-6 border-b border-zinc-900 flex justify-between items-start gap-4">
               <div>
-                <span className="text-[9px] font-black tracking-widest text-[#E52535] uppercase block mb-1">
+                <span className="text-[9px] font-black tracking-widest text-[#E1BC4A] uppercase block mb-1">
                   {activeDoc.category}
                 </span>
                 <h3 className="text-lg font-black uppercase text-white tracking-wide">
@@ -496,7 +500,7 @@ export function Footer() {
             <div className="p-4 bg-zinc-900/50 border-t border-zinc-900 flex justify-end">
               <button
                 onClick={handleClose}
-                className="bg-[#E52535] hover:bg-red-700 text-white font-black uppercase tracking-wider text-[10px] px-5 py-2.5 rounded-xl transition-all"
+                className="bg-[#E1BC4A] hover:bg-red-700 text-white font-black uppercase tracking-wider text-[10px] px-5 py-2.5 rounded-xl transition-all"
               >
                 {language === 'en' ? 'Acknowledge & Close' : 'সম্মত ও বন্ধ করুন'}
               </button>

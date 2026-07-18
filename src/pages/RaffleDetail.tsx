@@ -436,7 +436,7 @@ export function RaffleDetail() {
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400">Previous Winners</h3>
-                  <Link to="/winners" className="text-xs font-extrabold text-[#E52535] hover:underline flex items-center gap-1">
+                  <Link to="/winners" className="text-xs font-extrabold text-[#E1BC4A] hover:underline flex items-center gap-1">
                     View All <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -521,7 +521,7 @@ export function RaffleDetail() {
                           <td className="px-4 py-3.5 text-right">
                             <button
                               onClick={() => setSelectedResult(row)}
-                              className="text-[10px] font-black text-[#E52535] hover:underline uppercase leading-none"
+                              className="text-[10px] font-black text-[#E1BC4A] hover:underline uppercase leading-none"
                             >
                               VIEW
                             </button>

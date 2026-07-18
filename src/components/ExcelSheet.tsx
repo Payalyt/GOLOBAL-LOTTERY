@@ -19,6 +19,7 @@ interface ExcelSheetProps {
   onDataChange: (updatedData: any[]) => void;
   onAddRow?: () => any; // custom row creator
   onDeleteRow?: (index: number, row: any) => void;
+  onEditRow?: (row: any) => void;
   onCellClick?: (rowIndex: number, columnKey: string) => void;
 }
 
@@ -29,6 +30,7 @@ export function ExcelSheet({
   onDataChange,
   onAddRow,
   onDeleteRow,
+  onEditRow,
   onCellClick
 }: ExcelSheetProps) {
   const [selectedCell, setSelectedCell] = useState<{ rowIndex: number; colIndex: number; key: string } | null>(null);
@@ -455,6 +457,17 @@ export function ExcelSheet({
 
                     {/* Action controls button (Delete row) */}
                     <td className="p-1 border-b border-zinc-800 bg-zinc-950/40 text-center">
+                      
+                      {onEditRow && (
+                        <button
+                          type="button"
+                          onClick={() => onEditRow(row)}
+                          className="p-1.5 mr-1 bg-blue-950/30 hover:bg-blue-950/70 border border-blue-900/30 text-blue-400 rounded-lg transition-colors cursor-pointer"
+                          title="Edit spreadsheet row"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleDeleteSelectedRow(originalIndex)}

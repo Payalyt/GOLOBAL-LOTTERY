@@ -56,6 +56,7 @@ const menuData = {
       { title: 'RUSH DRAWS', items: [
           { name: 'PICK 1', link: '/results/pick1', color: 'bg-purple-600', text: 'SEE ALL RESULTS' },
           { name: 'PICK 2', link: '/results/pick2', color: 'bg-orange-500', text: 'SEE ALL RESULTS' },
+          { name: 'POK', link: '/results/POK', color: 'bg-indigo-600', text: 'SEE ALL RESULTS' },
       ]}
     ]
   },
@@ -79,6 +80,7 @@ const menuData = {
       { title: 'RUSH DRAWS', items: [
         { name: 'PICK 1', link: '/winners/pick1', color: 'bg-purple-600', text: 'SEE ALL WINNERS' },
         { name: 'PICK 2', link: '/winners/pick2', color: 'bg-orange-500', text: 'SEE ALL WINNERS' },
+        { name: 'POK', link: '/winners/POK', color: 'bg-indigo-600', text: 'SEE ALL WINNERS' },
       ]},
       { title: 'HALL OF FAME', items: [
         { name: 'HALL OF FAME', link: '/winners/hall-of-fame', color: 'bg-yellow-600', text: 'SEE ALL WINNERS' },
@@ -96,17 +98,29 @@ export function Header() {
   const { tickets } = useCart();
   const headerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const finalMenuData = siteConfig.navMenuData || menuData;
 
   useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 15) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
     const handleClickOutside = (event: MouseEvent) => {
       if (headerRef.current && !headerRef.current.contains(event.target as Node)) {
         setActiveMenu(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => { document.removeEventListener("mousedown", handleClickOutside); };
+    return () => { 
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener("mousedown", handleClickOutside); 
+    };
   }, []);
 
   // Soft Purple avatar helper based on name
@@ -128,8 +142,53 @@ export function Header() {
     return menu;
   };
 
+  const isDark = theme === 'dark';
+
+  const getHeaderStyle = () => {
+    if (!isDark) {
+      return isScrolled ? { backgroundColor: 'rgba(255, 255, 255, 0.85)' } : undefined;
+    }
+    const baseColor = siteConfig.customBgColor === '#121D3D' ? '#0b0f19' : (siteConfig.customBgColor || '#0b0f19');
+    if (isScrolled) {
+      if (baseColor.startsWith('#') && baseColor.length === 7) {
+        return { backgroundColor: `${baseColor}CC` };
+      }
+      return { backgroundColor: 'rgba(11, 15, 25, 0.8)' };
+    }
+    return { backgroundColor: baseColor };
+  };
+
   return (
-    <header className="sticky top-0 z-50 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 border-b border-[#E5E5EB] dark:border-zinc-850 shadow-sm" ref={headerRef}>
+    <header 
+      className={`sticky top-0 z-50 border-b transition-all duration-300 backdrop-blur-md ${
+        isScrolled
+          ? isDark 
+            ? "text-white border-teal-500/10 shadow-lg shadow-teal-950/10" 
+            : "text-zinc-900 border-zinc-200/60 shadow-md"
+          : isDark 
+            ? "text-white border-white/5 shadow-sm" 
+            : "bg-white text-zinc-900 border-zinc-200 shadow-sm"
+      }`} 
+      ref={headerRef}
+      style={getHeaderStyle()}
+    >
+      {/* Notice Banner - Bright Yellow (#F1C40F) background, Deep Navy (#0b0f19) text */}
+      <div className="bg-[#F1C40F] text-[#0b0f19] py-1.5 px-3 overflow-hidden select-none border-b border-teal-500/10">
+        <div className="max-w-7xl mx-auto flex items-center gap-3 text-[10px] sm:text-xs font-bold font-sans">
+          <div className="flex items-center gap-1 shrink-0 bg-[#0b0f19] text-[#F1C40F] px-2 py-0.5 rounded-md font-black text-[9px] tracking-wider uppercase animate-pulse">
+            <span>🔔</span>
+            <span>{language === 'en' ? 'NOTICE' : 'নোটিশ'}</span>
+          </div>
+          <div className="flex-1 overflow-hidden relative">
+            <div className="animate-marquee whitespace-nowrap inline-block font-bold">
+              {language === 'en' 
+                ? '🏆 WELCOME TO THE GLOBAL AUDITED LOTTERY PROTOCOL! NEW MEGA7 JACKPOT IS NOW ACTIVE WITH RECORD-BREAKING WEEKLY PRIZES. TOP UP SECURELY VIA BKASH, NAGAD, PERSONAL AGENTS, OR DEPOSIT USDT INSTANTLY! ' 
+                : '🏆 গ্লোবাল অডিটেড লটারি প্রটোকলে আপনাকে স্বাগতম! মেগা৭ জ্যাকপট এখন আরো আকর্ষণীয় এবং রেকর্ড পরিমাণ উইকলি পুরস্কারসহ লাইভ। বিকাশ, নগদ, লোকাল এজেন্ট বা ইউএসডিটি দিয়ে নিরাপদভাবে ডিপোজিট করুন! '}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 sm:h-20 gap-x-4 lg:gap-x-6 xl:gap-x-8">
           <div className="flex items-center shrink-0">
@@ -145,7 +204,7 @@ export function Header() {
                   />
                 </div>
               ) : (
-                <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-tr from-rose-600 to-[#E52535] flex items-center justify-center shadow-md shadow-red-200/50 overflow-hidden shrink-0 hidden sm:flex">
+                <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-[#E1BC4A] to-yellow-600 flex items-center justify-center shadow-md shadow-amber-500/20 overflow-hidden shrink-0 hidden sm:flex">
                   <svg className="w-5 h-5 md:w-6 md:h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                   </svg>
@@ -157,25 +216,29 @@ export function Header() {
                   {language === 'en' ? (siteConfig.primaryLogoText === 'GLOBAL' ? 'GLOBAL' : siteConfig.primaryLogoText || 'GLOBAL') : (siteConfig.primaryLogoText === 'GLOBAL' || siteConfig.primaryLogoText === 'GLOBAL' ? 'গ্লোবাল' : siteConfig.primaryLogoText)}
                 </span>
                 <span className="text-[18px] sm:text-[24px] font-black tracking-[0.1em] sm:tracking-[0.15em] text-zinc-900 dark:text-white flex items-center justify-start mt-1 uppercase font-bold-font leading-none truncate">
-                  L<span className="text-[#E52535]">O</span>TTERY
+                  L<span style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>O</span>TTERY
                 </span>
               </div>
             </Link>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-x-3.5 xl:gap-x-6 text-[11px] xl:text-xs font-bold tracking-wider text-zinc-700 dark:text-zinc-300 shrink">
+          <nav className="hidden lg:flex items-center gap-x-3.5 xl:gap-x-6 text-[11px] xl:text-xs font-bold tracking-wider text-zinc-700 dark:text-zinc-200 shrink">
             {Object.keys(finalMenuData).map((menu) => {
               const data = finalMenuData[menu as keyof typeof menuData] as any;
               return (
                 <div className="relative flex items-center group" key={menu}>
                   <button 
-                    className={`flex items-center hover:text-[#E52535] dark:hover:text-red-500 transition-colors uppercase cursor-pointer ${activeMenu === menu ? 'text-[#E52535] dark:text-red-500' : ''}`}
+                    className={`flex items-center hover:opacity-85 transition-colors uppercase cursor-pointer ${activeMenu === menu ? 'text-amber-500' : ''}`}
+                    style={activeMenu === menu ? { color: siteConfig.primaryHex || '#E1BC4A' } : {}}
                     onClick={() => setActiveMenu(activeMenu === menu ? null : menu)}
                   >
                     {getMenuLabel(menu, language)} <ChevronDown className="ml-1 w-3.5 h-3.5 opacity-60 group-hover:rotate-180 transition-transform duration-200" />
                   </button>
                   {activeMenu === menu && (
-                    <div className={`absolute top-full left-1/2 -translate-x-1/2 ${data.isSpecial ? 'w-[850px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'w-72'} bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 p-4 mt-3 rounded-xl shadow-xl text-black dark:text-white z-50`}>
+                    <div 
+                      className={`absolute top-full left-1/2 -translate-x-1/2 ${data.isSpecial ? 'w-[850px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'w-72'} bg-white dark:bg-[#121D3D] border border-gray-200 dark:border-zinc-800 p-4 mt-3 rounded-xl shadow-xl text-black dark:text-white z-50`}
+                      style={{ backgroundColor: theme === 'dark' ? (siteConfig.customBgColor || '#121D3D') : undefined }}
+                    >
                       {'groups' in data ? (
                         data.groups.map((group: any) => (
                           <div key={group.title} className="p-1.5">
@@ -224,65 +287,39 @@ export function Header() {
                 </div>
               );
             })}
-            <Link to="/promotions" className="hover:text-[#E52535] dark:hover:text-red-500 transition-colors uppercase self-center pt-px">{t('promotions', language)}</Link>
-            <Link to="/news" className="hover:text-[#E52535] dark:hover:text-red-500 transition-colors uppercase self-center pt-px">{t('news', language)}</Link>
+            <Link to="/promotions" className="hover:text-amber-500 transition-colors uppercase self-center pt-px">{t('promotions', language)}</Link>
+            <Link to="/news" className="hover:text-amber-500 transition-colors uppercase self-center pt-px">{t('news', language)}</Link>
             {(menuPages || []).filter(p => p.isActive !== false && p.id !== 'faq' && p.id !== 'support').map(p => (
-              <Link key={p.id} to={`/pages/${p.id}`} className="hover:text-[#E52535] dark:hover:text-red-500 transition-colors uppercase self-center pt-px">
+              <Link key={p.id} to={`/pages/${p.id}`} className="hover:text-amber-500 transition-colors uppercase self-center pt-px">
                 {p.menuTitle}
               </Link>
             ))}
-
-            {/* Theme Toggle in Menu Bar */}
-            <button
-              onClick={toggleTheme}
-              className="relative hidden lg:flex w-10 h-5 sm:w-12 sm:h-6 bg-zinc-200 dark:bg-zinc-800 rounded-full p-0.5 sm:p-1 transition-colors duration-300 items-center justify-between cursor-pointer focus:outline-none shrink-0 self-center ml-2"
-              title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              <div 
-                className={`absolute w-4 h-4 sm:w-4 sm:h-4 bg-white dark:bg-zinc-950 rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center ${
-                  theme === 'dark' ? 'translate-x-5 sm:translate-x-6' : 'translate-x-0'
-                }`}
-              >
-                {theme === 'dark' ? (
-                  <Moon className="w-2.5 h-2.5 text-indigo-400" />
-                ) : (
-                  <Sun className="w-2.5 h-2.5 text-amber-500" />
-                )}
-              </div>
-              <Sun className={`w-2.5 h-2.5 text-amber-500 transition-opacity duration-300 ml-0.5 ${theme === 'dark' ? 'opacity-30' : 'opacity-100'}`} />
-              <Moon className={`w-2.5 h-2.5 text-indigo-400 transition-opacity duration-300 mr-0.5 ${theme === 'dark' ? 'opacity-100' : 'opacity-30'}`} />
-            </button>
-
-            {/* Language Switcher in Menu Bar */}
-            <div className="hidden lg:flex items-center border border-zinc-200 dark:border-zinc-800 rounded-lg p-0.5 bg-zinc-50 dark:bg-zinc-900/60 font-sans text-[9px] font-black shrink-0 self-center">
-              <button
-                type="button"
-                onClick={() => setLanguage('en')}
-                className={`px-1.5 py-0.5 rounded-md cursor-pointer transition-all ${
-                  language === 'en' 
-                    ? 'bg-zinc-800 text-white dark:bg-zinc-700' 
-                    : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
-                }`}
-                title="English"
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage('bn')}
-                className={`px-1.5 py-0.5 rounded-md cursor-pointer transition-all ${
-                  language === 'bn' 
-                    ? 'bg-[#E52535] text-white' 
-                    : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
-                }`}
-                title="বাংলা"
-              >
-                বাং
-              </button>
-            </div>
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-3 z-10">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 sm:p-2 text-zinc-650 dark:text-zinc-400 hover:text-amber-500 dark:hover:text-yellow-400 rounded-full transition-all focus:outline-none cursor-pointer"
+              title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 sm:w-[19px] sm:h-[19px] text-zinc-800 dark:text-zinc-200 stroke-[2.5]" />
+              ) : (
+                <Moon className="w-4 h-4 sm:w-[19px] sm:h-[19px] text-zinc-800 dark:text-zinc-200 stroke-[2.5]" />
+              )}
+            </button>
+
+            {/* Language Toggle Button */}
+            <button
+              onClick={toggleLanguage}
+              className="p-1.5 sm:p-2 text-zinc-650 dark:text-zinc-400 hover:text-amber-500 dark:hover:text-yellow-400 rounded-full transition-all focus:outline-none cursor-pointer flex items-center gap-1"
+              title={language === 'en' ? "বাংলায় দেখুন" : "View in English"}
+            >
+              <Globe className="w-4 h-4 sm:w-[19px] sm:h-[19px] text-zinc-800 dark:text-zinc-200 stroke-[2.5]" />
+              <span className="hidden xs:inline text-[9px] font-black text-zinc-800 dark:text-zinc-200 bg-zinc-200/50 dark:bg-zinc-800/50 px-1.5 py-0.5 rounded uppercase">{language === 'en' ? 'EN' : 'বাং'}</span>
+            </button>
+
             {/* Shopping Cart Icon with Badge - Smaller on mobile */}
             <Link to="/cart" className="relative p-1.5 sm:p-2 text-zinc-650 dark:text-zinc-400 hover:text-red-650 rounded-full transition-all" title={t('view_cart', language)}>
               <ShoppingCart className="w-4 h-4 sm:w-[19px] sm:h-[19px] text-zinc-800 dark:text-zinc-200 stroke-[2.5]" />
@@ -325,27 +362,35 @@ export function Header() {
                   )}
                 </div>
 
+                {user.role === 'admin' && (
+                  <button 
+                    onClick={() => navigate('/admin')}
+                    className="hidden lg:block text-[9px] font-extrabold text-white bg-amber-500 hover:bg-amber-600 cursor-pointer uppercase font-sans border border-amber-500 px-2 py-1.5 rounded shadow-sm transition-colors"
+                  >
+                    Admin
+                  </button>
+                )}
+
                 <button 
                   onClick={logout} 
-                  className="hidden lg:block text-[9px] font-extrabold text-[#E52535] hover:underline cursor-pointer uppercase font-sans border border-red-100/40 px-2 py-1.5 rounded hover:bg-red-50"
+                  className="hidden lg:block text-[9px] font-extrabold text-amber-500 hover:underline cursor-pointer uppercase font-sans border border-amber-500/20 px-2 py-1.5 rounded hover:bg-amber-500/10"
                 >
                   {t('logout', language)}
                 </button>
               </div>
             ) : (
               <div className="flex items-center space-x-1 sm:space-x-2">
-                <Link to="/login" className="text-[10px] sm:text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white border border-zinc-200 dark:border-zinc-850 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 transition-colors uppercase">
+                <Link to="/login" className="text-[10px] sm:text-xs font-extrabold text-zinc-100 hover:text-white border border-[#2C3B69] hover:bg-[#2C3B69] rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 transition-colors uppercase bg-transparent">
                   {t('login', language)}
                 </Link>
-                <Link to="/register" className="text-[10px] sm:text-xs font-bold bg-[#0F0D24] text-white hover:bg-[#1E1A3C] px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors uppercase">
+                <Link to="/register" className="text-[10px] sm:text-xs font-black bg-[#E1BC4A] text-[#121D3D] hover:bg-yellow-500 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors uppercase shadow-md shadow-[#E1BC4A]/10">
                   {t('register', language)}
                 </Link>
               </div>
             )}
 
             {/* Premium Custom Animated Hamburger Button (Morphic Lines) */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            <button style={{ display: siteConfig.slideMenuEnabled === false ? "none" : "flex" }} onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden flex flex-col justify-center items-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 transition-colors focus:outline-none cursor-pointer group"
               aria-label="Toggle Menu"
             >
@@ -378,7 +423,8 @@ export function Header() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 240 }}
-              className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-[320px] bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shadow-2xl p-6 overflow-y-auto lg:hidden flex flex-col justify-between text-zinc-900 dark:text-zinc-100"
+              className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-[320px] bg-white dark:bg-[#121D3D] border-l border-zinc-200 dark:border-zinc-800 shadow-2xl p-6 overflow-y-auto lg:hidden flex flex-col justify-between text-zinc-900 dark:text-zinc-100"
+              style={{ backgroundColor: theme === 'dark' ? (siteConfig.customBgColor || '#121D3D') : undefined }}
             >
               <div className="space-y-6">
                 {/* Drawer Header with Logo & Close Icon */}
@@ -394,14 +440,14 @@ export function Header() {
                         />
                       </div>
                     ) : (
-                      <div className="relative w-11 h-11 rounded-xl bg-gradient-to-tr from-rose-600 to-[#E52535] flex items-center justify-center shadow-md overflow-hidden shrink-0">
+                      <div className="relative w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 via-[#E1BC4A] to-yellow-600 flex items-center justify-center shadow-md overflow-hidden shrink-0">
                         <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                         </svg>
                       </div>
                     )}
                     <div className="flex flex-col text-left">
-                      <span className="text-[8px] font-black tracking-[0.25em] text-[#E52535] dark:text-red-450 uppercase leading-none">
+                      <span className="text-[8px] font-black tracking-[0.25em] text-amber-500 dark:text-amber-400 uppercase leading-none">
                         {language === 'en' ? (siteConfig.primaryLogoText || 'GLOBAL') : (siteConfig.primaryLogoText === 'GLOBAL' ? 'গ্লোবাল' : siteConfig.primaryLogoText)}
                       </span>
                       <span className="text-base font-black tracking-[0.08em] text-zinc-950 dark:text-white leading-none mt-1 uppercase font-bold-font">
@@ -422,67 +468,6 @@ export function Header() {
 
                 {/* Mobile Navigation Menu Items */}
                 <div className="space-y-5 text-left">
-                  {/* Preferences Section - Theme & Language at the Top of Mobile Drawer */}
-                  <div className="p-3 bg-zinc-50 dark:bg-zinc-800/30 rounded-2xl border border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between animate-fade-in shadow-inner">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black uppercase text-zinc-950 dark:text-white tracking-wider">
-                        {language === 'en' ? 'Dark Mode' : 'ডার্ক মোড'}
-                      </span>
-                      <span className="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold uppercase mt-0.5">
-                        {theme === 'dark' ? (language === 'en' ? 'Enabled' : 'চালু আছে') : (language === 'en' ? 'Disabled' : 'বন্ধ আছে')}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2.5">
-                      {/* Theme toggle pill */}
-                      <button
-                        type="button"
-                        onClick={toggleTheme}
-                        className="relative w-12 h-6 bg-zinc-200 dark:bg-zinc-850 rounded-full p-1 transition-colors duration-300 flex items-center justify-between cursor-pointer focus:outline-none shrink-0"
-                        title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
-                      >
-                        <div 
-                          className={`absolute w-4 h-4 bg-white dark:bg-zinc-950 rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center ${
-                            theme === 'dark' ? 'translate-x-6' : 'translate-x-0'
-                          }`}
-                        >
-                          {theme === 'dark' ? (
-                            <Moon className="w-2.5 h-2.5 text-indigo-400" />
-                          ) : (
-                            <Sun className="w-2.5 h-2.5 text-amber-500" />
-                          )}
-                        </div>
-                        <Sun className={`w-3 h-3 text-amber-500 transition-opacity duration-300 ml-0.5 ${theme === 'dark' ? 'opacity-30' : 'opacity-100'}`} />
-                        <Moon className={`w-3 h-3 text-indigo-400 transition-opacity duration-300 mr-0.5 ${theme === 'dark' ? 'opacity-100' : 'opacity-30'}`} />
-                      </button>
-
-                      {/* Language Toggle buttons */}
-                      <div className="flex items-center border border-zinc-200 dark:border-zinc-700/60 rounded-lg p-0.5 bg-white dark:bg-zinc-900 font-sans text-[9px] font-black">
-                        <button
-                          type="button"
-                          onClick={() => setLanguage('en')}
-                          className={`px-1.5 py-0.5 rounded-md cursor-pointer transition-all ${
-                            language === 'en' 
-                              ? 'bg-zinc-800 text-white dark:bg-zinc-750' 
-                              : 'text-zinc-500 hover:text-zinc-850'
-                          }`}
-                        >
-                          EN
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setLanguage('bn')}
-                          className={`px-1.5 py-0.5 rounded-md cursor-pointer transition-all ${
-                            language === 'bn' 
-                              ? 'bg-[#E52535] text-white' 
-                              : 'text-zinc-500 hover:text-zinc-850'
-                          }`}
-                        >
-                          বাং
-                        </button>
-                      </div>
-                    </div>
-                  </div>
                   {/* Section: Life Changing Games */}
                   <div>
                     <span className="text-[9px] font-black tracking-widest text-zinc-400 dark:text-zinc-500 uppercase block mb-2 flex items-center gap-1.5 font-sans">
@@ -551,7 +536,7 @@ export function Header() {
                   {/* Quick Sections Grid */}
                   <div className="grid grid-cols-2 gap-2 pt-2">
                     <Link
-                      to="/results/mega7"
+                      to="/results"
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="flex flex-col items-center justify-center p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition text-center"
                     >
@@ -559,7 +544,7 @@ export function Header() {
                       <span className="text-[9px] font-black uppercase tracking-wider">{language === 'en' ? 'Draw Results' : 'ড্র ফলাফল'}</span>
                     </Link>
                     <Link
-                      to="/winners/mega7"
+                      to="/winners"
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="flex flex-col items-center justify-center p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition text-center"
                     >
@@ -638,6 +623,16 @@ export function Header() {
                         👤 {t('account_dashboard', language)}
                       </Link>
 
+                      {user.role === 'admin' && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="w-full text-center py-2.5 rounded-xl border border-amber-500 bg-amber-500 hover:bg-amber-600 text-xs font-bold text-white uppercase tracking-wider transition-all shadow-md"
+                        >
+                          ⚙️ Admin Panel
+                        </Link>
+                      )}
+
                       <button
                         onClick={() => {
                           logout();
@@ -654,14 +649,14 @@ export function Header() {
                     <Link
                       to="/login"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="text-center py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 text-xs font-black uppercase tracking-wider hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-colors"
+                      className="text-center py-2.5 rounded-lg border border-[#2C3B69] text-zinc-100 text-xs font-black uppercase tracking-wider hover:bg-[#2C3B69] transition-colors bg-transparent"
                     >
                       {t('login', language)}
                     </Link>
                     <Link
                       to="/register"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="text-center py-2.5 rounded-lg bg-[#0F0D24] hover:bg-[#1E1A3C] text-white text-xs font-black uppercase tracking-wider transition-colors"
+                      className="text-center py-2.5 rounded-lg bg-[#E1BC4A] hover:bg-yellow-500 text-[#121D3D] text-xs font-black uppercase tracking-wider transition-colors shadow-md shadow-[#E1BC4A]/10"
                     >
                       {t('register', language)}
                     </Link>

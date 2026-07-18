@@ -44,7 +44,7 @@ export function CountdownTimer({ targetDate }: { targetDate: Date }) {
   };
 
   return (
-    <div className="flex gap-2 justify-center text-white">
+    <div className="flex gap-1 sm:gap-2 justify-center text-white">
       {[
         { label: labels.DAYS, value: timeLeft.days },
         { label: labels.HOURS, value: timeLeft.hours },
@@ -52,12 +52,12 @@ export function CountdownTimer({ targetDate }: { targetDate: Date }) {
         { label: labels.SECS, value: timeLeft.secs },
       ].map((item, idx) => (
         <React.Fragment key={idx}>
-          {idx > 0 && <span className="self-center text-white/50 text-xs font-bold -mt-3.5">:</span>}
+          {idx > 0 && <span className="self-center text-white/50 text-[10px] sm:text-xs font-bold -mt-2.5 sm:-mt-3.5">:</span>}
           <div className="flex flex-col items-center">
-            <div className="bg-black/25 text-white font-black px-2.5 py-1.5 rounded-xl text-center text-sm font-mono min-w-[38px] tracking-wide border border-white/5 shadow-inner">
+            <div className="bg-black/25 text-white font-black px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-center text-xs sm:text-sm font-mono min-w-[28px] sm:min-w-[38px] tracking-wide border border-white/5 shadow-inner">
               {String(item.value).padStart(2, '0')}
             </div>
-            <span className="text-[7.5px] font-bold mt-1 text-white/70 uppercase tracking-widest">{item.label}</span>
+            <span className="text-[6.5px] sm:text-[7.5px] font-bold mt-1 text-white/70 uppercase tracking-widest">{item.label}</span>
           </div>
         </React.Fragment>
       ))}

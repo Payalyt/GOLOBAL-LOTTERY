@@ -34,6 +34,8 @@ export interface WithdrawalRequest {
   accountName?: string;
   userBalanceAtRequest?: number;
   commissionDeducted?: number;
+  sourceWallet?: 'winnings' | 'main';
+  isDebited?: boolean;
 }
 
 export interface PurchasedTicket {
@@ -55,6 +57,16 @@ export interface HistoricalDraw {
   status: string;
 }
 
+export interface SystemNotification {
+  id: string;
+  email: string;
+  title: string;
+  message: string;
+  date: string;
+  read: boolean;
+  type: 'success' | 'warning' | 'info' | 'payment' | 'draw';
+}
+
 export interface DynamicGame {
   id?: string;
   name: string;
@@ -71,6 +83,11 @@ export interface DynamicGame {
   cardBgGradient?: string;
   prizeBreakdown?: { label: string; count: number; prize: string }[];
   isActive?: boolean;
+  buttonColor?: string;
+  buttonTextColor?: string;
+  leftTickets?: number;
+  totalTickets?: number;
+  customUrl?: string;
 }
 
 export interface PaymentGateway {
@@ -95,6 +112,7 @@ export interface DailyRaffleWinner {
   avatarBg: string;
   initials: string;
   imageUrl?: string;
+  date?: string;
 }
 
 export function getGameColor(gameName: string): string {
@@ -212,6 +230,10 @@ export interface Promotion {
   accentColor: string;
   targetLink: string;
   isActive: boolean;
+  bgType?: 'color' | 'gradient' | 'image';
+  bgSolid?: string;
+  bgGradient?: string;
+  bgImage?: string;
 }
 
 export interface NewsArticle {
@@ -223,6 +245,7 @@ export interface NewsArticle {
   bannerTitle?: string;
   bannerSubtitle?: string;
   bannerBg?: string;
+  bgType?: 'color' | 'gradient' | 'image';
   isActive: boolean;
 }
 
@@ -256,6 +279,17 @@ export interface DrawResult {
   totalWinners: string;
   totalPaid: string;
   refCode?: string;
+  country?: string;
+  thaiSubResults?: {
+    up3?: string;
+    down3?: string;
+    up2?: string;
+    down2?: string;
+    up4?: string;
+    down4?: string;
+    up6?: string;
+    down6?: string;
+  };
 }
 
 export interface CustomBanner {
@@ -276,6 +310,10 @@ export interface CustomBanner {
 }
 
 export interface SiteThemeConfig {
+  slideMenuEnabled?: boolean;
+  thaiLotteryPrice?: number;
+  thaiLotteryDrawTime?: string;
+  thaiLotteryPrizes?: Record<string, number>;
   primaryHex: string;
   primaryLogoText: string;
   logoImageUrl?: string;
@@ -290,6 +328,18 @@ export interface SiteThemeConfig {
   allGamesSolidBg: boolean;
   allGamesSolidHex: string;
   hideHeroShadow?: boolean;
+  unlockHeadlineEn?: string;
+  unlockHeadlineBn?: string;
+  unlockSubEn?: string;
+  unlockSubBn?: string;
+  unlockPerksEn?: string;
+  unlockPerksBn?: string;
+  footerDescEn?: string;
+  footerDescBn?: string;
+  footerCopyrightEn?: string;
+  footerCopyrightBn?: string;
+  footerSubDescEn?: string;
+  footerSubDescBn?: string;
   // bKash & Nagad Payment Configs
   bkashNumber: string;
   bkashEnabled: boolean;
@@ -349,6 +399,7 @@ export interface SiteThemeConfig {
   videoWinners?: VideoWinner[];
   drawResults?: DrawResult[];
   navMenuData?: any; // To store dynamic header menus
+  thaiPrizes?: { name: string; count: string; prize: string }[];
 }
 
 interface AuthContextType {
@@ -417,6 +468,9 @@ interface AuthContextType {
   setLanguage: (lang: 'en' | 'bn') => void;
   allUsersCount: number;
   allTicketsCount: number;
+  systemNotifications: SystemNotification[];
+  addNotification: (notif: Omit<SystemNotification, 'id' | 'date' | 'read'>) => Promise<void>;
+  markNotificationAsRead: (id: string) => Promise<void>;
 }
 
 const DEFAULT_USERS: UserProfile[] = [
@@ -460,7 +514,7 @@ const DEFAULT_USERS: UserProfile[] = [
 ];
 
 const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
-  primaryHex: '#E52535',
+  primaryHex: '#14B8A6',
   primaryLogoText: 'GLOBAL',
   logoImageUrl: '',
   heroHeadline: 'Reach for the skies with',
@@ -468,11 +522,11 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
   heroDetails: 'Draw ends 21st June & resets to $30,000,000',
   heroDaysToGo: '3',
   bannerMascotUrl: '/images/emirates_winner_mascot_1781774955947.jpg',
-  customBgColor: '#F4F4F6',
+  customBgColor: '#0b0f19',
   heroBannerBgType: 'gradient',
-  heroBannerBgSolidHex: '#E52535',
+  heroBannerBgSolidHex: '#0b0f19',
   allGamesSolidBg: false,
-  allGamesSolidHex: '#E52535',
+  allGamesSolidHex: '#2C3B69',
   hideHeroShadow: false,
   // bKash & Nagad defaults
   bkashNumber: '+8801986259552',
@@ -511,6 +565,18 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
   footerLicenseBoard: 'Curacao eGaming Regulatory Authority',
   footerLicenseSerial: '#1668/JAZ - 2026 AUDITED LOTTERY PROTOCOL',
   footerGccCompliance: 'GCC-L-984210',
+  unlockHeadlineEn: 'Unlock Advanced AI Lucky Number & Probability Statistics!',
+  unlockHeadlineBn: 'উন্নত এআই লাকি নম্বর এবং সম্ভাবনা পরিসংখ্যান আনলক করুন!',
+  unlockSubEn: 'Join thousands of smart drawers utilizing our dynamic analytics suite. Register your phone number to reveal historical heatmaps, cold/hot number frequencies, and simulated checkout odds.',
+  unlockSubBn: 'আমাদের ডায়নামিক অ্যানালিটিক্স স্যুট ব্যবহার করে হাজার হাজার স্মার্ট লটারি ড্রয়ারদের সাথে যোগ দিন। ঐতিহাসিক হিটম্যাপ, ঠাণ্ডা/গরম নম্বরের ফ্রিকোয়েন্সি এবং সিমুলেটেড চেকআউট সম্ভাবনা দেখতে আপনার ফোন নম্বর দিয়ে নিবন্ধন করুন।',
+  unlockPerksEn: 'Comprehensive Hot & Cold Heatmaps, Personalised Lucky Number Generator, Next Draw Probability Calculator, Automatic Winners Match-Alerts',
+  unlockPerksBn: 'বিস্তারিত হট ও কোল্ড হিটম্যাপ, ব্যক্তিগত লাকি নম্বর জেনারেটর, পরবর্তী ড্র সম্ভাবনা ক্যালকুলেটর, স্বয়ংক্রিয় বিজয়ী ম্যাচ-অ্যালার্ট',
+  footerDescEn: 'The premier lottery and sweepstakes draw in the UAE and internationally. Raising hopes and changing lives, one dream ticket at a time.',
+  footerDescBn: 'সংযুক্ত আরব আমিরাত এবং আন্তর্জাতিকভাবে প্রধান লটারি ও সুইপস্টেক ড্র। একবারে একটি স্বপ্ন টিকিট কিনে মানুষের জীবন পরিবর্তন করা।',
+  footerCopyrightEn: '© 2026 Golobal Lottery Registered Platform. All corporate marks, logos & licenses are properties of their respective governing entities.',
+  footerCopyrightBn: '© ২০২৬ গ্লোবাল লটারি রেজিস্টার্ড প্ল্যাটফর্ম। সমস্ত কর্পোরেট চিহ্ন, লোগো এবং লাইসেন্স তাদের নিজ নিজ গভর্নিং সত্তার সম্পত্তি।',
+  footerSubDescEn: 'This platform stimulates raffle draws, lottery statistics tracking, and lucky pick purchases with verified secure payments.',
+  footerSubDescBn: 'এই প্ল্যাটফর্মটি যাচাইকৃত নিরাপদ পেমেন্টের মাধ্যমে র‌্যাফেল ড্র, লটারির পরিসংখ্যান ট্র্যাকিং এবং লাকি পিক ক্রয় সিমুলেট করে।',
   // Default Custom Banners
   banners: [
     {
@@ -719,6 +785,16 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
     // LOTTERY
     { id: 'dr-30', gameName: 'LOTTERY', date: '16 June 2026', numbers: [5, 12, 19, 27, 33, 41], totalWinners: '241 Players', totalPaid: '$1,000,000.00', refCode: 'EMD-2941-XQ9' },
     { id: 'dr-31', gameName: 'LOTTERY', date: '09 June 2026', numbers: [1, 10, 15, 22, 38, 44], totalWinners: '189 Players', totalPaid: '$15,000.00', refCode: 'EMD-2941-XQ9' }
+  ],
+  thaiPrizes: [
+    { name: '1st Prize', count: '1', prize: '6,000,000 Baht' },
+    { name: '3-Digit Front', count: '2', prize: '4,000 Baht' },
+    { name: '3-Digit Rear', count: '2', prize: '4,000 Baht' },
+    { name: '2-Digit Last', count: '1', prize: '2,000 Baht' },
+    { name: '2nd Prize', count: '5', prize: '200,000 Baht' },
+    { name: '3rd Prize', count: '10', prize: '80,000 Baht' },
+    { name: '4th Prize', count: '50', prize: '40,000 Baht' },
+    { name: '5th Prize', count: '100', prize: '20,000 Baht' }
   ]
 };
 
@@ -771,11 +847,14 @@ const AuthContext = createContext<AuthContextType>({
   toggleTheme: () => {},
   language: 'en',
   toggleLanguage: () => {},
-  setLanguage: () => {}
+  setLanguage: () => {},
+  systemNotifications: [],
+  addNotification: async () => {},
+  markNotificationAsRead: async () => {}
 });
 
 export const getInitialGames = (): DynamicGame[] => [
-  { name: 'MEGA7', prize: '$50,000,000', price: 15, drawTime: 'Sunday', targetDateStr: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#E52535', isSolidStyle: false, ballCount: 7, maxBallValue: 99 },
+  { name: 'MEGA7', prize: '$50,000,000', price: 15, drawTime: 'Sunday', targetDateStr: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#E1BC4A', isSolidStyle: false, ballCount: 7, maxBallValue: 99 },
   { name: 'WILD5', prize: '$3,000,000', price: 10, drawTime: 'Saturday', targetDateStr: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#1C2C80', isSolidStyle: false, ballCount: 5, maxBallValue: 49 },
   { name: 'EASY6', prize: '$4,000,000', price: 6, drawTime: 'Friday', targetDateStr: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#12A054', isSolidStyle: false, ballCount: 6, maxBallValue: 39 },
   { name: 'FAST5', prize: '$6,000', price: 8, drawTime: 'Saturday', targetDateStr: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#1AA3E5', isSolidStyle: false, ballCount: 5, maxBallValue: 39 },
@@ -812,11 +891,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [menuPages, setMenuPages] = useState<MenuPage[]>([]);
-  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
-  const [depositRequests, setDepositRequests] = useState<DepositRequest[]>([]);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>(() => {
+    try {
+      const saved = localStorage.getItem('withdrawalRequests');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [depositRequests, setDepositRequests] = useState<DepositRequest[]>(() => {
+    try {
+      const saved = localStorage.getItem('depositRequests');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [systemNotifications, setSystemNotifications] = useState<SystemNotification[]>([]);
 
   const intelligentMergeConfig = (defaultConfig: SiteThemeConfig, data: Partial<SiteThemeConfig>): SiteThemeConfig => {
-    const merged = { ...defaultConfig, ...data };
+    const merged = { ...defaultConfig, ...data, customBgColor: '#0b0f19' };
     if (data.paymentGateways && Array.isArray(data.paymentGateways)) {
       const defaultGateways = defaultConfig.paymentGateways || [];
       const mergedGateways = [...defaultGateways];
@@ -875,8 +969,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
     }
   }, [theme]);
 
@@ -890,6 +986,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const configSnap = await getDoc(configRef);
           if (!configSnap.exists()) {
             await setDoc(configRef, DEFAULT_SITE_CONFIG);
+          } else {
+            const data = configSnap.data();
+            if (data?.customBgColor !== '#0b0f19') {
+              await setDoc(configRef, { customBgColor: '#0b0f19' }, { merge: true });
+            }
           }
         } catch (e) {
           console.log("Site config seeding skipped (likely permissions or exists)");
@@ -916,7 +1017,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const gamesSnap = await getDocs(gamesColl);
           
           const initialGames = [
-            { name: 'MEGA7', prize: '$50,000,000', price: 15, drawTime: 'Sunday', targetDateStr: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#E52535', isSolidStyle: false, ballCount: 7, maxBallValue: 99 },
+            { name: 'MEGA7', prize: '$50,000,000', price: 15, drawTime: 'Sunday', targetDateStr: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#E1BC4A', isSolidStyle: false, ballCount: 7, maxBallValue: 99 },
             { name: 'WILD5', prize: '$3,000,000', price: 10, drawTime: 'Saturday', targetDateStr: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#1C2C80', isSolidStyle: false, ballCount: 5, maxBallValue: 49 },
             { name: 'EASY6', prize: '$4,000,000', price: 6, drawTime: 'Friday', targetDateStr: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#12A054', isSolidStyle: false, ballCount: 6, maxBallValue: 39 },
             { name: 'FAST5', prize: '$6,000', price: 8, drawTime: 'Saturday', targetDateStr: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#1AA3E5', isSolidStyle: false, ballCount: 5, maxBallValue: 39 },
@@ -1023,8 +1124,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 flyerAmount: '$50,000,000',
                 flyerSub: 'EXTENDED: Reach for the skies with $50M!',
                 flyerExtra: 'ENDS 21st JUNE • RESETS TO $30,000,000',
-                flyerGradient: 'from-amber-600 via-[#E52535] to-[#4A030A] text-white',
-                accentColor: '[#E52535]',
+                flyerGradient: 'from-amber-600 via-[#E1BC4A] to-[#4A030A] text-white',
+                accentColor: '[#E1BC4A]',
                 targetLink: '/games/mega7',
                 isActive: true
               },
@@ -1103,7 +1204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 imageUrl: 'https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&q=80&w=400',
                 bannerTitle: 'EID BONANZA',
                 bannerSubtitle: 'WIN 52 FREE TICKETS',
-                bannerBg: 'bg-gradient-to-r from-red-650 from-red-600 via-[#E52535] to-amber-500 text-white',
+                bannerBg: 'bg-gradient-to-r from-red-650 from-red-600 via-[#E1BC4A] to-amber-500 text-white',
                 isActive: true
               },
               {
@@ -1233,15 +1334,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'dynamicGames'));
 
+    const safeTime = (dateStr: any): number => {
+      if (!dateStr) return 0;
+      if (typeof dateStr === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+        const parts = dateStr.split('/');
+        dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+      const t = new Date(dateStr).getTime();
+      return isNaN(t) ? 0 : t;
+    };
+
     const unsubRaffle = onSnapshot(collection(db, 'raffleWinners'), (snap) => {
       const list: DailyRaffleWinner[] = [];
       snap.forEach((d) => list.push(d.data() as DailyRaffleWinner));
+      list.sort((a, b) => safeTime(b.date) - safeTime(a.date));
       setRaffleWinners(list);
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'raffleWinners'));
 
     const unsubDraws = onSnapshot(collection(db, 'historicalDraws'), (snap) => {
       const list: HistoricalDraw[] = [];
       snap.forEach((d) => list.push(d.data() as HistoricalDraw));
+      list.sort((a, b) => safeTime(b.drawDate) - safeTime(a.drawDate));
       setHistoricalDraws(list);
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'historicalDraws'));
 
@@ -1251,6 +1364,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const p = d.data() as Promotion;
         list.push({ ...p, id: d.id });
       });
+      list.sort((a, b) => safeTime(b.date) - safeTime(a.date));
       setPromotions(list);
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'promotions'));
 
@@ -1260,6 +1374,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const n = d.data() as NewsArticle;
         list.push({ ...n, id: d.id });
       });
+      list.sort((a, b) => safeTime(b.date) - safeTime(a.date));
       setNewsArticles(list);
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'newsArticles'));
 
@@ -1400,64 +1515,87 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Only proceed if Firebase Auth actually has a user. 
-    // If we have a local session but no Firebase user, we wait for Firebase Auth to catch up or fail.
-    if (!auth.currentUser) return;
-
     const emailLower = user.email.toLowerCase();
     let unsubDeposits: () => void;
     let unsubWithdrawals: () => void;
     let unsubTickets: () => void;
+    let unsubNotifications: () => void;
     let unsubUsers: (() => void) | null = null;
 
     if (user.role === 'admin') {
       // Admins listen to EVERYTHING in full
       unsubDeposits = onSnapshot(collection(db, 'depositRequests'), (snap) => {
         const list: DepositRequest[] = [];
-        snap.forEach((d) => list.push(d.data() as DepositRequest));
+        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as unknown as DepositRequest));
         setDepositRequests(list);
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'depositRequests'));
 
       unsubWithdrawals = onSnapshot(collection(db, 'withdrawalRequests'), (snap) => {
         const list: WithdrawalRequest[] = [];
-        snap.forEach((d) => list.push(d.data() as WithdrawalRequest));
+        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as unknown as WithdrawalRequest));
         setWithdrawalRequests(list);
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'withdrawalRequests'));
 
       unsubTickets = onSnapshot(collection(db, 'purchasedTickets'), (snap) => {
         const list: PurchasedTicket[] = [];
-        snap.forEach((d) => list.push(d.data() as PurchasedTicket));
+        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as unknown as PurchasedTicket));
         setTickets(list);
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'purchasedTickets'));
 
       unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
         const list: UserProfile[] = [];
-        snap.forEach((d) => list.push(d.data() as UserProfile));
+        snap.forEach((d) => {
+          const data = d.data();
+          list.push({
+            ...data,
+            id: d.id,
+            email: data.email || d.id
+          } as unknown as UserProfile);
+        });
         setAllUsers(list);
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'users'));
+
+      unsubNotifications = onSnapshot(collection(db, 'systemNotifications'), (snap) => {
+        const list: SystemNotification[] = [];
+        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as unknown as SystemNotification));
+        list.sort((a, b) => b.id.localeCompare(a.id));
+        setSystemNotifications(list);
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'systemNotifications'));
 
     } else {
       // Normal users only listen to their OWN records via Firestore queries
       const depositsQuery = query(collection(db, 'depositRequests'), where('email', '==', emailLower));
       unsubDeposits = onSnapshot(depositsQuery, (snap) => {
         const list: DepositRequest[] = [];
-        snap.forEach((d) => list.push(d.data() as DepositRequest));
+        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as unknown as DepositRequest));
         setDepositRequests(list);
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'depositRequests (filtered)'));
 
       const withdrawalsQuery = query(collection(db, 'withdrawalRequests'), where('email', '==', emailLower));
       unsubWithdrawals = onSnapshot(withdrawalsQuery, (snap) => {
         const list: WithdrawalRequest[] = [];
-        snap.forEach((d) => list.push(d.data() as WithdrawalRequest));
+        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as unknown as WithdrawalRequest));
         setWithdrawalRequests(list);
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'withdrawalRequests (filtered)'));
 
       const ticketsQuery = query(collection(db, 'purchasedTickets'), where('email', '==', emailLower));
       unsubTickets = onSnapshot(ticketsQuery, (snap) => {
         const list: PurchasedTicket[] = [];
-        snap.forEach((d) => list.push(d.data() as PurchasedTicket));
+        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as unknown as PurchasedTicket));
         setTickets(list);
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'purchasedTickets (filtered)'));
+
+      unsubNotifications = onSnapshot(collection(db, 'systemNotifications'), (snap) => {
+        const list: SystemNotification[] = [];
+        snap.forEach((d) => {
+          const item = { ...d.data(), id: d.id } as unknown as SystemNotification;
+          if (item.email.toLowerCase() === emailLower || item.email === 'all') {
+            list.push(item);
+          }
+        });
+        list.sort((a, b) => b.id.localeCompare(a.id));
+        setSystemNotifications(list);
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'systemNotifications (filtered)'));
 
       // Normal users don't have access to other users' list
       setAllUsers([]);
@@ -1467,6 +1605,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unsubDeposits();
       unsubWithdrawals();
       unsubTickets();
+      if (unsubNotifications) {
+        unsubNotifications();
+      }
       if (unsubUsers) {
         unsubUsers();
       }
@@ -1489,6 +1630,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem('allUsers', JSON.stringify(allUsers));
   }, [allUsers]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('withdrawalRequests', JSON.stringify(withdrawalRequests));
+    } catch (e) {
+      console.warn('Could not save withdrawalRequests to localStorage', e);
+    }
+  }, [withdrawalRequests]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('depositRequests', JSON.stringify(depositRequests));
+    } catch (e) {
+      console.warn('Could not save depositRequests to localStorage', e);
+    }
+  }, [depositRequests]);
 
   // --- ACTIONS ---
   const buyTickets = (newTickets: Array<{ id: number; numbers: number[]; price: number; gameName: string }>): boolean => {
@@ -1529,6 +1686,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateUserBalance = async (email: string, amount: number) => {
+    // 1. Update local state instantly so user/admin UI responds immediately
+    setAllUsers(prev => prev.map(u => {
+      if (u.email.toLowerCase() === email.toLowerCase()) {
+        const newBal = parseFloat((u.balance + amount).toFixed(2));
+        if (user && user.email.toLowerCase() === email.toLowerCase()) {
+          setUser(prevUser => prevUser ? { ...prevUser, balance: newBal } : null);
+        }
+        return { ...u, balance: newBal };
+      }
+      return u;
+    }));
+
+    // 2. Safely attempt Firestore write without letting errors bubble up
     try {
       const userRef = doc(db, 'users', email.toLowerCase());
       const userSnap = await getDoc(userRef);
@@ -1536,24 +1706,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const uData = userSnap.data() as UserProfile;
         const newBal = parseFloat((uData.balance + amount).toFixed(2));
         await setDoc(userRef, { balance: newBal }, { merge: true });
-        if (user && user.email.toLowerCase() === email.toLowerCase()) {
-          setUser(prev => prev ? { ...prev, balance: newBal } : null);
-        }
       }
     } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `users/${email}`);
+      console.warn("Firebase failed to update user balance. Handled locally.", err);
     }
   };
 
   const updateUserProfileFields = async (email: string, fields: Partial<UserProfile>) => {
+    // 1. Update local state instantly so user/admin UI responds immediately
+    setAllUsers(prev => prev.map(u => {
+      if (u.email.toLowerCase() === email.toLowerCase()) {
+        const updated = { ...u, ...fields };
+        if (user && user.email.toLowerCase() === email.toLowerCase()) {
+          setUser(prevUser => prevUser ? { ...prevUser, ...fields } : null);
+        }
+        return updated;
+      }
+      return u;
+    }));
+
+    // 2. Safely attempt Firestore write without letting errors bubble up
     try {
       const userRef = doc(db, 'users', email.toLowerCase());
       await setDoc(userRef, fields, { merge: true });
-      if (user && user.email.toLowerCase() === email.toLowerCase()) {
-        setUser(prev => prev ? { ...prev, ...fields } : null);
-      }
     } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `users/${email}`);
+      console.warn("Firebase failed to update user profile fields. Handled locally.", err);
     }
   };
 
@@ -1589,99 +1766,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const winningSeq = winningNumbers.join('');
           const ticketNum = t.thaiLotteryNumber || '';
           
+                    const prizes = siteConfig?.thaiLotteryPrizes || {
+            firstPrize: 66666.66, front3: 40, rear3: 40, last2: 20, consolation: 1000,
+            threeUpDirect: 500, threeUpRumble: 100, threeUpSingle: 10, threeUpSum: 15,
+            twoUpDirect: 90, downDirect: 90, downSingle: 8, downSum: 15
+          };
           if (t.thaiLotteryType === '1st Prize Category') {
             if (ticketNum === winningSeq) {
               won = true;
-              payout = (t.directBet || t.price || 3) * 66666.66;
+              payout = (t.directBet || t.price || 3) * prizes.firstPrize;
             }
           } else if (t.thaiLotteryType === 'Front 3-Digit Category') {
             const winFront3 = winningSeq.slice(0, 3);
             if (ticketNum === winFront3) {
               won = true;
-              payout = (t.directBet || t.price || 3) * 40;
+              payout = (t.directBet || t.price || 3) * prizes.front3;
             }
           } else if (t.thaiLotteryType === 'Rear 3-Digit Category') {
             const winRear3 = winningSeq.slice(-3);
             if (ticketNum === winRear3) {
               won = true;
-              payout = (t.directBet || t.price || 3) * 40;
+              payout = (t.directBet || t.price || 3) * prizes.rear3;
             }
           } else if (t.thaiLotteryType === 'Last 2-Digit Category') {
             const winLast2 = winningSeq.slice(-2);
             if (ticketNum === winLast2) {
               won = true;
-              payout = (t.directBet || t.price || 3) * 20;
+              payout = (t.directBet || t.price || 3) * prizes.last2;
             }
           } else if (t.thaiLotteryType === 'Consolation Category') {
-            // Check if ticket is off by 1 digit (adjacent to first prize) as a consolation
             const ticketInt = parseInt(ticketNum);
             const winInt = parseInt(winningSeq);
             if (!isNaN(ticketInt) && !isNaN(winInt) && Math.abs(ticketInt - winInt) === 1) {
               won = true;
-              payout = (t.directBet || t.price || 3) * 1000;
+              payout = (t.directBet || t.price || 3) * prizes.consolation;
             }
           } else if (t.thaiLotteryType === '3Up Direct + Rumble') {
             const isDirectMatch = ticketNum === winningSeq;
-            
-            // Check rumble match (permutation)
             const sortedWin = winningSeq.split('').sort().join('');
             const sortedTicket = ticketNum.split('').sort().join('');
             const isRumbleMatch = sortedTicket === sortedWin;
-            
             if (isDirectMatch) {
               won = true;
-              payout = (t.directBet || 0) * 500 + (t.rumbleBet || 0) * 100;
+              payout = (t.directBet || 0) * prizes.threeUpDirect + (t.rumbleBet || 0) * prizes.threeUpRumble;
             } else if (isRumbleMatch) {
               won = true;
-              payout = (t.rumbleBet || 0) * 100;
+              payout = (t.rumbleBet || 0) * prizes.threeUpRumble;
             }
           } else if (t.thaiLotteryType === '3Up Single Digit') {
-            // Check if any digit in ticket matches any digit in winningSeq
             const ticketDigits = ticketNum.split('');
             const matches = ticketDigits.filter(d => winningSeq.includes(d)).length;
             if (matches > 0) {
               won = true;
-              payout = (t.directBet || t.price || 0) * 10 * matches;
+              payout = (t.directBet || t.price || 0) * prizes.threeUpSingle * matches;
             }
           } else if (t.thaiLotteryType === '3Up Total Sum') {
-            // Check if sum of winningSeq matches the ticket total
             const winningSum = winningSeq.split('').reduce((sum, d) => sum + parseInt(d), 0);
             if (parseInt(ticketNum) === winningSum) {
               won = true;
-              payout = (t.directBet || t.price || 0) * 15;
+              payout = (t.directBet || t.price || 0) * prizes.threeUpSum;
             }
           } else if (t.thaiLotteryType === '2Up Direct') {
-            // Matches last 2 digits of 3Up winningSeq
             const winning2Up = winningSeq.slice(-2);
             if (ticketNum === winning2Up) {
               won = true;
-              payout = (t.directBet || t.price || 0) * 90;
+              payout = (t.directBet || t.price || 0) * prizes.twoUpDirect;
             }
           } else if (t.thaiLotteryType === 'Down Direct') {
-            // Down direct match (we can compare with the winningSeq last 2 digits as well)
             const winningDown = winningSeq.slice(-2);
             if (ticketNum === winningDown) {
               won = true;
-              payout = (t.directBet || t.price || 0) * 90;
+              payout = (t.directBet || t.price || 0) * prizes.downDirect;
             }
           } else if (t.thaiLotteryType === 'Down Single Digit') {
             const winningDown = winningSeq.slice(-2);
             if (winningDown.includes(ticketNum)) {
               won = true;
-              payout = (t.directBet || t.price || 0) * 8;
+              payout = (t.directBet || t.price || 0) * prizes.downSingle;
             }
           } else if (t.thaiLotteryType === 'Down Total Sum') {
             const winningDown = winningSeq.slice(-2);
             const downSum = winningDown.split('').reduce((sum, d) => sum + parseInt(d), 0);
             if (parseInt(ticketNum) === downSum) {
               won = true;
-              payout = (t.directBet || t.price || 0) * 15;
+              payout = (t.directBet || t.price || 0) * prizes.downSum;
             }
-          }
-          
-          if (won) {
-            payoutTotal += payout;
-            matchedIds.push(t.id);
           }
         } else {
           // Standard games
@@ -1721,6 +1890,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           handleFirestoreError(err, OperationType.UPDATE, `purchasedTickets/${t.id}`);
         }
       }
+    });
+
+    // Global notification about the draw results
+    addNotification({
+      email: 'all',
+      title: `🔮 Official Draw results: ${gameName}!`,
+      message: `The live draw for ${gameName} has successfully concluded! Winning numbers: ${winningNumbers.join(', ')}. Check your purchased tickets now!`,
+      type: 'draw'
     });
 
     return { matchedIds, payoutTotal };
@@ -1850,7 +2027,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const addMenuPage = async (page: Omit<MenuPage, 'id'>) => {
     try {
-      const id = page.menuTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'page-' + Date.now();
+      const slug = page.menuTitle.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+      const id = slug && slug !== '-' ? slug : 'page-' + Date.now();
       const newPage = { ...page, id };
       await setDoc(doc(db, 'menuPages', id), newPage);
     } catch (err) {
@@ -1874,108 +2054,225 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addWithdrawalRequest = async (req: Omit<WithdrawalRequest, 'id' | 'date' | 'status'>) => {
-    try {
-      const id = 'WD-' + Math.floor(1000 + Math.random() * 9000);
-      const newReq: WithdrawalRequest = {
-        ...req,
-        id,
-        date: new Date().toLocaleDateString('en-GB'),
-        status: 'Pending'
-      };
-      await setDoc(doc(db, 'withdrawalRequests', id), newReq);
+  const addWithdrawalRequest = async (req: Omit<WithdrawalRequest, 'id' | 'date' | 'status'> & { id?: string; sourceWallet?: 'winnings' | 'main'; isDebited?: boolean; status?: 'Pending' | 'Approved' | 'Rejected'; date?: string }) => {
+    const id = req.id || 'WD-' + Math.floor(1000 + Math.random() * 9000);
+    const newReq: WithdrawalRequest = {
+      id,
+      email: req.email,
+      amount: req.amount,
+      bankName: req.bankName,
+      iban: req.iban,
+      accountName: req.accountName,
+      commissionDeducted: req.commissionDeducted || 0,
+      sourceWallet: req.sourceWallet || 'main',
+      isDebited: req.isDebited !== undefined ? req.isDebited : true,
+      status: req.status || 'Pending',
+      date: req.date || new Date().toLocaleDateString('en-GB'),
+    };
 
-      // We no longer deduct here because Dashboard.tsx already deducts it before calling this.
+    setWithdrawalRequests(prev => {
+      if (prev.some(r => r.id === id)) {
+        return prev.map(r => r.id === id ? newReq : r);
+      }
+      return [newReq, ...prev];
+    });
+
+    try {
+      await setDoc(doc(db, 'withdrawalRequests', id), newReq);
     } catch (err) {
-      handleFirestoreError(err, OperationType.CREATE, 'withdrawalRequests');
+      console.warn("Firebase failed to save withdrawal request. Using local state fallback.", err);
     }
   };
 
-  const updateWithdrawalStatus = async (id: string, status: 'Approved' | 'Rejected') => {
+  const updateWithdrawalStatus = async (id: string, status: 'Approved' | 'Rejected' | 'Pending') => {
+    // 1. Instantly lookup the record using the correct snapshot of current state
+    const reqToUpdate = withdrawalRequests.find(r => r.id === id);
+    if (!reqToUpdate) return;
+
+    const isCurrentlyDebited = !!reqToUpdate.isDebited;
+    
+    // 2. Update local state immediately
+    setWithdrawalRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+
+    const finalEmail = reqToUpdate.email.trim().toLowerCase();
+    const sourceWallet = reqToUpdate.sourceWallet || 'main';
+    const userTarget = allUsers.find(u => u.email.toLowerCase() === finalEmail);
+
+    let nextIsDebited = isCurrentlyDebited;
+
+    if (userTarget) {
+      let currentBal = userTarget.balance || 0;
+      let currentWinnings = userTarget.winningsBalance || 0;
+      let currentComm = userTarget.commissionBalance || 0;
+
+      if (status === 'Approved' && !isCurrentlyDebited) {
+        if (sourceWallet === 'winnings') {
+          currentWinnings = Math.max(0, parseFloat((currentWinnings - reqToUpdate.amount).toFixed(2)));
+        } else {
+          currentBal = Math.max(0, parseFloat((currentBal - reqToUpdate.amount).toFixed(2)));
+        }
+        nextIsDebited = true;
+      }
+
+      if (status !== 'Approved' && isCurrentlyDebited) {
+        if (sourceWallet === 'winnings') {
+          currentWinnings = parseFloat((currentWinnings + reqToUpdate.amount).toFixed(2));
+        } else {
+          currentBal = parseFloat((currentBal + reqToUpdate.amount).toFixed(2));
+        }
+        currentComm = parseFloat((currentComm + (reqToUpdate.commissionDeducted || 0)).toFixed(2));
+        nextIsDebited = false;
+      }
+
+      // Update local and firestore profile fields (safely catches internally)
+      await updateUserProfileFields(finalEmail, {
+        balance: currentBal,
+        winningsBalance: currentWinnings,
+        commissionBalance: currentComm
+      });
+    }
+
+    const msg = status === 'Approved'
+      ? `🎉 Your withdrawal of $${reqToUpdate.amount.toFixed(2)} via ${reqToUpdate.bankName} has been approved and processed!`
+      : status === 'Rejected'
+        ? `❌ Your withdrawal of $${reqToUpdate.amount.toFixed(2)} via ${reqToUpdate.bankName} was rejected. Funds are refunded to your balance.`
+        : `ℹ️ Your withdrawal of $${reqToUpdate.amount.toFixed(2)} via ${reqToUpdate.bankName} has been set to Pending status.`;
+
+    await addNotification({
+      email: finalEmail,
+      title: status === 'Approved' ? "💰 Withdrawal Approved!" : status === 'Rejected' ? "❌ Withdrawal Rejected" : "ℹ️ Withdrawal Pending",
+      message: msg,
+      type: status === 'Approved' ? 'success' : status === 'Rejected' ? 'warning' : 'info'
+    });
+
+    // 3. Try Firestore status update silently
     try {
       const reqRef = doc(db, 'withdrawalRequests', id);
-      const reqSnap = await getDoc(reqRef);
-      if (reqSnap.exists()) {
-        const req = reqSnap.data() as WithdrawalRequest;
-        if (status === 'Rejected' && req.status === 'Pending') {
-          const userRef = doc(db, 'users', req.email.toLowerCase());
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            const uData = userSnap.data() as UserProfile;
-            const currentBal = uData.balance || 0;
-            const currentComm = uData.commissionBalance || 0;
-            
-            const nextBal = currentBal + req.amount;
-            const nextComm = currentComm + (req.commissionDeducted || 0);
-            
-            await setDoc(userRef, { balance: nextBal, commissionBalance: nextComm }, { merge: true });
-            if (user && user.email.toLowerCase() === req.email.toLowerCase()) {
-              setUser(prev => prev ? { ...prev, balance: nextBal, commissionBalance: nextComm } : null);
-            }
-          }
-        }
-        await setDoc(reqRef, { status }, { merge: true });
-      }
+      await setDoc(reqRef, { status, isDebited: nextIsDebited }, { merge: true });
     } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `withdrawalRequests/${id}`);
+      console.warn("Firebase failed to update withdrawal status. Handled locally.", err);
     }
   };
 
   const addDepositRequest = async (req: Omit<DepositRequest, 'id' | 'date' | 'status'>) => {
+    const id = 'DEP-' + Math.floor(1000 + Math.random() * 9000);
+    const newReq: DepositRequest = {
+      ...req,
+      id,
+      date: new Date().toLocaleDateString('en-GB'),
+      status: 'Pending'
+    };
+
+    setDepositRequests(prev => {
+      if (prev.some(r => r.id === id)) {
+        return prev.map(r => r.id === id ? newReq : r);
+      }
+      return [newReq, ...prev];
+    });
+
     try {
-      const id = 'DEP-' + Math.floor(1000 + Math.random() * 9000);
-      const newReq: DepositRequest = {
-        ...req,
-        id,
-        date: new Date().toLocaleDateString('en-GB'),
-        status: 'Pending'
-      };
       await setDoc(doc(db, 'depositRequests', id), newReq);
     } catch (err) {
-      handleFirestoreError(err, OperationType.CREATE, 'depositRequests');
+      console.warn("Firebase failed to save deposit request. Using local fallback.", err);
     }
   };
 
   const addApprovedDeposit = async (req: Omit<DepositRequest, 'id' | 'date' | 'status'>) => {
+    const id = 'DEP-' + Math.floor(1000 + Math.random() * 9000);
+    const newReq: DepositRequest = {
+      ...req,
+      id,
+      date: new Date().toLocaleDateString('en-GB'),
+      status: 'Approved'
+    };
+
+    setDepositRequests(prev => {
+      if (prev.some(r => r.id === id)) {
+        return prev.map(r => r.id === id ? newReq : r);
+      }
+      return [newReq, ...prev];
+    });
+
     try {
-      const id = 'DEP-' + Math.floor(1000 + Math.random() * 9000);
-      const newReq: DepositRequest = {
-        ...req,
-        id,
-        date: new Date().toLocaleDateString('en-GB'),
-        status: 'Approved'
-      };
       await setDoc(doc(db, 'depositRequests', id), newReq);
       await updateUserBalance(req.email, req.amount);
     } catch (err) {
-      handleFirestoreError(err, OperationType.CREATE, 'depositRequests');
+      console.warn("Firebase failed to save approved deposit. Using local fallback.", err);
+      await updateUserBalance(req.email, req.amount);
     }
   };
 
   const updateDepositStatus = async (id: string, status: 'Approved' | 'Rejected', customEmail?: string) => {
+    // 1. Instantly look up the deposit record from our state snapshot
+    const reqToUpdate = depositRequests.find(r => r.id === id);
+    if (!reqToUpdate) return;
+
+    const isPending = reqToUpdate.status === 'Pending';
+
+    // 2. Update local state immediately so user and admin interfaces reflect changes instantly
+    setDepositRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+
+    const finalEmail = (customEmail || reqToUpdate.email).trim().toLowerCase();
+
+    // 3. Process credits if approved and was pending
+    if (status === 'Approved' && isPending) {
+      const isCommission = reqToUpdate.gateway.toLowerCase().includes('commission') || reqToUpdate.details?.toLowerCase().includes('commission');
+      if (isCommission) {
+        const userTarget = allUsers.find(u => u.email === finalEmail);
+        const currentComm = userTarget?.commissionBalance || 0;
+        await updateUserProfileFields(finalEmail, { commissionBalance: currentComm + reqToUpdate.amount });
+      } else {
+        await updateUserBalance(finalEmail, reqToUpdate.amount);
+      }
+    }
+
+    const msg = status === 'Approved'
+      ? `🎉 Your deposit of $${reqToUpdate.amount.toFixed(2)} via ${reqToUpdate.gateway} has been successfully approved!`
+      : `❌ Your deposit of $${reqToUpdate.amount.toFixed(2)} via ${reqToUpdate.gateway} was rejected. Please verify transaction details.`;
+
+    await addNotification({
+      email: finalEmail,
+      title: status === 'Approved' ? "💵 Deposit Credited!" : "❌ Deposit Rejected",
+      message: msg,
+      type: status === 'Approved' ? 'success' : 'warning'
+    });
+
+    // 4. Safely write back to Firebase in background without throwing errors
     try {
       const reqRef = doc(db, 'depositRequests', id);
-      const reqSnap = await getDoc(reqRef);
-      if (reqSnap.exists()) {
-        const req = reqSnap.data() as DepositRequest;
-        const finalEmail = (customEmail || req.email).trim().toLowerCase();
-        
-        if (status === 'Approved' && req.status === 'Pending') {
-          // Check if it's a commission deposit based on gateway or details
-          const isCommission = req.gateway.toLowerCase().includes('commission') || req.details?.toLowerCase().includes('commission');
-          
-          if (isCommission) {
-            const userTarget = allUsers.find(u => u.email === finalEmail);
-            const currentComm = userTarget?.commissionBalance || 0;
-            await updateUserProfileFields(finalEmail, { commissionBalance: currentComm + req.amount });
-          } else {
-            await updateUserBalance(finalEmail, req.amount);
-          }
-        }
-        await setDoc(reqRef, { status, email: finalEmail }, { merge: true });
-      }
+      await setDoc(reqRef, { status, email: finalEmail }, { merge: true });
     } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `depositRequests/${id}`);
+      console.warn("Firebase failed to update deposit status. Handled locally.", err);
+    }
+  };
+
+  const addNotification = async (notif: Omit<SystemNotification, 'id' | 'date' | 'read'>) => {
+    const id = 'NOTIF-' + Date.now() + '-' + Math.floor(1000 + Math.random() * 9000);
+    const newNotif: SystemNotification = {
+      ...notif,
+      id,
+      date: new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      read: false
+    };
+
+    // Update local state instantly so notification badges / bells show the update
+    setSystemNotifications(prev => [newNotif, ...prev]);
+
+    try {
+      await setDoc(doc(db, 'systemNotifications', id), newNotif);
+    } catch (err) {
+      console.warn("Firebase failed to write system notification. Handled locally.", err);
+    }
+  };
+
+  const markNotificationAsRead = async (id: string) => {
+    // Update local state instantly
+    setSystemNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+
+    try {
+      await setDoc(doc(db, 'systemNotifications', id), { read: true }, { merge: true });
+    } catch (err) {
+      console.warn("Firebase failed to mark notification as read. Handled locally.", err);
     }
   };
 
@@ -2037,6 +2334,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       addDepositRequest,
       addApprovedDeposit,
       updateDepositStatus,
+      // Notifications
+      systemNotifications,
+      addNotification,
+      markNotificationAsRead,
       // Theme management
       theme,
       toggleTheme,

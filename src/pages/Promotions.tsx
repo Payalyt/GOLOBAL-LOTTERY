@@ -65,7 +65,18 @@ export function Promotions() {
                   <div>
                     
                     {/* Visual Promotional Flyer utilizing pure high-fidelity CSS text design */}
-                    <div className={`aspect-[4/3] w-full bg-gradient-to-br ${promo.flyerGradient} p-6 flex flex-col justify-between relative select-none shrink-0 overflow-hidden`}>
+                    <div 
+                      style={
+                        promo.bgType === 'color' && promo.bgSolid
+                          ? { backgroundColor: promo.bgSolid }
+                          : promo.bgType === 'gradient' && promo.bgGradient
+                          ? { background: promo.bgGradient }
+                          : promo.bgType === 'image' && promo.bgImage
+                          ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url(${promo.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                          : { background: promo.flyerGradient && (promo.flyerGradient.includes('gradient') || promo.flyerGradient.startsWith('#') || promo.flyerGradient.startsWith('rgb')) ? promo.flyerGradient : undefined }
+                      }
+                      className={!(promo.bgType) && !(promo.flyerGradient?.includes('gradient') || promo.flyerGradient?.startsWith('#') || promo.flyerGradient?.startsWith('rgb')) ? `aspect-[4/3] w-full bg-gradient-to-br ${promo.flyerGradient} p-6 flex flex-col justify-between relative select-none shrink-0 overflow-hidden` : "aspect-[4/3] w-full p-6 flex flex-col justify-between relative select-none shrink-0 overflow-hidden"}
+                    >
                       
                       {/* Radial light glow element overlay */}
                       <div className="absolute inset-0 bg-radial-gradient from-transparent to-black/20 pointer-events-none" />
@@ -142,7 +153,18 @@ export function Promotions() {
           <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl border border-gray-100 dark:border-zinc-800 max-w-md w-full relative">
             
             {/* Upper Flyer Box display */}
-            <div className={`aspect-[4/3] w-full bg-gradient-to-br ${activePromo.flyerGradient} p-8 flex flex-col justify-between relative select-none`}>
+            <div 
+              style={
+                activePromo.bgType === 'color' && activePromo.bgSolid
+                  ? { backgroundColor: activePromo.bgSolid }
+                  : activePromo.bgType === 'gradient' && activePromo.bgGradient
+                  ? { background: activePromo.bgGradient }
+                  : activePromo.bgType === 'image' && activePromo.bgImage
+                  ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url(${activePromo.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                  : { background: activePromo.flyerGradient && (activePromo.flyerGradient.includes('gradient') || activePromo.flyerGradient.startsWith('#') || activePromo.flyerGradient.startsWith('rgb')) ? activePromo.flyerGradient : undefined }
+              }
+              className={!(activePromo.bgType) && !(activePromo.flyerGradient?.includes('gradient') || activePromo.flyerGradient?.startsWith('#') || activePromo.flyerGradient?.startsWith('rgb')) ? `aspect-[4/3] w-full bg-gradient-to-br ${activePromo.flyerGradient} p-8 flex flex-col justify-between relative select-none` : "aspect-[4/3] w-full p-8 flex flex-col justify-between relative select-none"}
+            >
               <div className="flex justify-between items-start">
                 <span className="bg-white/20 backdrop-blur-md px-3 py-1 text-[9px] font-black tracking-widest rounded uppercase text-white">
                   ACTIVE CAMPAIGN

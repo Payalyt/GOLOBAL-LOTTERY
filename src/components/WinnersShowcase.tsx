@@ -3,6 +3,7 @@ import { Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { resolveBannerImage } from './Hero';
+import { motion } from 'motion/react';
 
 export function WinnersShowcase() {
   const navigate = useNavigate();
@@ -20,6 +21,52 @@ export function WinnersShowcase() {
   ];
 
   const [currentWinnerIdx, setCurrentWinnerIdx] = useState(0);
+  
+  // Real-time ticking metrics states
+  const [liveRegisteredUsers, setLiveRegisteredUsers] = useState<number>(0);
+  const [liveTicketsPurchased, setLiveTicketsPurchased] = useState<number>(0);
+
+  useEffect(() => {
+    const baseUsers = parseInt((siteConfig.totalMetricRegisteredUsers || "119,230,692").replace(/[^0-9]/g, ''), 10) || 119230692;
+    const baseTickets = parseInt((siteConfig.totalMetricTicketsPurchased || "105,485,912").replace(/[^0-9]/g, ''), 10) || 105485912;
+
+    // Deterministic offset based on fixed epoch in early 2025
+    const epoch = 1760000000000;
+    const secondsPassed = Math.max(0, Math.floor((Date.now() - epoch) / 1000));
+    
+    // Rates represent units of growth.
+    const rateUsers = Number(siteConfig.totalMetricRegisteredUsersRate) || 12;
+    const rateTickets = Number(siteConfig.totalMetricTicketsPurchasedRate) || 25;
+
+    // Calculate dynamic base value that increases deterministically over time
+    const initialUsers = baseUsers + Math.floor(secondsPassed * (rateUsers / 100));
+    const initialTickets = baseTickets + Math.floor(secondsPassed * (rateTickets / 100));
+
+    setLiveRegisteredUsers(initialUsers);
+    setLiveTicketsPurchased(initialTickets);
+
+    // Dynamic ticker to increment values in real-time
+    const interval = setInterval(() => {
+      setLiveRegisteredUsers(prev => {
+        const increment = Math.floor(Math.random() * Math.max(1, Math.round(rateUsers / 4))) + 1;
+        return prev + increment;
+      });
+      setLiveTicketsPurchased(prev => {
+        const increment = Math.floor(Math.random() * Math.max(1, Math.round(rateTickets / 4))) + 1;
+        return prev + increment;
+      });
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [siteConfig.totalMetricRegisteredUsers, siteConfig.totalMetricTicketsPurchased, siteConfig.totalMetricRegisteredUsersRate, siteConfig.totalMetricTicketsPurchasedRate]);
+
+  const displayRegisteredUsers = liveRegisteredUsers > 0 
+    ? liveRegisteredUsers.toLocaleString('en-US') 
+    : (siteConfig.totalMetricRegisteredUsers || "119,230,692");
+
+  const displayTicketsPurchased = liveTicketsPurchased > 0 
+    ? liveTicketsPurchased.toLocaleString('en-US') 
+    : (siteConfig.totalMetricTicketsPurchased || "105,485,912");
 
   // Auto-rotate grand prize winners if there are more than 1
   useEffect(() => {
@@ -54,7 +101,15 @@ export function WinnersShowcase() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* CARD 1: Robert Burkovski / Custom Grand Prize Winner Slider */}
-        <div id="card-grand-prize-winners" className="bg-white dark:bg-zinc-900 border border-[#E5E5EB] dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+        <motion.div 
+          id="card-grand-prize-winners" 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-10px" }}
+          transition={{ duration: 0.5, delay: 0 }}
+          whileHover={{ y: -6, scale: 1.015, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.35)" }}
+          className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-sm transition-all duration-300 flex flex-col justify-between group"
+        >
           <div className="p-4 flex-grow flex flex-col items-center">
             {/* Image card wrapper */}
             <div className="relative w-full rounded-2xl overflow-hidden aspect-square max-h-[300px]">
@@ -93,15 +148,23 @@ export function WinnersShowcase() {
             )}
           </div>
 
-          <div className="bg-[#F8F9FA] dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-850 p-4 text-center">
-            <span className="text-xs font-black uppercase tracking-widest text-[#151329] dark:text-zinc-200 select-none">
+          <div className="bg-zinc-950 border-t border-zinc-850 p-4 text-center">
+            <span className="text-xs font-black uppercase tracking-widest text-zinc-200 select-none">
               {language === 'en' ? 'Grand Prize Winners' : 'গ্র্যান্ড প্রাইজ বিজয়ী'}
             </span>
           </div>
-        </div>
+        </motion.div>
 
         {/* CARD 2: YouTube Style Video Interview Block */}
-        <div id="card-youtube-interview" className="bg-white dark:bg-zinc-900 border border-[#E5E5EB] dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+        <motion.div 
+          id="card-youtube-interview" 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-10px" }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          whileHover={{ y: -6, scale: 1.015, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.35)" }}
+          className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-sm transition-all duration-300 flex flex-col justify-between group"
+        >
           <div className="p-4 flex-grow flex flex-col justify-start">
             {/* Video player frame mockup */}
             <a 
@@ -137,7 +200,7 @@ export function WinnersShowcase() {
               <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider block">
                 {youtubeVideoSubtitle}
               </span>
-              <p className="text-sm font-black text-zinc-950 dark:text-white leading-snug mt-1 uppercase">
+              <p className="text-sm font-black text-white leading-snug mt-1 uppercase">
                 {youtubeVideoDescription}
               </p>
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-normal mt-1.5">
@@ -150,19 +213,27 @@ export function WinnersShowcase() {
             href={youtubeVideoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[#F8F9FA] dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-850 p-4 text-center flex justify-between items-center px-6 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+            className="bg-zinc-950 border-t border-zinc-850 p-4 text-center flex justify-between items-center px-6 cursor-pointer hover:bg-zinc-900 transition-colors"
           >
-            <span className="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-300">
+            <span className="text-xs font-black uppercase tracking-widest text-zinc-300">
               {language === 'en' ? 'KNOW MORE' : 'আরও জানুন'}
             </span>
             <span className="text-xs font-bold text-red-600">→</span>
           </a>
-        </div>
+        </motion.div>
 
         {/* CARD 3: Deep Blue Winners Accumulator Box */}
-        <div id="card-total-metrics" className="bg-[#151329] rounded-3xl p-6 flex flex-col justify-between shadow-xl min-h-[360px] text-white overflow-hidden group border border-[#1E1A3C] relative">
+        <motion.div 
+          id="card-total-metrics" 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-10px" }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          whileHover={{ y: -6, scale: 1.015, boxShadow: "0 20px 30px -5px rgba(225,188,74,0.15)" }}
+          className="bg-[#151329] rounded-3xl p-6 flex flex-col justify-between shadow-xl min-h-[360px] text-white overflow-hidden group border border-[#1E1A3C] relative"
+        >
           {/* Accent graphics top-right */}
-          <div className="absolute top-[-40px] right-[-40px] w-48 h-48 bg-[#E52535] rounded-full blur-[70px] opacity-[0.15] pointer-events-none" />
+          <div className="absolute top-[-40px] right-[-40px] w-48 h-48 bg-[#E1BC4A] rounded-full blur-[70px] opacity-[0.15] pointer-events-none" />
 
           <div className="space-y-3.5 mt-2 relative z-10">
             <span className="text-xs font-bold text-[#1AA3E5] uppercase tracking-[0.2em] block">
@@ -178,7 +249,7 @@ export function WinnersShowcase() {
             {/* Registered Users */}
             <div>
               <p className="text-3xl sm:text-4xl font-black tracking-tight text-yellow-300 drop-shadow-[0_2px_10px_rgba(253,224,71,0.15)] font-mono leading-none">
-                {siteConfig.totalMetricRegisteredUsers || "1,230,692"}
+                {displayRegisteredUsers}
               </p>
               <span className="text-[10px] font-extrabold text-white/50 tracking-wider block mt-1.5 uppercase leading-none">
                 {language === 'en' ? 'Registered participants around the globe' : 'সারা বিশ্ব জুড়ে নিবন্ধিত অংশগ্রহণকারী'}
@@ -191,7 +262,7 @@ export function WinnersShowcase() {
             {/* Tickets Purchased */}
             <div>
               <p className="text-3xl sm:text-4xl font-black tracking-tight text-[#1AA3E5] drop-shadow-[0_2px_10px_rgba(26,163,229,0.15)] font-mono leading-none">
-                {siteConfig.totalMetricTicketsPurchased || "3,485,912"}
+                {displayTicketsPurchased}
               </p>
               <span className="text-[10px] font-extrabold text-white/50 tracking-wider block mt-1.5 uppercase leading-none">
                 {language === 'en' ? 'Total Tickets Sold & Drawn' : 'মোট বিক্রিত ও ড্র হওয়া টিকেট'}
@@ -205,7 +276,7 @@ export function WinnersShowcase() {
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
           </div>
-        </div>
+        </motion.div>
 
       </div>
     </div>

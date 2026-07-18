@@ -182,13 +182,13 @@ export function Register() {
       // Timeout helper promise
       const timeoutPromise = (ms: number) => new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms));
 
-      // 1. Check if user already exists in Firestore (with a 2-second timeout to prevent blocking)
+      // 1. Check if user already exists in Firestore (with a 15-second timeout to prevent blocking)
       let alreadyExists = false;
       try {
         const userDocRef = doc(db, 'users', emailToUse);
         const userDocSnap = await Promise.race([
           getDoc(userDocRef),
-          timeoutPromise(1500)
+          timeoutPromise(15000)
         ]) as any;
         if (userDocSnap && userDocSnap.exists()) {
           alreadyExists = true;
@@ -210,12 +210,12 @@ export function Register() {
         return;
       }
 
-      // 2. Create authentication in Firebase Auth with 2-second timeout fallback
+      // 2. Create authentication in Firebase Auth with 18-second timeout fallback
       let authUser: any = null;
       try {
         const userCredential = await Promise.race([
           createUserWithEmailAndPassword(auth, emailToUse, formData.password),
-          timeoutPromise(1800)
+          timeoutPromise(18000)
         ]) as any;
         authUser = userCredential.user;
       } catch (authErr: any) {
@@ -278,11 +278,11 @@ export function Register() {
 
       if (isCancelled) return;
 
-      // 4. Save profile document in Firestore (with 1.5-second non-blocking timeout)
+      // 4. Save profile document in Firestore (with 15-second non-blocking timeout)
       try {
         await Promise.race([
           setDoc(doc(db, 'users', emailLower), newProfile, { merge: true }),
-          timeoutPromise(1500)
+          timeoutPromise(15000)
         ]);
       } catch (fsErr: any) {
         console.warn("Firestore Profile saving slow or failed. Activating account locally.", fsErr);

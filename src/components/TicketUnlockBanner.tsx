@@ -5,31 +5,23 @@ import { useAuth } from '../context/AuthContext';
 
 export function TicketUnlockBanner() {
   const navigate = useNavigate();
-  const { language } = useAuth();
+  const { language, siteConfig } = useAuth();
 
-  const perks = [
-    {
-      en: 'Comprehensive Hot & Cold Heatmaps',
-      bn: 'বিস্তারিত হট ও কোল্ড হিটম্যাপ'
-    },
-    {
-      en: 'Personalized Lucky Number Generator',
-      bn: 'ব্যক্তিগত লাকি নম্বর জেনারেটর'
-    },
-    {
-      en: 'Next Draw Probability Calculator',
-      bn: 'পরবর্তী ড্র সম্ভাবনা ক্যালকুলেটর'
-    },
-    {
-      en: 'Automatic Winners Match-Alerts',
-      bn: 'স্বয়ংক্রিয় বিজয়ী ম্যাচ-অ্যালার্ট'
-    }
-  ];
+  const rawPerksEn = siteConfig.unlockPerksEn || 'Comprehensive Hot & Cold Heatmaps, Personalized Lucky Number Generator, Next Draw Probability Calculator, Automatic Winners Match-Alerts';
+  const rawPerksBn = siteConfig.unlockPerksBn || 'বিস্তারিত হট ও কোল্ড হিটম্যাপ, ব্যক্তিগত লাকি নম্বর জেনারেটর, পরবর্তী ড্র সম্ভাবনা ক্যালকুলেটর, স্বয়ংক্রিয় বিজয়ী ম্যাচ-অ্যালার্ট';
+
+  const perksEnList = rawPerksEn.split(',').map(s => s.trim()).filter(Boolean);
+  const perksBnList = rawPerksBn.split(',').map(s => s.trim()).filter(Boolean);
+
+  const perks = perksEnList.map((enVal, index) => ({
+    en: enVal,
+    bn: perksBnList[index] || enVal
+  }));
 
   return (
     <div className="relative my-12 overflow-hidden bg-gradient-to-br from-[#0F0D24] via-[#1A163F] to-[#0A0818] p-8 sm:p-12 rounded-[32px] border border-[#2B245F] shadow-2xl">
       {/* Visual background decorations */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#E52535] rounded-full blur-[140px] opacity-[0.05] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#E1BC4A] rounded-full blur-[140px] opacity-[0.05] pointer-events-none" />
       <div className="absolute bottom-[-100px] left-[-100px] w-[350px] h-[350px] bg-[#1268A2] rounded-full blur-[120px] opacity-[0.06] pointer-events-none" />
 
       {/* Grid subtle print layout */}
@@ -49,14 +41,14 @@ export function TicketUnlockBanner() {
           
           <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight uppercase">
             {language === 'en' 
-              ? 'Unlock Advanced AI Lucky Number & Probability Statistics!' 
-              : 'উন্নত এআই লাকি নম্বর এবং সম্ভাবনা পরিসংখ্যান আনলক করুন!'}
+              ? (siteConfig.unlockHeadlineEn || 'Unlock Advanced AI Lucky Number & Probability Statistics!') 
+              : (siteConfig.unlockHeadlineBn || 'উন্নত এআই লাকি নম্বর এবং সম্ভাবনা পরিসংখ্যান আনলক করুন!')}
           </h3>
           
           <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed font-medium">
             {language === 'en' 
-              ? 'Join thousands of smart drawers utilizing our dynamic analytics suite. Register your phone number to reveal historical heatmaps, cold/hot number frequencies, and simulated checkout odds.'
-              : 'আমাদের ডায়নামিক অ্যানালিটিক্স স্যুট ব্যবহার করে হাজার হাজার স্মার্ট লটারি ড্রয়ারদের সাথে যোগ দিন। ঐতিহাসিক হিটম্যাপ, ঠাণ্ডা/গরম নম্বরের ফ্রিকোয়েন্সি এবং সিমুলেটেড চেকআউট সম্ভাবনা দেখতে আপনার ফোন নম্বর দিয়ে নিবন্ধন করুন।'}
+              ? (siteConfig.unlockSubEn || 'Join thousands of smart drawers utilizing our dynamic analytics suite. Register your phone number to reveal historical heatmaps, cold/hot number frequencies, and simulated checkout odds.')
+              : (siteConfig.unlockSubBn || 'আমাদের ডায়নামিক অ্যানালিটিক্স স্যুট ব্যবহার করে হাজার হাজার স্মার্ট লটারি ড্রয়ারদের সাথে যোগ দিন। ঐতিহাসিক হিটম্যাপ, ঠাণ্ডা/গরম নম্বরের ফ্রিকোয়েন্সি এবং সিমুলেটেড চেকআউট সম্ভাবনা দেখতে আপনার ফোন নম্বর দিয়ে নিবন্ধন করুন।')}
           </p>
 
           {/* Checklist stats perks */}
@@ -105,7 +97,7 @@ export function TicketUnlockBanner() {
           <button 
             type="button"
             onClick={() => navigate('/register')}
-            className="w-full sm:w-auto bg-white hover:bg-zinc-100 text-black font-black text-xs uppercase px-8 py-4 rounded-xl tracking-widest leading-none shadow-xl transition-all duration-300 hover:scale-[1.03]"
+            className="w-full sm:w-auto bg-[#E1BC4A] hover:bg-yellow-500 text-[#121D3D] font-black text-xs uppercase px-8 py-4 rounded-xl tracking-widest leading-none shadow-xl transition-all duration-300 hover:scale-[1.03]"
           >
             {language === 'en' ? 'GET FREE ACCESS NOW' : 'এখনই ফ্রি অ্যাক্সেস নিন'}
           </button>

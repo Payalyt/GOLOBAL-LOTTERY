@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export function Raffles() {
   const { addTickets } = useCart();
-  const { language } = useAuth();
+  const { language, dynamicGames } = useAuth();
+  const navigate = useNavigate();
 
   // Dynamic ticket amounts chosen by keys
   const [ticketCounts, setTicketCounts] = useState<Record<string, number>>({
@@ -54,15 +56,16 @@ export function Raffles() {
     setTicketCounts(prev => ({ ...prev, [raffleName]: 1 }));
   };
 
-  const rafflesData = [
+  const defaultRaffles = [
     {
       name: 'SURE 1',
       prize: '$30,000',
       price: 10,
       left: 4547,
       total: 5000,
-      bg: 'bg-gradient-to-br from-[#E52554] to-[#B0173A]',
-      progress: 91 // percents left
+      bg: 'linear-gradient(135deg, #E52554 0%, #B0173A 100%)',
+      progress: 91,
+      customUrl: ''
     },
     {
       name: 'SURE 2',
@@ -70,8 +73,9 @@ export function Raffles() {
       price: 15,
       left: 3561,
       total: 5000,
-      bg: 'bg-gradient-to-br from-[#8F3EA5] to-[#5C236E]',
-      progress: 71
+      bg: 'linear-gradient(135deg, #8F3EA5 0%, #5C236E 100%)',
+      progress: 71,
+      customUrl: ''
     },
     {
       name: 'SURE 3',
@@ -79,10 +83,41 @@ export function Raffles() {
       price: 30,
       left: 8318,
       total: 20000,
-      bg: 'bg-gradient-to-br from-[#12A098] to-[#0A6762]',
-      progress: 41
+      bg: 'linear-gradient(135deg, #12A098 0%, #0A6762 100%)',
+      progress: 41,
+      customUrl: ''
     }
   ];
+
+  const rafflesData = defaultRaffles.map(def => {
+    const live = dynamicGames?.find(g => g.name.toUpperCase() === def.name.toUpperCase());
+    if (live) {
+      const left = live.leftTickets !== undefined ? Number(live.leftTickets) : def.left;
+      const total = live.totalTickets !== undefined ? Number(live.totalTickets) : def.total;
+      const progress = total > 0 ? Math.round((left / total) * 100) : 0;
+      
+      let background = def.bg;
+      if (live.cardBgType === 'gradient' && live.cardBgGradient) {
+        background = live.cardBgGradient;
+      } else if (live.cardBgType === 'color' && live.bgHex) {
+        background = live.bgHex;
+      } else if (live.bgHex) {
+        background = live.bgHex;
+      }
+
+      return {
+        name: live.name,
+        prize: live.prize || def.prize,
+        price: live.price || def.price,
+        left,
+        total,
+        bg: background,
+        progress,
+        customUrl: live.customUrl
+      };
+    }
+    return def;
+  });
 
   return (
     <div className="bg-[#0D0B1E] text-white py-12 px-6 sm:px-10 rounded-3xl mt-12 overflow-hidden shadow-2xl relative border border-slate-900">
@@ -119,11 +154,15 @@ export function Raffles() {
         {rafflesData.map((raffle) => {
           const qty = ticketCounts[raffle.name] || 1;
           const totalCost = raffle.price * qty;
+          const bgStyle = raffle.bg.startsWith('linear') || raffle.bg.startsWith('radial')
+            ? { backgroundImage: raffle.bg }
+            : { backgroundColor: raffle.bg };
 
           return (
             <div 
               key={raffle.name} 
-              className={`${raffle.bg} rounded-3xl p-6 flex flex-col justify-between shadow-xl min-h-[390px] hover:scale-[1.01] transition-transform duration-300 relative group overflow-hidden`}
+              style={bgStyle}
+              className="rounded-3xl p-6 flex flex-col justify-between shadow-xl min-h-[390px] hover:scale-[1.01] transition-transform duration-300 relative group overflow-hidden"
             >
               {/* Dotted translucent grid overlay on card */}
               <div className="absolute inset-0 bg-opacity-[0.15] pointer-events-none" style={{
@@ -140,7 +179,7 @@ export function Raffles() {
               </div>
 
               {/* Mid Row: Prize & Tickets left */}
-              <div className="my-auto py-4 relative z-10 space-y-1.5 matches-text-container">
+              <div className="my-auto py-4 relative z-10 space-y-1.5 matches-text-container text-left">
                 <span className="text-[10px] font-bold text-white/70 uppercase tracking-widest block">
                   {language === 'en' ? 'PRIZE' : 'পুরস্কার'}
                 </span>
@@ -157,7 +196,7 @@ export function Raffles() {
                   <div className="w-full bg-black/30 h-1.5 rounded-full mt-1.5 overflow-hidden">
                     <div 
                       className="bg-yellow-300 h-full rounded-full transition-all duration-500"
-                      style={{ width: `${(raffle.left / raffle.total) * 100}%` }}
+                      style={{ width: `${raffle.total > 0 ? (raffle.left / raffle.total) * 100 : 0}%` }}
                     />
                   </div>
                 </div>
@@ -206,10 +245,22 @@ export function Raffles() {
 
                   <button 
                     type="button"
-                    onClick={() => handleAddRaffleToCart(raffle.name, raffle.price)}
-                    className="flex-1 bg-white hover:bg-zinc-100 text-black font-extrabold text-[10px] tracking-wider uppercase py-3 px-4 rounded-xl shadow transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-center"
+                    onClick={() => {
+                      if (raffle.customUrl) {
+                        if (raffle.customUrl.startsWith('http')) {
+                          window.open(raffle.customUrl, '_blank');
+                        } else {
+                          navigate(raffle.customUrl);
+                        }
+                      } else {
+                        handleAddRaffleToCart(raffle.name, raffle.price);
+                      }
+                    }}
+                    className="flex-1 bg-[#E1BC4A] hover:bg-yellow-500 text-[#121D3D] font-extrabold text-[10px] tracking-wider uppercase py-3 px-4 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-center"
                   >
-                    {language === 'en' ? 'ADD TO CART' : 'কার্টে যোগ করুন'}
+                    {raffle.customUrl 
+                      ? (language === 'en' ? 'GO TO DRAW' : 'ড্র-তে যান') 
+                      : (language === 'en' ? 'ADD TO CART' : 'কার্টে যোগ করুন')}
                   </button>
                 </div>
 

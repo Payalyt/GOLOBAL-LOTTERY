@@ -291,7 +291,7 @@ export function GameDetail() {
       background: game.cardBgGradient,
     };
   } else if (siteConfig.allGamesSolidBg || game.isSolidStyle || game.cardBgType === 'color') {
-    const activeBgHex = siteConfig.allGamesSolidBg ? (siteConfig.allGamesSolidHex || '#1C2C80') : (game.bgHex || '#E52535');
+    const activeBgHex = siteConfig.allGamesSolidBg ? (siteConfig.allGamesSolidHex || '#1C2C80') : (game.bgHex || siteConfig.primaryHex || '#E1BC4A');
     bannerStyle = { backgroundColor: activeBgHex };
   } else {
     // Default fallback - use class if nothing set
@@ -533,7 +533,7 @@ export function GameDetail() {
               {/* Headline */}
               <div className="pb-4 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center mb-6">
                 <div>
-                  <h2 className="text-xl font-black text-[#0F0D24] dark:text-white uppercase tracking-wide">
+                  <h2 className="text-xl font-black text-white dark:text-white uppercase tracking-wide">
                     Play {game.name}
                   </h2>
                   <div className="h-[2px] bg-zinc-800 w-12 mt-1.5 rounded-full" />
@@ -798,7 +798,7 @@ export function GameDetail() {
             <div className="bg-white dark:bg-zinc-900 border border-[#E5E5EB] dark:border-zinc-800 rounded-[28px] p-6 sm:p-8 shadow-sm">
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h3 className="text-sm font-black text-[#0F0D24] dark:text-zinc-100 uppercase tracking-wide">
+                  <h3 className="text-sm font-black text-white dark:text-zinc-100 uppercase tracking-wide">
                     {game.name} Latest Results
                   </h3>
                   <div className="h-[2px] bg-zinc-800 dark:bg-zinc-700 w-8 mt-1.5 rounded-full" />
@@ -845,7 +845,7 @@ export function GameDetail() {
 
                   <div className="text-right flex flex-col justify-center sm:text-right leading-none">
                     <span className="text-xs text-zinc-400 font-bold block">12 June 2026</span>
-                    <span className="text-xs font-black text-[#0F0D24] dark:text-zinc-100 block mt-1">214 Winners</span>
+                    <span className="text-xs font-black text-white dark:text-zinc-100 block mt-1">214 Winners</span>
                   </div>
                 </div>
               </div>

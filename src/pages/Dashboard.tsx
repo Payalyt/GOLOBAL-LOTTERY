@@ -26,11 +26,13 @@ import {
   EyeOff,
   AlertTriangle,
   X,
-  Sparkles
+  Sparkles,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export function Dashboard() {
-  const { user, setUser, isLoggedIn, tickets, updateUserBalance, updateUserProfileFields, withdrawalRequests = [], addWithdrawalRequest, addDepositRequest, addApprovedDeposit, depositRequests = [], siteConfig, language, theme } = useAuth();
+  const { user, setUser, isLoggedIn, tickets, updateUserBalance, updateUserProfileFields, withdrawalRequests = [], addWithdrawalRequest, addDepositRequest, addApprovedDeposit, depositRequests = [], siteConfig, language, setLanguage, theme, toggleTheme, systemNotifications = [], markNotificationAsRead } = useAuth();
   const { tickets: cartTickets } = useCart();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -39,6 +41,35 @@ export function Dashboard() {
   const prevDepositsRef = useRef(depositRequests);
   const prevWithdrawalsRef = useRef(withdrawalRequests);
   const [notifications, setNotifications] = useState<{id: string, message: string, type: 'success' | 'error'}[]>([]);
+
+  // Real-time toast alerts for database notifications
+  const prevNotificationsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    if (!user || !systemNotifications) return;
+
+    const unreadNew = systemNotifications.filter(
+      n => !n.read && !prevNotificationsRef.current.includes(n.id)
+    );
+
+    unreadNew.forEach(n => {
+      const type = n.type === 'success' || n.type === 'payment' ? 'success' : 'error';
+      const newNotif = {
+        id: n.id,
+        message: `${n.title}: ${n.message}`,
+        type: type as 'success' | 'error'
+      };
+      setNotifications(prev => [...prev, newNotif]);
+      
+      // Auto-remove notification from floating toasts after 10 seconds
+      setTimeout(() => {
+        setNotifications(prev => prev.filter(x => x.id !== newNotif.id));
+      }, 10000);
+    });
+
+    // Sync ref
+    prevNotificationsRef.current = systemNotifications.map(n => n.id);
+  }, [systemNotifications, user]);
 
   useEffect(() => {
     if (!user) return;
@@ -229,18 +260,18 @@ export function Dashboard() {
   const [commissionDepositAmount, setCommissionDepositAmount] = useState('8500');
 
   // Manual payment gateway states
-  const [depositGatewayName, setDepositGatewayName] = useState<'bKash' | 'Nagad' | 'Rocket' | 'Upay' | 'Bank'>('bKash');
+  const [depositGatewayName, setDepositGatewayName] = useState<string>('bKash');
   const [depositPhoneOrAccount, setDepositPhoneOrAccount] = useState('');
   const [depositTrxId, setDepositTrxId] = useState('');
 
-  const [withdrawGatewayName, setWithdrawGatewayName] = useState<'bKash' | 'Nagad' | 'Rocket' | 'Upay' | 'Bank'>('bKash');
+  const [withdrawGatewayName, setWithdrawGatewayName] = useState<string>('bKash');
   const [withdrawPhoneOrAccount, setWithdrawPhoneOrAccount] = useState('');
   const [withdrawAmountInput, setWithdrawAmountInput] = useState('');
   const [withdrawAccountName, setWithdrawAccountName] = useState('');
   const [withdrawBankName, setWithdrawBankName] = useState('');
   const [withdrawBranch, setWithdrawBranch] = useState('');
 
-  const [commissionGatewayName, setCommissionGatewayName] = useState<'bKash' | 'Nagad' | 'Rocket' | 'Upay' | 'Bank'>('bKash');
+  const [commissionGatewayName, setCommissionGatewayName] = useState<string>('bKash');
   const [commissionPhoneOrAccount, setCommissionPhoneOrAccount] = useState('');
   const [commissionTrxId, setCommissionTrxId] = useState('');
 
@@ -250,7 +281,7 @@ export function Dashboard() {
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
 
   const [selectedCommissionMethod, setSelectedCommissionMethod] = useState<'manual_gateway' | 'card' | 'agent'>('manual_gateway');
-  const [selectedWithdrawMethod, setSelectedWithdrawMethod] = useState<'manual_gateway' | 'bank' | 'agent'>('manual_gateway');
+  const [selectedWithdrawMethod, setSelectedWithdrawMethod] = useState<'crypto_usdt' | 'crypto_ltc' | 'crypto_usd' | 'bank'>('crypto_usdt');
   const [isProcessingDokan, setIsProcessingDokan] = useState(false);
   const [selectedGatewayId, setSelectedGatewayId] = useState<string | null>(null);
   const [agentDepositReference, setAgentDepositReference] = useState('');
@@ -259,6 +290,48 @@ export function Dashboard() {
   const [agentCommissionChannel, setAgentCommissionChannel] = useState<string>('WhatsApp');
   const [agentWithdrawReference, setAgentWithdrawReference] = useState('');
   const [agentWithdrawChannel, setAgentWithdrawChannel] = useState<string>('WhatsApp');
+
+  // Checkboxes for double confirmation and fake prevention
+  const [declareDeposit, setDeclareDeposit] = useState(false);
+  const [declareWithdraw, setDeclareWithdraw] = useState(false);
+  const [declareCommission, setDeclareCommission] = useState(false);
+
+  // Helper functions for validating fake deposits / withdrawals
+  const isFakeTrxId = (trx: string): boolean => {
+    const cleaned = trx.trim().toLowerCase();
+    if (cleaned.length < 8) return true;
+    
+    // Check for single character repeating (e.g., "11111111", "aaaaaaaa")
+    if (/^(.)\1+$/.test(cleaned)) return true;
+    
+    // Check for continuous numbers/sequences (e.g., "12345678", "abcdefgh")
+    const numSeq = "01234567890123456789";
+    const alphaSeq = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
+    if (numSeq.includes(cleaned) || alphaSeq.includes(cleaned)) return true;
+    
+    // Check for descending continuous numbers/sequences
+    const revNumSeq = "98765432109876543210";
+    const revAlphaSeq = "zyxwvutsrqponmlkjihgfedcbazyxwvutsrqponmlkjihgfedcba";
+    if (revNumSeq.includes(cleaned) || revAlphaSeq.includes(cleaned)) return true;
+
+    return false;
+  };
+
+  const isValidBDPhone = (phone: string): boolean => {
+    const digits = phone.replace(/[^\d]/g, '');
+    if (digits.length === 11 && digits.startsWith('01')) {
+      return /^01[3-9]\d{8}$/.test(digits);
+    }
+    if (digits.length === 13 && digits.startsWith('8801')) {
+      return /^8801[3-9]\d{8}$/.test(digits);
+    }
+    return false;
+  };
+
+  const isMFSGateway = (name: string): boolean => {
+    const n = name.toLowerCase();
+    return n.includes('bkash') || n.includes('nagad') || n.includes('rocket') || n.includes('upay');
+  };
 
   // Password and secure state
   const [oldPassword, setOldPassword] = useState('');
@@ -328,19 +401,24 @@ export function Dashboard() {
 
   if (!isLoggedIn) {
     return (
-      <div className="max-w-md mx-auto my-24 p-8 bg-white border border-gray-200 rounded-3xl shadow-xl text-center space-y-6 text-zinc-900">
-        <div className="w-16 h-16 rounded-full bg-red-550 bg-red-50 text-red-500 flex items-center justify-center mx-auto">
+      <div className="max-w-md mx-auto my-24 p-8 bg-white dark:bg-[#111726] border border-gray-200 dark:border-zinc-800/80 rounded-[2rem] shadow-xl text-center space-y-6 text-zinc-900 dark:text-white transition-all duration-300">
+        <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400 flex items-center justify-center mx-auto shadow-inner">
           <User className="w-8 h-8" />
         </div>
-        <h2 className="text-3xl font-extrabold tracking-tight text-[#0F0D24]">Access Restricted</h2>
-        <p className="text-zinc-500 text-sm leading-relaxed">
-          Unlock advanced probability checkers, transaction wallets, and tickets. Please log in first.
+        <h2 className="text-2xl font-black tracking-wider text-zinc-900 dark:text-white uppercase">
+          {language === 'en' ? 'Access Restricted' : 'অ্যাক্সেস সীমাবদ্ধ'}
+        </h2>
+        <p className="text-zinc-650 dark:text-zinc-300 text-sm leading-relaxed font-semibold font-roboto-sans">
+          {language === 'en' 
+            ? 'Unlock advanced probability checkers, transaction wallets, and tickets. Please log in first.'
+            : 'অ্যাডভান্সড প্রবাবিলিটি চেকার, ট্রানজেকশন ওয়ালেট এবং টিকিট আনলক করতে অনুগ্রহ করে প্রথমে লগইন করুন।'}
         </p>
         <button 
           onClick={() => navigate('/login')}
-          className="w-full bg-[#0F0D24] hover:bg-[#1E1A3C] text-white font-black py-4 px-6 rounded-xl text-xs uppercase tracking-widest transition-all"
+          className="w-full text-white font-black py-4 px-6 rounded-xl text-xs uppercase tracking-widest transition-all duration-300 shadow-md active:scale-95 cursor-pointer"
+          style={{ backgroundColor: siteConfig.primaryHex || '#FF003C' }}
         >
-          LOG IN TO MY ACCOUNT
+          {language === 'en' ? 'LOG IN TO MY ACCOUNT' : 'আমার অ্যাকাউন্টে লগইন করুন'}
         </button>
       </div>
     );
@@ -461,16 +539,30 @@ export function Dashboard() {
       alert("Please specify a valid deposit amount.");
       return;
     }
+    if (!declareDeposit) {
+      alert(language === 'en'
+        ? "⚠️ Please confirm the declaration checkbox stating you have contacted the local agent and completed the payment."
+        : "⚠️ অনুগ্রহ করে ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি এজেন্টের সাথে কথা বলে টাকা পাঠিয়েছেন।");
+      return;
+    }
+    if (!agentDepositReference || agentDepositReference.trim().length < 4) {
+      alert(language === 'en'
+        ? "❌ Please enter a valid Sender Phone / IMO ID / Username. This is required so our agents can match your payment."
+        : "❌ অনুগ্রহ করে আপনার ইমো আইডি, টেলিগ্রাম ইউজারনেম বা সঠিক মোবাইল নাম্বারটি লিখুন যেন এজেন্ট মিলিয়ে দেখতে পারেন।");
+      return;
+    }
+
     if (addDepositRequest) {
       addDepositRequest({
         email: user.email,
         amount: amt,
         gateway: `Agent (${agentDepositChannel})`,
-        transactionId: agentDepositReference || 'AGENT-REF-' + Math.floor(100000 + Math.random() * 900000)
+        transactionId: agentDepositReference.trim()
       });
     }
     alert(`🎉 Success! Agent Deposit request for $${amt.toFixed(2)} via ${agentDepositChannel} has been submitted to Admin.`);
     setAgentDepositReference('');
+    setDeclareDeposit(false);
     setActiveTab('Transactions');
   };
 
@@ -531,9 +623,16 @@ export function Dashboard() {
       return;
     }
 
+    if (!declareDeposit) {
+      alert(language === 'en'
+        ? "⚠️ Please confirm the declaration checkbox at the bottom stating you have completed this transaction."
+        : "⚠️ অনুগ্রহ করে নিচে দেওয়া পেমেন্ট কনফার্মেশন ডিক্লেয়ারেশন বক্সে টিক মার্ক দিন।");
+      return;
+    }
+
     const gatewayName = depositGatewayName;
     const matched = (siteConfig.paymentGateways || []).find(g => 
-      g.enabled && g.name.toLowerCase().replace(/\s/g, '').includes(gatewayName.toLowerCase())
+      g.enabled && g.name === gatewayName
     );
 
     const minAmt = matched ? matched.minAmount : 10;
@@ -551,18 +650,35 @@ export function Dashboard() {
       return;
     }
 
+    // Bangladesh MFS validation
+    if (isMFSGateway(gatewayName) && !isValidBDPhone(depositPhoneOrAccount)) {
+      alert(language === 'en'
+        ? "❌ Invalid Mobile Number! For bKash/Nagad/Rocket/Upay, please enter a valid 11-digit Bangladeshi mobile number starting with 01."
+        : "❌ ভুল মোবাইল নাম্বার! বিকাশ/নগদ/রকেট/উপায় এর জন্য দয়া করে সঠিক ১১-ডিজিটের বাংলাদেশি মোবাইল নাম্বার (যেমন 017XXXXXXXX) প্রদান করুন।");
+      return;
+    }
+
+    // Alphanumeric/Fake TrxID pattern check
+    if (isFakeTrxId(depositTrxId)) {
+      alert(language === 'en'
+        ? "❌ Invalid or Fake Transaction ID format! Please enter the correct Transaction ID (TrxID) from your receipt. Continuous numbers or repeated characters are blocked."
+        : "❌ ট্রানজেকশন আইডি সঠিক নয়! দয়া করে আপনার পেমেন্ট রিসিট থেকে সঠিক Transaction ID (TrxID) প্রদান করুন। শুধু একই অক্ষর বা ক্রমানুসারে সংখ্যা দিলে রিকোয়েস্ট সাবমিট হবে না।");
+      return;
+    }
+
     if (addDepositRequest) {
       await addDepositRequest({
         email: user.email,
         amount: amt,
         gateway: gatewayName,
-        transactionId: depositTrxId,
+        transactionId: depositTrxId.trim(),
         details: `Sender Number: ${depositPhoneOrAccount}`
       });
       alert(`🎉 Manual Deposit request of $${amt.toFixed(2)} via ${gatewayName} submitted successfully! It will be verified by our Admin team and added to your balance shortly.`);
       setDepositAmount('100');
       setDepositPhoneOrAccount('');
       setDepositTrxId('');
+      setDeclareDeposit(false);
       setActiveTab('Transactions');
     }
   };
@@ -576,9 +692,16 @@ export function Dashboard() {
       return;
     }
 
+    if (!declareCommission) {
+      alert(language === 'en'
+        ? "⚠️ Please confirm the declaration checkbox at the bottom stating you have completed this transaction."
+        : "⚠️ অনুগ্রহ করে নিচে দেওয়া পেমেন্ট কনফার্মেশন ডিক্লেয়ারেশন বক্সে টিক মার্ক দিন।");
+      return;
+    }
+
     const gatewayName = commissionGatewayName;
     const matched = (siteConfig.paymentGateways || []).find(g => 
-      g.enabled && g.name.toLowerCase().replace(/\s/g, '').includes(gatewayName.toLowerCase())
+      g.enabled && g.name === gatewayName
     );
 
     const minAmt = matched ? matched.minAmount : 10;
@@ -596,18 +719,35 @@ export function Dashboard() {
       return;
     }
 
+    // Bangladesh MFS validation
+    if (isMFSGateway(gatewayName) && !isValidBDPhone(commissionPhoneOrAccount)) {
+      alert(language === 'en'
+        ? "❌ Invalid Mobile Number! For bKash/Nagad/Rocket/Upay, please enter a valid 11-digit Bangladeshi mobile number starting with 01."
+        : "❌ ভুল মোবাইল নাম্বার! বিকাশ/নগদ/রকেট/উপায় এর জন্য দয়া করে সঠিক ১১-ডিজিটের বাংলাদেশি মোবাইল নাম্বার (যেমন 017XXXXXXXX) প্রদান করুন।");
+      return;
+    }
+
+    // Alphanumeric/Fake TrxID pattern check
+    if (isFakeTrxId(commissionTrxId)) {
+      alert(language === 'en'
+        ? "❌ Invalid or Fake Transaction ID format! Please enter the correct Transaction ID (TrxID) from your receipt. Continuous numbers or repeated characters are blocked."
+        : "❌ ট্রানজেকশন আইডি সঠিক নয়! দয়া করে আপনার পেমেন্ট রিসিট থেকে সঠিক Transaction ID (TrxID) প্রদান করুন। শুধু একই অক্ষর বা ক্রমানুসারে সংখ্যা দিলে রিকোয়েস্ট সাবমিট হবে না।");
+      return;
+    }
+
     if (addDepositRequest) {
       await addDepositRequest({
         email: user.email,
         amount: amt,
         gateway: `${gatewayName} (Commission)`,
-        transactionId: commissionTrxId,
+        transactionId: commissionTrxId.trim(),
         details: `Sender Number: ${commissionPhoneOrAccount}. Commission Deposit.`
       });
       alert(`🎉 Commission Deposit request of $${amt.toFixed(2)} via ${gatewayName} submitted successfully! It will be verified by our Admin team and credited to your Commission Balance once approved.`);
       setCommissionDepositAmount('100');
       setCommissionPhoneOrAccount('');
       setCommissionTrxId('');
+      setDeclareCommission(false);
       setActiveTab('Transactions');
     }
   };
@@ -621,9 +761,16 @@ export function Dashboard() {
       return;
     }
 
+    if (!declareWithdraw) {
+      alert(language === 'en'
+        ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal and understand fake requests lead to account suspension."
+        : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
+      return;
+    }
+
     const gatewayName = withdrawGatewayName;
     const matched = (siteConfig.paymentGateways || []).find(g => 
-      g.enabled && g.name.toLowerCase().replace(/\s/g, '').includes(gatewayName.toLowerCase())
+      g.enabled && g.name === gatewayName
     );
 
     const minWd = matched ? matched.minAmount : (siteConfig.minWithdrawalAmount ?? 10);
@@ -651,6 +798,14 @@ export function Dashboard() {
       return;
     }
 
+    // Bangladesh MFS Recipient validation
+    if (isMFSGateway(gatewayName) && !isValidBDPhone(withdrawPhoneOrAccount)) {
+      alert(language === 'en'
+        ? "❌ Invalid Recipient Number! For bKash/Nagad/Rocket/Upay, please enter a valid 11-digit Bangladeshi mobile number starting with 01."
+        : "❌ ভুল নাম্বার! বিকাশ/নগদ/রকেট/উপায় উইথড্র এর জন্য দয়া করে সঠিক ১১-ডিজিটের বাংলাদেশি মোবাইল নাম্বার প্রদান করুন।");
+      return;
+    }
+
     const nextBalance = parseFloat((currentBal - amt).toFixed(2));
     const nextCommission = parseFloat((currentComm - commissionNeeded).toFixed(2));
     await updateUserProfileFields(user.email, { balance: nextBalance, commissionBalance: nextCommission });
@@ -660,7 +815,7 @@ export function Dashboard() {
         email: user.email,
         amount: amt,
         bankName: gatewayName === 'Bank' ? `Bank (${withdrawBankName}, Branch: ${withdrawBranch})` : gatewayName,
-        iban: withdrawPhoneOrAccount,
+        iban: withdrawPhoneOrAccount.trim(),
         accountName: withdrawAccountName || user.name,
         commissionDeducted: commissionNeeded
       });
@@ -672,6 +827,7 @@ export function Dashboard() {
     setWithdrawAccountName('');
     setWithdrawBankName('');
     setWithdrawBranch('');
+    setDeclareWithdraw(false);
     setActiveTab('Transactions');
   };
 
@@ -710,6 +866,29 @@ export function Dashboard() {
       alert("Please specify a valid withdrawal amount.");
       return;
     }
+
+    if (!declareWithdraw) {
+      alert(language === 'en'
+        ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal."
+        : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
+      return;
+    }
+
+    if (!agentWithdrawReference || agentWithdrawReference.trim().length < 4) {
+      alert(language === 'en'
+        ? "❌ Please enter a valid Agent Contact ID or Recipient Mobile Number."
+        : "❌ অনুগ্রহ করে এজেন্টের কন্টাক্ট আইডি বা রিসিভার মোবাইল নাম্বার লিখুন।");
+      return;
+    }
+
+    // Bangladesh MFS validation
+    if (isMFSGateway(agentWithdrawChannel) && !isValidBDPhone(agentWithdrawReference)) {
+      alert(language === 'en'
+        ? "❌ Invalid Recipient Number! For bKash/Nagad/Rocket/Upay, please enter a valid 11-digit Bangladeshi mobile number starting with 01."
+        : "❌ ভুল নাম্বার! বিকাশ/নগদ/রকেট/উপায় উইথড্র এর জন্য দয়া করে সঠিক ১১-ডিজিটের বাংলাদেশি মোবাইল নাম্বার প্রদান করুন।");
+      return;
+    }
+
     if (amt < minWd) {
       alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
       return;
@@ -740,7 +919,7 @@ export function Dashboard() {
         email: user.email,
         amount: amt,
         bankName: `Agent (${agentWithdrawChannel})`,
-        iban: agentWithdrawReference || 'Agent Contact ID',
+        iban: agentWithdrawReference.trim(),
         accountName: user.name,
         commissionDeducted: commissionNeeded
       });
@@ -749,6 +928,7 @@ export function Dashboard() {
     alert(`🎉 Agent Withdrawal request for $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
     setBankWithdrawAmount('');
     setAgentWithdrawReference('');
+    setDeclareWithdraw(false);
     setActiveTab('Transactions');
   };
 
@@ -762,6 +942,28 @@ export function Dashboard() {
 
     if (isNaN(amt) || amt <= 0) {
       alert("Please specify a valid withdrawal amount.");
+      return;
+    }
+
+    if (!declareWithdraw) {
+      alert(language === 'en'
+        ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal."
+        : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
+      return;
+    }
+
+    if (!bankWithdrawIban || bankWithdrawIban.trim().length < 4) {
+      alert(language === 'en'
+        ? "❌ Please enter a valid Bank Account Number / Wallet Number."
+        : "❌ অনুগ্রহ করে সঠিক ব্যাংক অ্যাকাউন্ট বা মোবাইল ওয়ালেট নম্বর দিন।");
+      return;
+    }
+
+    // Bangladesh MFS validation if MFS selected as Bank
+    if (isMFSGateway(bankWithdrawName) && !isValidBDPhone(bankWithdrawIban)) {
+      alert(language === 'en'
+        ? "❌ Invalid Recipient Number! For bKash/Nagad/Rocket/Upay, please enter a valid 11-digit Bangladeshi mobile number starting with 01."
+        : "❌ ভুল নাম্বার! বিকাশ/নগদ/রকেট/উপায় উইথড্র এর জন্য দয়া করে সঠিক ১১-ডিজিটের বাংলাদেশি মোবাইল নাম্বার প্রদান করুন।");
       return;
     }
     
@@ -797,8 +999,8 @@ export function Dashboard() {
       addWithdrawalRequest({
         email: user.email,
         amount: amt,
-        bankName: `${bankWithdrawName} (Branch: ${bankWithdrawBranch})`,
-        iban: bankWithdrawIban,
+        bankName: `${bankWithdrawName} (Branch: ${bankWithdrawBranch || 'Main'})`,
+        iban: bankWithdrawIban.trim(),
         accountName: user.name,
         commissionDeducted: commissionNeeded
       });
@@ -809,6 +1011,7 @@ export function Dashboard() {
     setBankWithdrawName('');
     setBankWithdrawIban('');
     setBankWithdrawBranch('');
+    setDeclareWithdraw(false);
     setActiveTab('Transactions');
   };
 
@@ -862,7 +1065,7 @@ export function Dashboard() {
         
         {/* Title */}
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-extrabold tracking-tight text-[#0F0D24] dark:text-white">
+          <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
             {language === 'en' ? 'My Account' : 'আমার অ্যাকাউন্ট'}
           </h1>
           <button
@@ -874,70 +1077,133 @@ export function Dashboard() {
           </button>
         </div>
 
-        {/* Balances Panel */}
-        <div className="mt-6 flex flex-col gap-6">
-          <div className="bg-gradient-to-br from-[#0F0D24] via-[#1A1638] to-[#0F0D24] rounded-[32px] p-10 flex flex-col md:flex-row md:items-center justify-between gap-8 shadow-2xl relative overflow-hidden border border-zinc-800">
-            {/* Decorative background blur */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[60px] pointer-events-none -mt-10 -mr-10"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/10 rounded-full blur-[50px] pointer-events-none -mb-10 -ml-10"></div>
-
-            <div className="flex items-center gap-6 relative z-10">
-              <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 shadow-inner backdrop-blur-md">
-                <CreditCard className="w-8 h-8 text-yellow-300 drop-shadow-md" />
-              </div>
-              <div className="space-y-1">
-                <span className="text-xs text-zinc-400 font-extrabold tracking-[0.2em] uppercase block drop-shadow">
-                  {language === 'en' ? 'Total Wallet Balance' : 'মোট ওয়ালেট ব্যালেন্স'}
-                </span>
-                <div className="text-4xl sm:text-6xl font-black text-white font-sans leading-none tracking-tight drop-shadow-lg">
-                  <span className="text-emerald-400 font-light mr-1">$</span>{user.balance.toFixed(2)}
-                </div>
+        {/* User Gilded Profile Bar */}
+        <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0a0f1d] border border-[#1a233d] p-5 rounded-3xl shadow-xl">
+          <div className="flex items-center gap-4">
+            {/* Custom Gilded Geometric overlapping brand emblem */}
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 via-[#E1BC4A] to-yellow-600 flex items-center justify-center shadow-lg border border-yellow-300/30 relative shrink-0">
+              <span className="text-zinc-950 font-black text-lg tracking-tighter">G</span>
+              <div className="absolute -bottom-1 -right-1 bg-emerald-500 w-3.5 h-3.5 rounded-full border-2 border-[#0a0f1d] flex items-center justify-center" title="Online">
+                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
               </div>
             </div>
-
-            {/* Action buttons on the right side of balance */}
-            <div className="flex flex-wrap items-center gap-3 relative z-10">
-              <button 
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-black text-white uppercase tracking-wider">{user.username || user.email.split('@')[0]}</span>
+                <span className="bg-yellow-500/10 text-yellow-400 text-[9px] font-black tracking-widest uppercase px-2 py-0.5 rounded-full border border-yellow-500/20">
+                  👑 VIP Lvl 1
+                </span>
+              </div>
+              <button
                 type="button"
-                onClick={() => setActiveTab('Add Credit')}
-                className="bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xs uppercase px-6 py-4 rounded-xl tracking-widest transition-all flex items-center gap-2 shadow-lg active:scale-95 border border-emerald-400/50 cursor-pointer"
+                onClick={() => setActiveTab('Personal Info')}
+                className="text-xs text-zinc-400 hover:text-[#E1BC4A] transition-colors font-bold uppercase tracking-wider flex items-center gap-1 mt-1 text-left"
               >
-                <Plus className="w-4 h-4 stroke-[3]" />
-                {language === 'en' ? 'ADD CREDIT' : 'টাকা যোগ করুন'}
-              </button>
-              <button 
-                type="button"
-                onClick={() => setActiveTab('Bank Withdraw')}
-                className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm font-black text-xs uppercase px-6 py-4 rounded-xl tracking-widest transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer"
-              >
-                <ArrowDownLeft className="w-4 h-4 text-emerald-400 stroke-[3]" />
-                {language === 'en' ? 'WITHDRAW' : 'উত্তোলন করুন'}
+                {language === 'en' ? 'Manage Profile ›' : 'প্রোফাইল নিয়ন্ত্রণ ›'}
               </button>
             </div>
           </div>
           
-          <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-[24px] p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center border border-emerald-200 dark:border-emerald-900">
-                <Lock className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex items-center gap-3 self-start sm:self-center">
+            <span className="text-[11px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl">
+              {language === 'en' ? 'Verified Account' : 'যাচাইকৃত অ্যাকাউন্ট'} ✅
+            </span>
+          </div>
+        </div>
+
+        {/* Balances Panel */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Main Wallet (Styled exactly as the golden card in references) */}
+          <div className="md:col-span-8 bg-gradient-to-r from-yellow-400 via-[#E1BC4A] to-yellow-500 rounded-[28px] p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden border border-yellow-300/20 text-zinc-950 min-h-[180px]">
+            {/* Glossy decorative overlays */}
+            <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-white/10 rounded-full blur-[40px] pointer-events-none"></div>
+            <div className="absolute bottom-[-30px] left-[-30px] w-36 h-36 bg-black/5 rounded-full blur-[30px] pointer-events-none"></div>
+            
+            <div className="flex items-start justify-between relative z-10">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-zinc-900/80">
+                  <span>{language === 'en' ? 'MAIN WALLET' : 'মূল ওয়ালেট'}</span>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      alert(language === 'en' ? "Wallet balance refreshed successfully!" : "ওয়ালেট ব্যালেন্স সফলভাবে রিফ্রেশ করা হয়েছে!");
+                    }}
+                    className="hover:scale-110 active:scale-95 transition-all text-zinc-900/60 hover:text-zinc-900"
+                    title="Refresh Balance"
+                  >
+                    <svg className="w-3.5 h-3.5 animate-spin-hover" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18" />
+                    </svg>
+                  </button>
+                </div>
+                
+                {/* Single Currency High contrast bold Display (USDT Only) */}
+                <div className="space-y-0.5">
+                  <div className="text-4xl sm:text-5xl font-black font-sans leading-none tracking-tight flex items-baseline">
+                    <span className="text-2xl sm:text-3xl font-extrabold mr-1.5">USDT</span>
+                    {(user.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-xs font-black tracking-wider text-zinc-900/70">
+                    {language === 'en' ? 'Available Wallet Balance' : 'ওয়ালেট ব্যালেন্স'}
+                  </div>
+                </div>
               </div>
+              
+              {/* Wallet Bag Circular Icon */}
+              <div className="w-14 h-14 rounded-full bg-black/10 border border-white/20 flex items-center justify-center shadow-inner">
+                <CreditCard className="w-7 h-7 text-zinc-950" />
+              </div>
+            </div>
+
+            {/* Quick action triggers */}
+            <div className="flex items-center gap-3 mt-6 relative z-10 pt-2 border-t border-black/10">
+              <button 
+                type="button"
+                onClick={() => setActiveTab('Add Credit')}
+                className="bg-zinc-950 hover:bg-zinc-900 text-white font-black text-[11px] uppercase px-5 py-3.5 rounded-xl tracking-wider transition-all flex items-center gap-2 shadow-md active:scale-95 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[3] text-yellow-400" />
+                {language === 'en' ? 'Deposit' : 'ডিপোজিট'}
+              </button>
+              <button 
+                type="button"
+                onClick={() => setActiveTab('Bank Withdraw')}
+                className="bg-white/20 hover:bg-white/35 text-zinc-950 font-black text-[11px] uppercase px-5 py-3.5 rounded-xl tracking-wider transition-all flex items-center gap-2 border border-black/10 active:scale-95 cursor-pointer"
+              >
+                <ArrowDownLeft className="w-4 h-4 stroke-[3]" />
+                {language === 'en' ? 'Withdrawal' : 'উত্তোলন'}
+              </button>
+            </div>
+          </div>
+
+          {/* Commission Balance card (Matching reference structure) */}
+          <div className="md:col-span-4 bg-[#0a0f1d] border border-[#1a233d] rounded-[28px] p-8 flex flex-col justify-between shadow-xl text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-full blur-[40px] pointer-events-none"></div>
+            
+            <div className="space-y-1">
+              <span className="text-[10px] text-zinc-400 font-extrabold tracking-[0.2em] uppercase block">
+                {language === 'en' ? 'COMMISSION WALLET' : 'কমিশন ওয়ালেট'}
+              </span>
               <div className="space-y-0.5">
-                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-extrabold tracking-wider uppercase block">
-                  {language === 'en' ? 'Commission Balance' : 'কমিশন ব্যালেন্স'}
-                </span>
-                <div className="text-2xl font-black text-zinc-900 dark:text-white font-sans leading-none">
-                  $ {(user.commissionBalance || 0).toFixed(2)}
+                <div className="text-3xl font-black font-sans leading-none text-[#E1BC4A]">
+                  USDT {(user.commissionBalance || 0).toFixed(2)}
+                </div>
+                <div className="text-[11px] font-bold text-zinc-500">
+                  {language === 'en' ? 'For Withdrawal Fees' : 'উইথড্র ফি এর জন্য'}
                 </div>
               </div>
             </div>
-            <button 
-              type="button"
-              onClick={() => setActiveTab('Add Commission')}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase px-5 py-3 rounded-xl tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
-              {language === 'en' ? 'DEPOSIT COMMISSION' : 'কমিশন ডিপোজিট করুন'}
-            </button>
+
+            <div className="mt-8">
+              <button 
+                type="button"
+                onClick={() => setActiveTab('Add Commission')}
+                className="w-full bg-[#161d31] hover:bg-[#1f2945] text-[#E1BC4A] border border-[#2a3861] font-black text-[11px] uppercase py-3.5 rounded-xl tracking-wider transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                {language === 'en' ? 'Deposit Commission' : 'কমিশন জমা করুন'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -964,29 +1230,94 @@ export function Dashboard() {
                   }}
                   className={`w-full text-left py-3.5 px-4 rounded-xl text-xs uppercase tracking-wide font-extrabold flex items-center justify-between transition-all select-none border-l-4 cursor-pointer ${
                     isActive
-                      ? 'border-[#E52535] bg-zinc-100/70 dark:bg-zinc-900 text-zinc-950 dark:text-white shadow-sm'
-                      : 'border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-900/50'
+                      ? 'border-[#E1BC4A] bg-[#2C3B69] text-white shadow-sm'
+                      : 'border-transparent text-zinc-600 dark:text-zinc-300 hover:text-[#E1BC4A] hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <IconComp className={`w-4 h-4 ${isActive ? 'text-[#E52535]' : 'text-zinc-400'}`} />
+                    <IconComp className={`w-4 h-4 ${isActive ? 'text-[#E1BC4A]' : 'text-zinc-400'}`} />
                     <span>{getTabLabel(item.label, language)}</span>
                   </div>
 
                   {/* Badges indicators for active components */}
                   {item.label === 'My Tickets' && userTickets.length > 0 && (
-                    <span className="bg-[#E52535] text-white text-[9px] font-black tracking-normal px-2 py-0.5 rounded-full">
+                    <span className="bg-[#E1BC4A] text-white text-[9px] font-black tracking-normal px-2 py-0.5 rounded-full">
                       {userTickets.length}
                     </span>
                   )}
                   {item.label === 'Inbox' && (
-                    <span className="bg-[#E52535] text-white text-[9px] font-black tracking-normal px-2 py-0.5 rounded-full">
+                    <span className="bg-[#E1BC4A] text-white text-[9px] font-black tracking-normal px-2 py-0.5 rounded-full">
                       2
                     </span>
                   )}
                 </button>
               );
             })}
+
+            {/* Preferences Card inside My Account Sidebar */}
+            <div className="mt-8 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-150 dark:border-zinc-800/80 space-y-4">
+              <span className="text-[10px] font-black tracking-widest text-zinc-400 dark:text-zinc-500 uppercase block">
+                {language === 'en' ? 'App Settings' : 'অ্যাপ সেটিংস'}
+              </span>
+              
+              {/* Theme Selector */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-zinc-700 dark:text-zinc-300">
+                  {language === 'en' ? 'Dark Mode' : 'ডার্ক মোড'}
+                </span>
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="relative w-12 h-6 bg-zinc-200 dark:bg-zinc-800 rounded-full p-1 transition-colors duration-300 flex items-center justify-between cursor-pointer focus:outline-none shrink-0"
+                  title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                >
+                  <div 
+                    className={`absolute w-4 h-4 bg-white dark:bg-zinc-950 rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center ${
+                      theme === 'dark' ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  >
+                    {theme === 'dark' ? (
+                      <Moon className="w-2.5 h-2.5 text-indigo-400" />
+                    ) : (
+                      <Sun className="w-2.5 h-2.5 text-amber-500" />
+                    )}
+                  </div>
+                  <Sun className={`w-2.5 h-2.5 text-amber-500 transition-opacity duration-300 ml-0.5 ${theme === 'dark' ? 'opacity-30' : 'opacity-100'}`} />
+                  <Moon className={`w-2.5 h-2.5 text-indigo-400 transition-opacity duration-300 mr-0.5 ${theme === 'dark' ? 'opacity-100' : 'opacity-30'}`} />
+                </button>
+              </div>
+
+              {/* Language Switcher */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-zinc-700 dark:text-zinc-300">
+                  {language === 'en' ? 'Language' : 'ভাষা'}
+                </span>
+                <div className="flex items-center border border-zinc-250 dark:border-zinc-700 rounded-lg p-0.5 bg-white dark:bg-zinc-900 font-sans text-[10px] font-black shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setLanguage('en')}
+                    className={`px-2 py-0.5 rounded-md cursor-pointer transition-all ${
+                      language === 'en' 
+                        ? 'bg-zinc-800 text-white dark:bg-zinc-700' 
+                        : 'text-zinc-450 hover:text-zinc-800 dark:hover:text-zinc-200'
+                    }`}
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLanguage('bn')}
+                    className={`px-2 py-0.5 rounded-md cursor-pointer transition-all ${
+                      language === 'bn' 
+                        ? 'bg-[#E1BC4A] text-white' 
+                        : 'text-zinc-450 hover:text-zinc-800 dark:hover:text-zinc-200'
+                    }`}
+                  >
+                    বাং
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* RIGHT COLUMN: View Contents */}
@@ -1022,7 +1353,7 @@ export function Dashboard() {
                           </div>
                           <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
                             <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100">${item.price} <span className="text-[9px] text-zinc-400">/ Ticket</span></span>
-                            <Link to={item.link} className="px-3 py-1.5 bg-[#0F0D24] hover:bg-[#E52535] text-white text-[9px] font-black uppercase rounded-lg tracking-wider transition-all">
+                            <Link to={item.link} className="px-3 py-1.5 bg-[#2C3B69] hover:bg-[#E1BC4A] text-white text-[9px] font-black uppercase rounded-lg tracking-wider transition-all">
                               {language === 'en' ? 'PLAY' : 'খেলুন'}
                             </Link>
                           </div>
@@ -1102,7 +1433,7 @@ export function Dashboard() {
                     {!isEditingPersonal && (
                       <button 
                         onClick={() => setIsEditingPersonal(true)}
-                        className="text-zinc-400 hover:text-[#E52535] p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-zinc-200 shadow-sm"
+                        className="text-zinc-400 hover:text-[#E1BC4A] p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-zinc-200 shadow-sm"
                         title="Edit Personal Information"
                       >
                         <Pencil className="w-4 h-4" />
@@ -1138,7 +1469,7 @@ export function Dashboard() {
                                 key={url}
                                 type="button"
                                 onClick={() => setEditProfileImage(url)}
-                                className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all ${editProfileImage === url ? 'border-[#E52535] scale-110 shadow-lg' : 'border-transparent hover:scale-105'}`}
+                                className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all ${editProfileImage === url ? 'border-[#E1BC4A] scale-110 shadow-lg' : 'border-transparent hover:scale-105'}`}
                               >
                                 <img src={url} alt="Avatar option" className="w-full h-full object-cover" />
                               </button>
@@ -1230,7 +1561,7 @@ export function Dashboard() {
                       </div>
 
                       <div className="flex gap-2.5 pt-4">
-                        <button type="submit" className="bg-[#E52535] hover:bg-red-700 text-white font-black px-5 py-3 rounded-xl text-[10px] uppercase tracking-wider">
+                        <button type="submit" className="bg-[#E1BC4A] hover:bg-red-700 text-white font-black px-5 py-3 rounded-xl text-[10px] uppercase tracking-wider">
                           Save Changes
                         </button>
                         <button type="button" onClick={() => setIsEditingPersonal(false)} className="bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-extrabold px-5 py-3 rounded-xl text-[10px] uppercase tracking-wider">
@@ -1242,7 +1573,7 @@ export function Dashboard() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-4 text-xs font-semibold">
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Full Name</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{user.name}</p>
+                        <p className="text-white font-bold text-[13px]">{user.name}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Profile Logo</span>
@@ -1258,31 +1589,31 @@ export function Dashboard() {
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Nationality</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{user.country}</p>
+                        <p className="text-white font-bold text-[13px]">{user.country}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Date of Birth</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{user.dob}</p>
+                        <p className="text-white font-bold text-[13px]">{user.dob}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Gender</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{gender}</p>
+                        <p className="text-white font-bold text-[13px]">{gender}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Employer</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{employer}</p>
+                        <p className="text-white font-bold text-[13px]">{employer}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Region</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{region}</p>
+                        <p className="text-white font-bold text-[13px]">{region}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">NID Card Number</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{user.nidNumber || 'Not set (Click edit to add)'}</p>
+                        <p className="text-white font-bold text-[13px]">{user.nidNumber || 'Not set (Click edit to add)'}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Passport Number</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{user.passportNumber || 'Not set (Click edit to add)'}</p>
+                        <p className="text-white font-bold text-[13px]">{user.passportNumber || 'Not set (Click edit to add)'}</p>
                       </div>
                     </div>
                   )}
@@ -1297,7 +1628,7 @@ export function Dashboard() {
                     {!isEditingContact && (
                       <button 
                         onClick={() => setIsEditingContact(true)}
-                        className="text-zinc-400 hover:text-[#E52535] p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-zinc-200 shadow-sm"
+                        className="text-zinc-400 hover:text-[#E1BC4A] p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-zinc-200 shadow-sm"
                         title="Edit Contact Information"
                       >
                         <Pencil className="w-4 h-4" />
@@ -1331,7 +1662,7 @@ export function Dashboard() {
                       </div>
 
                       <div className="flex gap-2.5 pt-4">
-                        <button type="submit" className="bg-[#E52535] hover:bg-red-700 text-white font-black px-5 py-3 rounded-xl text-[10px] uppercase tracking-wider">
+                        <button type="submit" className="bg-[#E1BC4A] hover:bg-red-700 text-white font-black px-5 py-3 rounded-xl text-[10px] uppercase tracking-wider">
                           Save Changes
                         </button>
                         <button type="button" onClick={() => setIsEditingContact(false)} className="bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-extrabold px-5 py-3 rounded-xl text-[10px] uppercase tracking-wider">
@@ -1343,11 +1674,11 @@ export function Dashboard() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-4 text-xs font-semibold">
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Email</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{user.email}</p>
+                        <p className="text-white font-bold text-[13px]">{user.email}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Phone Number</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{user.phone}</p>
+                        <p className="text-white font-bold text-[13px]">{user.phone}</p>
                       </div>
                     </div>
                   )}
@@ -1362,7 +1693,7 @@ export function Dashboard() {
                     {!isEditingAddress && (
                       <button 
                         onClick={() => setIsEditingAddress(true)}
-                        className="text-zinc-400 hover:text-[#E52535] p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-zinc-200 shadow-sm"
+                        className="text-zinc-400 hover:text-[#E1BC4A] p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-zinc-200 shadow-sm"
                         title="Edit Address Details"
                       >
                         <Pencil className="w-4 h-4" />
@@ -1424,7 +1755,7 @@ export function Dashboard() {
                       </div>
 
                       <div className="flex gap-2.5 pt-4">
-                        <button type="submit" className="bg-[#E52535] hover:bg-red-700 text-white font-black px-5 py-3 rounded-xl text-[10px] uppercase tracking-wider">
+                        <button type="submit" className="bg-[#E1BC4A] hover:bg-red-700 text-white font-black px-5 py-3 rounded-xl text-[10px] uppercase tracking-wider">
                           Save Changes
                         </button>
                         <button type="button" onClick={() => setIsEditingAddress(false)} className="bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-extrabold px-5 py-3 rounded-xl text-[10px] uppercase tracking-wider">
@@ -1436,23 +1767,23 @@ export function Dashboard() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-4 text-xs font-semibold">
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Address (Line 1)</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{address1}</p>
+                        <p className="text-white font-bold text-[13px]">{address1}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Address (Line 2)</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{address2 || ' '}</p>
+                        <p className="text-white font-bold text-[13px]">{address2 || ' '}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">City</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{city}</p>
+                        <p className="text-white font-bold text-[13px]">{city}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Country of Residence</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{user.country}</p>
+                        <p className="text-white font-bold text-[13px]">{user.country}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-0.5">Zip / Post Code</span>
-                        <p className="text-[#0F0D24] font-bold text-[13px]">{zipcode || ' '}</p>
+                        <p className="text-white font-bold text-[13px]">{zipcode || ' '}</p>
                       </div>
                     </div>
                   )}
@@ -1464,9 +1795,9 @@ export function Dashboard() {
             {/* TAB 2: Add Credit */}
             {activeTab === 'Add Credit' && (
               <div className="space-y-6">
-                <div className="bg-white border border-zinc-200/85 rounded-3xl p-6 sm:p-8 shadow-sm text-left">
-                  <h3 className="text-lg font-black text-zinc-950 uppercase tracking-widest mb-6 border-b pb-4 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-[#E52535]" /> 
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200/85 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-sm text-left">
+                  <h3 className="text-lg font-black text-zinc-950 dark:text-white uppercase tracking-widest mb-6 border-b border-zinc-100 dark:border-zinc-800 pb-4 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-[#E1BC4A]" /> 
                     {language === 'en' ? 'Deposit Funds' : 'ডিপোজিট করুন'}
                   </h3>
 
@@ -1481,8 +1812,8 @@ export function Dashboard() {
                         onClick={() => setSelectedDepositMethod('manual_gateway')}
                         className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
                           selectedDepositMethod === 'manual_gateway'
-                            ? 'bg-[#E52535] border-[#E52535] text-white shadow-md scale-[1.02]'
-                            : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                            ? 'bg-[#E1BC4A] border-[#E1BC4A] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                         }`}
                       >
                         🏦 {language === 'en' ? 'Manual Pay' : 'ম্যানুয়াল পে'}
@@ -1492,8 +1823,8 @@ export function Dashboard() {
                         onClick={() => setSelectedDepositMethod('agent')}
                         className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
                           selectedDepositMethod === 'agent'
-                            ? 'bg-[#E52535] border-[#E52535] text-white shadow-md scale-[1.02]'
-                            : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                            ? 'bg-[#E1BC4A] border-[#E1BC4A] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                         }`}
                       >
                         👥 {language === 'en' ? 'Local Agent' : 'লোকাল এজেন্ট'}
@@ -1503,8 +1834,8 @@ export function Dashboard() {
                         onClick={() => setSelectedDepositMethod('crypto')}
                         className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
                           selectedDepositMethod === 'crypto'
-                            ? 'bg-[#E52535] border-[#E52535] text-white shadow-md scale-[1.02]'
-                            : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                            ? 'bg-[#E1BC4A] border-[#E1BC4A] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                         }`}
                       >
                         🪙 {language === 'en' ? 'Crypto USDT' : 'ক্রিপ্টো USDT'}
@@ -1528,8 +1859,8 @@ export function Dashboard() {
                               onClick={() => setDepositAmount(val)}
                               className={`py-3.5 text-center font-bold text-xs rounded-xl border transition-all ${
                                 depositAmount === val
-                                  ? 'bg-[#E52535] border-[#E52535] text-white shadow-md'
-                                  : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                                  ? 'bg-[#E1BC4A] border-[#E1BC4A] text-white shadow-md'
+                                  : 'bg-zinc-50 dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                               }`}
                             >
                               ${val}
@@ -1553,28 +1884,28 @@ export function Dashboard() {
                         />
                       </div>
 
-                      {/* Selector Box for Nagad, bKash, Rocket, Upay, Bank */}
+                      {/* Selector Box for Dynamic Gateways */}
                       <div>
                         <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
                           {language === 'en' ? 'Select Payment Method' : 'পেমেন্ট মাধ্যম সিলেক্ট করুন'}
                         </label>
                         <select
                           value={depositGatewayName}
-                          onChange={(e) => setDepositGatewayName(e.target.value as any)}
+                          onChange={(e) => setDepositGatewayName(e.target.value)}
                           className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-sm font-semibold outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all cursor-pointer"
                         >
-                          <option value="bKash">bKash / বিকাশ</option>
-                          <option value="Nagad">Nagad / নগদ</option>
-                          <option value="Rocket">Rocket / রকেট</option>
-                          <option value="Upay">Upay / উপায়</option>
-                          <option value="Bank">Bank / ব্যাংক</option>
+                          {(siteConfig.paymentGateways || [])
+                            .filter(g => g.enabled && (g.type === 'both' || g.type === 'deposit'))
+                            .map(g => (
+                              <option key={g.id} value={g.name}>{g.name}</option>
+                            ))}
                         </select>
                       </div>
 
                       {/* Matching dynamic gateway details */}
                       {(() => {
                         const matched = (siteConfig.paymentGateways || []).find(g => 
-                          g.enabled && g.name.toLowerCase().replace(/\s/g, '').includes(depositGatewayName.toLowerCase())
+                          g.enabled && g.name === depositGatewayName
                         );
 
                         if (!matched) {
@@ -1624,6 +1955,18 @@ export function Dashboard() {
                               "{matched.instructions}"
                             </div>
 
+                            {/* Warning Banner */}
+                            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 p-4 rounded-xl text-left space-y-1">
+                              <p className="text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                                ⚠️ Warning / সতর্কীকরণ
+                              </p>
+                              <p className="text-red-600 dark:text-red-400 text-[11px] leading-relaxed">
+                                {language === 'en'
+                                  ? 'Submitting false, inaccurate, or reused transaction information is strictly forbidden. Fake deposit requests are automatically flagged. Any attempt to exploit or upload fake transaction details will lead to immediate, irreversible account ban and confiscation of all assets.'
+                                  : 'ভুয়া, অসত্য বা পূর্বে ব্যবহৃত পেমেন্ট তথ্য সাবমিট করা কঠোরভাবে নিষিদ্ধ। কৃত্রিম বা ভুয়া ডিপোজিট রিকোয়েস্ট স্বয়ংক্রিয়ভাবে ব্লক করা হবে। কোনো অ্যাকাউন্ট থেকে ভুয়া ট্রানজেকশন সাবমিট করার চেষ্টা করা হলে অ্যাকাউন্ট চিরতরে ব্যান করা হবে এবং ব্যালেন্স বাজেয়াপ্ত করা হবে।'}
+                              </p>
+                            </div>
+
                             {/* Inputs: User Phone, TrxID */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                               <div>
@@ -1654,9 +1997,25 @@ export function Dashboard() {
                               </div>
                             </div>
 
+                            {/* Declaration Checkbox */}
+                            <div className="flex items-start gap-3 bg-white p-3.5 border border-zinc-250 rounded-xl">
+                              <input
+                                id="declareDepositManual"
+                                type="checkbox"
+                                checked={declareDeposit}
+                                onChange={(e) => setDeclareDeposit(e.target.checked)}
+                                className="mt-1 h-4.5 w-4.5 rounded border-zinc-350 text-amber-600 focus:ring-amber-500 accent-amber-500 cursor-pointer"
+                              />
+                              <label htmlFor="declareDepositManual" className="text-[11px] text-zinc-600 font-bold select-none cursor-pointer leading-relaxed text-left">
+                                {language === 'en'
+                                  ? 'I declare under full personal liability that I have sent the correct amount from my own wallet/account and have specified the correct transaction info. I understand that submitting fake requests is fraud.'
+                                  : 'আমি সম্পূর্ণ ব্যক্তিগত দায়িত্বে ঘোষণা করছি যে আমি আমার নিজের ওয়ালেট থেকে সঠিক পরিমাণ টাকা পাঠিয়েছি এবং সঠিক ট্রানজেকশন তথ্য প্রদান করেছি। আমি জানি যে ভুয়া রিকোয়েস্ট সাবমিট করা একটি প্রতারণা।'}
+                              </label>
+                            </div>
+
                             <button
                               type="submit"
-                              className="w-full bg-[#E52535] hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                              className="w-full bg-[#E1BC4A] hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
                             >
                               {language === 'en' ? 'SUBMIT DEPOSIT FOR VERIFICATION' : 'ডিপোজিট রিকোয়েস্ট পাঠান'}
                             </button>
@@ -1717,6 +2076,18 @@ export function Dashboard() {
                             : 'ওপরের যেকোনো মাধ্যমে আমাদের অনুমোদিত লোকাল এজেন্টের সাথে চ্যাট করুন, পেমেন্ট নাম্বার নিয়ে টাকা পাঠান, এবং নিচে আপনার কন্টাক্ট আইডি বা রেফারেন্স লিখে সাবমিট করুন।'}
                         </p>
 
+                        {/* Warning Banner */}
+                        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 p-4 rounded-xl text-left space-y-1">
+                          <p className="text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            ⚠️ Agent Rules / এজেন্টের নিয়মাবলী
+                          </p>
+                          <p className="text-red-600 dark:text-red-400 text-[11px] leading-relaxed">
+                            {language === 'en'
+                              ? 'Any fake, uncoordinated, or arbitrary request submitted without contacting and paying our agent first will result in immediate permanent block of your account. Ensure you connect with the agent and send the funds before submitting.'
+                              : 'প্রথমে এজেন্টের সাথে যোগাযোগ ও পেমেন্ট না করে এখানে কোনো প্রকার ভুয়া বা আন্দাজে রিকোয়েস্ট সাবমিট করলে আপনার অ্যাকাউন্ট তাৎক্ষণিকভাবে চিরতরে ব্লক করা হবে। দয়া করে আগে টাকা পাঠান তারপর সঠিক রেফারেন্স এখানে লিখুন।'}
+                          </p>
+                        </div>
+
                         <div>
                           <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
                             {language === 'en' ? 'Connected Agent Channel' : 'কানেক্টেড এজেন্ট চ্যানেল'}
@@ -1745,6 +2116,22 @@ export function Dashboard() {
                             required
                           />
                         </div>
+                      </div>
+
+                      {/* Declaration Checkbox */}
+                      <div className="flex items-start gap-3 bg-white p-3.5 border border-zinc-250 rounded-xl">
+                        <input
+                          id="declareDepositAgent"
+                          type="checkbox"
+                          checked={declareDeposit}
+                          onChange={(e) => setDeclareDeposit(e.target.checked)}
+                          className="mt-1 h-4.5 w-4.5 rounded border-zinc-350 text-amber-600 focus:ring-amber-500 accent-amber-500 cursor-pointer"
+                        />
+                        <label htmlFor="declareDepositAgent" className="text-[11px] text-zinc-600 font-bold select-none cursor-pointer leading-relaxed text-left">
+                          {language === 'en'
+                            ? 'I declare that I have contacted the selected agent, completed the transaction, and sent the specified amount. I understand that submitting fake agent requests will permanently ban my account.'
+                            : 'আমি ঘোষণা করছি যে আমি এজেন্টের সাথে যোগাযোগ করেছি, টাকা পাঠিয়েছি এবং সঠিক রেফারেন্সটি দিয়েছি। আমি জানি যে কোনো প্রকার মিথ্যা তথ্য দিলে আমার ওয়ালেট চিরতরে ব্যান করা হবে।'}
+                        </label>
                       </div>
 
                       <button
@@ -1832,7 +2219,7 @@ export function Dashboard() {
                             <button
                               type="submit"
                               disabled={isCreatingInvoice}
-                              className="w-full bg-[#E52535] hover:bg-red-700 disabled:bg-red-400 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                              className="w-full bg-[#E1BC4A] hover:bg-red-700 disabled:bg-red-400 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
                             >
                               {isCreatingInvoice ? (
                                 <>
@@ -1943,7 +2330,7 @@ export function Dashboard() {
                           {/* Crypto details */}
                           <div className="animate-fade-in space-y-5 bg-zinc-50 border border-zinc-200/60 p-5 rounded-2xl">
                             <div className="bg-white border border-zinc-200/80 rounded-xl p-4 flex flex-col items-center justify-center text-center">
-                              <span className="text-[9px] font-black text-[#E52535] uppercase tracking-widest block mb-1">
+                              <span className="text-[9px] font-black text-[#E1BC4A] uppercase tracking-widest block mb-1">
                                 USDT (TRC20) Wallet Address:
                               </span>
                               <p className="font-mono text-xs sm:text-sm font-black text-zinc-950 select-all break-all mb-2">
@@ -1997,55 +2384,21 @@ export function Dashboard() {
 
                             <button
                               type="submit"
-                              className="w-full bg-[#E52535] hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                              className="w-full bg-[#E1BC4A] hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
                             >
                               {language === 'en' ? 'SUBMIT CRYPTO DEPOSIT FOR VERIFICATION' : 'ক্রিপ্টো ডিপোজিট রিকোয়েস্ট পাঠান'}
                             </button>
 
-                            <div className="mt-6 pt-6 border-t border-zinc-200/40 space-y-4">
-                              <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-sm space-y-4">
-                                <div className="text-center">
-                                  <h4 className="text-xs font-black text-zinc-900 uppercase tracking-wider flex items-center justify-center gap-1.5">
-                                    🎁 {language === 'en' ? 'Support Golobal Lottery' : 'গ্লোবাল লটারি প্রজেক্ট সাপোর্ট করুন'}
-                                  </h4>
-                                  <p className="text-[9px] text-zinc-500 font-semibold mt-1">
-                                    {language === 'en' ? 'Choose your preferred instant secure checkout below:' : 'নিচের যেকোনো একটি নিরাপদ পেমেন্ট মেথড বেছে নিন:'}
-                                  </p>
-                                </div>
-
-                                <div className="border border-zinc-100 rounded-xl overflow-hidden bg-zinc-50 p-1 flex justify-center shadow-inner">
-                                  <iframe 
-                                    src="https://nowpayments.io/embeds/donation-widget?api_key=46939299-dcc1-403d-9c4b-13c833682370&theme=light" 
-                                    width="100%" 
-                                    height="320" 
-                                    frameBorder="0" 
-                                    scrolling="no" 
-                                    style={{ borderRadius: "10px", overflow: "hidden" }}
-                                    title="NOWPayments Donation Widget"
-                                  />
-                                </div>
-
-                                <div className="flex flex-col items-center justify-center gap-2 pt-1">
-                                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">
-                                    {language === 'en' ? 'Or use direct checkout page:' : 'অথবা সরাসরি পে করুন:'}
+                            <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-col items-center gap-2">
+                              <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">
+                                🔒 {language === 'en' ? 'Accepted Payment Methods' : 'স্বীকৃত পেমেন্ট পদ্ধতিসমূহ'}
+                              </span>
+                              <div className="flex flex-wrap justify-center gap-1.5">
+                                {['VISA', 'Mastercard', 'BTC', 'USDT', 'ETH', 'TRX', 'LTC'].map((method) => (
+                                  <span key={method} className="text-[8px] font-black tracking-widest uppercase bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 py-1 rounded border border-zinc-200/60 dark:border-zinc-700 shadow-xs">
+                                    {method}
                                   </span>
-                                  <a href="https://nowpayments.io/donation?api_key=46939299-dcc1-403d-9c4b-13c833682370" target="_blank" rel="noreferrer noopener" className="inline-block hover:scale-105 transition-all">
-                                    <img src="https://nowpayments.io/images/embeds/donation-button-white.svg" alt="Cryptocurrency & Bitcoin donation button by NOWPayments" className="h-10" referrerPolicy="no-referrer" />
-                                  </a>
-                                </div>
-
-                                <div className="pt-3 border-t border-zinc-100 flex flex-col items-center gap-2">
-                                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">
-                                    🔒 {language === 'en' ? 'Accepted Payment Methods' : 'স্বীকৃত পেমেন্ট পদ্ধতিসমূহ'}
-                                  </span>
-                                  <div className="flex flex-wrap justify-center gap-1.5">
-                                    {['VISA', 'Mastercard', 'BTC', 'USDT', 'ETH', 'TRX', 'LTC'].map((method) => (
-                                      <span key={method} className="text-[8px] font-black tracking-widest uppercase bg-zinc-100 text-zinc-700 px-2 py-1 rounded border border-zinc-200/60 shadow-xs">
-                                        {method}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
+                                ))}
                               </div>
                             </div>
                           </div>
@@ -2056,24 +2409,22 @@ export function Dashboard() {
                 </div>
               </div>
             )}
-
-            {/* TAB: Bank Withdraw */}
             {activeTab === 'Bank Withdraw' && (
               <div className="space-y-6">
-                <div className="bg-white border border-zinc-200/85 rounded-3xl p-6 sm:p-8 shadow-sm text-left">
-                  <h3 className="text-lg font-black text-zinc-950 uppercase tracking-widest mb-2 flex items-center gap-2 border-b pb-4">
-                    <span className="text-[#E52535]">🏦</span> 
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200/85 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-sm text-left">
+                  <h3 className="text-lg font-black text-zinc-950 dark:text-white uppercase tracking-widest mb-2 flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                    <span className="text-[#E1BC4A]">🏦</span> 
                     {language === 'en' ? 'Withdraw Funds' : 'উইথড্র করুন'}
                   </h3>
                   
-                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-xs text-amber-900 leading-relaxed mb-6">
-                    <p className="font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5 text-amber-950">
+                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-4 rounded-2xl text-xs text-amber-900 dark:text-amber-200 leading-relaxed mb-6">
+                    <p className="font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5 text-amber-950 dark:text-amber-100">
                       ⚠️ {language === 'en' ? 'Commission Fee Requirement' : 'কমিশন ফি নোটিশ'}
                     </p>
                     <p>
                       {language === 'en' 
-                        ? `A ${siteConfig.governmentFeePct ?? 10}% government commission fee applies. This fee will be deducted from your Commission Balance (Available Commission Balance: $${(user?.commissionBalance || 0).toFixed(2)}).`
-                        : `আপনার উইথড্র পরিমাণের ওপর ${siteConfig.governmentFeePct ?? 10}% সরকারি কমিশন ফি প্রযোজ্য হবে। এই ফি-টি আপনার কমিশন ব্যালেন্স থেকে কাটা হবে (আপনার বর্তমান কমিশন ব্যালেন্স: $${(user?.commissionBalance || 0).toFixed(2)})।`}
+                        ? `A ${siteConfig.governmentFeePct ?? 10}% government commission fee applies. This fee will be deducted from your Commission Balance (Available Commission Balance: USDT ${(user?.commissionBalance || 0).toFixed(2)}).`
+                        : `আপনার উইথড্র পরিমাণের ওপর ${siteConfig.governmentFeePct ?? 10}% সরকারি কমিশন ফি প্রযোজ্য হবে। এই ফি-টি আপনার কমিশন ব্যালেন্স থেকে কাটা হবে (আপনার বর্তমান কমিশন ব্যালেন্স: USDT ${(user?.commissionBalance || 0).toFixed(2)})।`}
                     </p>
                   </div>
 
@@ -2082,318 +2433,152 @@ export function Dashboard() {
                     <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
                       {language === 'en' ? 'Select Withdrawal Channel' : 'উইথড্র পদ্ধতি সিলেক্ট করুন'}
                     </label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <button
                         type="button"
-                        onClick={() => setSelectedWithdrawMethod('manual_gateway')}
+                        onClick={() => {
+                          setSelectedWithdrawMethod('crypto_usdt');
+                          setWithdrawPhoneOrAccount('');
+                        }}
                         className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
-                          selectedWithdrawMethod === 'manual_gateway'
-                            ? 'bg-[#E52535] border-[#E52535] text-white shadow-md scale-[1.02]'
-                            : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                          selectedWithdrawMethod === 'crypto_usdt'
+                            ? 'bg-[#E1BC4A] border-[#E1BC4A] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                         }`}
                       >
-                        🏦 {language === 'en' ? 'Manual Pay' : 'ম্যানুয়াল উইথড্র'}
+                        🪙 USDT (TRC20)
                       </button>
                       <button
                         type="button"
-                        onClick={() => setSelectedWithdrawMethod('agent')}
+                        onClick={() => {
+                          setSelectedWithdrawMethod('crypto_ltc');
+                          setWithdrawPhoneOrAccount('');
+                        }}
                         className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
-                          selectedWithdrawMethod === 'agent'
-                            ? 'bg-[#E52535] border-[#E52535] text-white shadow-md scale-[1.02]'
-                            : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                          selectedWithdrawMethod === 'crypto_ltc'
+                            ? 'bg-[#E1BC4A] border-[#E1BC4A] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                         }`}
                       >
-                        👥 {language === 'en' ? 'Local Agent' : 'লোকাল এজেন্ট'}
+                        🪙 LTC (Litecoin)
                       </button>
                       <button
                         type="button"
-                        onClick={() => setSelectedWithdrawMethod('bank')} // using 'bank' as key for crypto withdraw to keep schema compatible or define custom flow
+                        onClick={() => {
+                          setSelectedWithdrawMethod('crypto_usd');
+                          setWithdrawPhoneOrAccount('');
+                        }}
+                        className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
+                          selectedWithdrawMethod === 'crypto_usd'
+                            ? 'bg-[#E1BC4A] border-[#E1BC4A] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        🪙 USD (Payeer/PM)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedWithdrawMethod('bank');
+                          setWithdrawPhoneOrAccount('');
+                        }}
                         className={`py-3 px-1 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all uppercase tracking-wider ${
                           selectedWithdrawMethod === 'bank'
-                            ? 'bg-[#E52535] border-[#E52535] text-white shadow-md scale-[1.02]'
-                            : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                            ? 'bg-[#E1BC4A] border-[#E1BC4A] text-white shadow-md scale-[1.02]'
+                            : 'bg-zinc-50 dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                         }`}
                       >
-                        🪙 {language === 'en' ? 'Crypto USDT' : 'ক্রিপ্টো USDT'}
+                        🏦 {language === 'en' ? 'Bank Transfer' : 'ব্যাংক ট্রান্সফার'}
                       </button>
                     </div>
                   </div>
 
-                  {selectedWithdrawMethod === 'manual_gateway' && (
-                    <form onSubmit={handleManualWithdrawalSubmit} className="space-y-6">
-                      {/* Amount Input */}
-                      <div>
-                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
-                          {language === 'en' ? 'Enter Withdrawal Amount ($)' : 'উইথড্র পরিমাণ লিখুন ($)'}
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          step="any"
-                          value={withdrawAmountInput}
-                          onChange={(e) => setWithdrawAmountInput(e.target.value)}
-                          className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-lg font-black outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all"
-                          placeholder="0.00"
-                          required
-                        />
-                        <p className="text-[10px] text-zinc-400 mt-1 font-semibold">
-                          {language === 'en' 
-                            ? `Minimum withdrawal amount: $${(siteConfig.minWithdrawalAmount ?? 10).toFixed(2)}` 
-                            : `সর্বনিম্ন উইথড্র পরিমাণ: $${(siteConfig.minWithdrawalAmount ?? 10).toFixed(2)}`}
-                        </p>
-                      </div>
+                  {/* Dynamic Commission Calculator & Insufficient Balance Warning */}
+                  {(() => {
+                    const amt = parseFloat(withdrawAmountInput);
+                    if (isNaN(amt) || amt <= 0) return null;
 
-                      {/* Method Selector */}
-                      <div>
-                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-3">
-                          {language === 'en' ? 'Select Payout Channel' : 'উইথড্র মাধ্যম সিলেক্ট করুন'}
-                        </label>
-                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                          {[
-                            { key: 'bKash', label: 'bKash / বিকাশ', color: 'bg-[#E2125A]', text: 'text-white' },
-                            { key: 'Nagad', label: 'Nagad / নগদ', color: 'bg-[#F26422]', text: 'text-white' },
-                            { key: 'Rocket', label: 'Rocket / রকেট', color: 'bg-[#8C3494]', text: 'text-white' },
-                            { key: 'Upay', label: 'Upay / উপায়', color: 'bg-[#1D60FF]', text: 'text-white' },
-                            { key: 'Bank', label: 'Bank / ব্যাংক', color: 'bg-[#1C2C80]', text: 'text-white' }
-                          ].map((m) => (
-                            <button
-                              key={m.key}
-                              type="button"
-                              onClick={() => setWithdrawGatewayName(m.key as any)}
-                              className={`py-3.5 px-2 text-center font-bold text-[10px] sm:text-xs rounded-xl border transition-all flex flex-col items-center justify-center gap-1 ${
-                                withdrawGatewayName === m.key
-                                  ? `${m.color} border-transparent ${m.text} shadow-md scale-[1.03]`
-                                  : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'
-                              }`}
-                            >
-                              <span>{m.label}</span>
-                            </button>
-                          ))}
+                    const govFeePct = siteConfig.governmentFeePct ?? 10;
+                    const commissionNeeded = amt * (govFeePct / 100);
+                    const currentComm = user?.commissionBalance || 0;
+                    const isInsufficient = currentComm < commissionNeeded;
+                    const deficit = parseFloat((commissionNeeded - currentComm).toFixed(2));
+
+                    return (
+                      <div className={`p-5 rounded-2xl border transition-all mb-6 ${
+                        isInsufficient 
+                          ? 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/30 text-rose-950 dark:text-rose-100' 
+                          : 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/30 text-emerald-950 dark:text-emerald-100'
+                      }`}>
+                        <div className="flex items-center gap-2 font-black uppercase tracking-wider text-xs mb-3 border-b pb-2 border-zinc-200/40">
+                          <span>{isInsufficient ? '⚠️' : '✅'}</span>
+                          <span>
+                            {language === 'en' 
+                              ? 'Withdrawal & Commission Summary' 
+                              : 'উইথড্র এবং কমিশন সামারি'}
+                          </span>
                         </div>
-                      </div>
 
-                      {/* Instruction Cards for selected withdrawal channel */}
-                      {(() => {
-                        const matched = (siteConfig.paymentGateways || []).find(g => 
-                          g.enabled && g.name.toLowerCase().replace(/\s/g, '').includes(withdrawGatewayName.toLowerCase())
-                        );
-
-                        return (
-                          <div className="animate-fade-in space-y-5 bg-zinc-50 border border-zinc-200/60 p-5 rounded-2xl">
-                            <div className="flex justify-between items-center pb-2 border-b border-zinc-200">
-                              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                                {language === 'en' ? 'Withdrawal Instructions' : 'উইথড্র নির্দেশনাবলী'}
-                              </span>
-                              <span className="bg-zinc-200/80 text-zinc-700 text-[9px] font-bold px-2 py-0.5 rounded-lg border border-zinc-300">
-                                Min Limit: ${matched?.minAmount || siteConfig.minWithdrawalAmount || 10}
-                              </span>
-                            </div>
-
-                            {matched?.instructions && (
-                              <div className="text-xs text-zinc-600 font-medium italic bg-white border border-zinc-150 p-4 rounded-xl">
-                                <p className="font-bold text-zinc-700 not-italic mb-1 uppercase tracking-wider text-[9px]">Instructions:</p>
-                                "{matched.instructions}"
-                              </div>
-                            )}
-
-                            {/* Inputs */}
-                            <div className="space-y-4">
-                              {withdrawGatewayName === 'Bank' ? (
-                                <>
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
-                                        Bank Name <span className="text-red-500">*</span>
-                                      </label>
-                                      <input
-                                        type="text"
-                                        placeholder="e.g. Dutch-Bangla Bank"
-                                        value={withdrawBankName}
-                                        onChange={(e) => setWithdrawBankName(e.target.value)}
-                                        className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
-                                        required
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
-                                        Branch Name <span className="text-red-500">*</span>
-                                      </label>
-                                      <input
-                                        type="text"
-                                        placeholder="e.g. Motijheel Branch"
-                                        value={withdrawBranch}
-                                        onChange={(e) => setWithdrawBranch(e.target.value)}
-                                        className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
-                                        required
-                                      />
-                                    </div>
-                                  </div>
-
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
-                                        Account Number <span className="text-red-500">*</span>
-                                      </label>
-                                      <input
-                                        type="text"
-                                        placeholder="e.g. 102.120.49129"
-                                        value={withdrawPhoneOrAccount}
-                                        onChange={(e) => setWithdrawPhoneOrAccount(e.target.value)}
-                                        className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900 font-mono"
-                                        required
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
-                                        Account Holder Name <span className="text-red-500">*</span>
-                                      </label>
-                                      <input
-                                        type="text"
-                                        placeholder="e.g. Md. Ashraful Islam"
-                                        value={withdrawAccountName}
-                                        onChange={(e) => setWithdrawAccountName(e.target.value)}
-                                        className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
-                                        required
-                                      />
-                                    </div>
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                  <div>
-                                    <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
-                                      Recipient {withdrawGatewayName} Phone Number <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                      type="text"
-                                      placeholder="e.g. 01712345678"
-                                      value={withdrawPhoneOrAccount}
-                                      onChange={(e) => setWithdrawPhoneOrAccount(e.target.value)}
-                                      className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
-                                      required
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
-                                      Account Holder Name (Optional)
-                                    </label>
-                                    <input
-                                      type="text"
-                                      placeholder="e.g. Ashraful"
-                                      value={withdrawAccountName}
-                                      onChange={(e) => setWithdrawAccountName(e.target.value)}
-                                      className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none focus:border-zinc-950 text-zinc-900"
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-
-                            <button
-                              type="submit"
-                              className="w-full bg-[#E52535] hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
-                            >
-                              {language === 'en' ? 'SUBMIT WITHDRAWAL REQUEST' : 'উইথড্র রিকোয়েস্ট পাঠান'}
-                            </button>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-medium">
+                          <div>
+                            <span className="text-zinc-500 block text-[10px] uppercase tracking-wider font-extrabold mb-1">
+                              {language === 'en' ? 'Requested Withdrawal' : 'অনুরোধকৃত উইথড্র'}
+                            </span>
+                            <span className="text-sm font-black text-zinc-900 dark:text-white">
+                              ${amt.toFixed(2)}
+                            </span>
                           </div>
-                        );
-                      })()}
-                    </form>
-                  )}
-
-                  {selectedWithdrawMethod === 'agent' && (
-                    <form onSubmit={handleAgentWithdrawSubmit} className="space-y-6">
-                      {/* Amount Input */}
-                      <div>
-                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
-                          {language === 'en' ? 'Enter Withdrawal Amount ($)' : 'উইথড্র পরিমাণ লিখুন ($)'}
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          step="any"
-                          value={bankWithdrawAmount}
-                          onChange={(e) => setBankWithdrawAmount(e.target.value)}
-                          className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-lg font-black outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all"
-                          placeholder="0.00"
-                          required
-                        />
-                      </div>
-
-                      {/* Agent Channels */}
-                      <div>
-                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-2">
-                          {language === 'en' ? '1. Connect with Local Agent via App:' : '১. লোকাল এজেন্টের সাথে যোগাযোগ করুন:'}
-                        </label>
-                        <div className="grid grid-cols-3 gap-3">
-                          {[
-                            { name: 'WhatsApp', color: 'bg-emerald-600', icon: '💬' },
-                            { name: 'IMO', color: 'bg-blue-600', icon: '📞' },
-                            { name: 'Telegram', color: 'bg-sky-500', icon: '✈️' }
-                          ].map((ch) => (
-                            <button
-                              key={ch.name}
-                              type="button"
-                              onClick={(e) => {
-                                setAgentWithdrawChannel(ch.name);
-                                handleAgentClick(ch.name as any, e);
-                              }}
-                              className={`py-3.5 text-center font-bold text-xs rounded-xl text-white ${ch.color} shadow-sm hover:opacity-90 active:scale-95 transition-all flex flex-col items-center justify-center gap-1`}
-                            >
-                              <span>{ch.icon}</span>
-                              <span className="text-[10px]">{ch.name} Agent</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="bg-zinc-50 border border-zinc-200 p-4 rounded-2xl space-y-4">
-                        <p className="text-xs text-zinc-600 font-medium italic">
-                          {language === 'en' 
-                            ? 'Contact an authorized local agent using the buttons above, share your account details, and enter your Agent Contact Reference below to initiate withdraw verification.' 
-                            : 'ওপরের বাটনে ক্লিক করে লোকাল এজেন্টের সাথে যোগাযোগ করুন, আপনার অ্যাকাউন্ট ডিটেইলস শেয়ার করুন এবং নিচে ভেরিফিকেশনের জন্য রেফারেন্স আইডি দিন।'}
-                        </p>
-
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
-                            {language === 'en' ? 'Selected Agent Channel' : 'সিলেক্টেড এজেন্ট চ্যানেল'}
-                          </label>
-                          <select
-                            value={agentWithdrawChannel}
-                            onChange={(e) => setAgentWithdrawChannel(e.target.value)}
-                            className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900"
-                          >
-                            <option value="WhatsApp">WhatsApp Agent</option>
-                            <option value="IMO">IMO Agent</option>
-                            <option value="Telegram">Telegram Agent</option>
-                          </select>
+                          <div>
+                            <span className="text-zinc-500 block text-[10px] uppercase tracking-wider font-extrabold mb-1">
+                              {language === 'en' ? `Commission Fee (${govFeePct}%)` : `কমিশন ফি (${govFeePct}%)`}
+                            </span>
+                            <span className={`text-sm font-black ${isInsufficient ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                              ${commissionNeeded.toFixed(2)}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-500 block text-[10px] uppercase tracking-wider font-extrabold mb-1">
+                              {language === 'en' ? 'Your Commission Balance' : 'আপনার কমিশন ব্যালেন্স'}
+                            </span>
+                            <span className="text-sm font-black text-zinc-900 dark:text-white">
+                              ${currentComm.toFixed(2)}
+                            </span>
+                          </div>
                         </div>
 
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
-                            {language === 'en' ? 'Agent Chat ID / Phone / Reference' : 'এজেন্ট চ্যাট আইডি / ফোন / রেফারেন্স'} <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="e.g. Chat reference with Agent"
-                            value={agentWithdrawReference}
-                            onChange={(e) => setAgentWithdrawReference(e.target.value)}
-                            className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 font-mono"
-                            required
-                          />
-                        </div>
+                        {isInsufficient ? (
+                          <div className="mt-4 pt-3 border-t border-rose-200/50 text-xs space-y-2 leading-relaxed">
+                            <p className="font-bold text-rose-700 dark:text-rose-300">
+                              {language === 'en'
+                                ? `⚠️ Insufficient Commission Balance! You need to add at least $${deficit.toFixed(2)} more to your Commission Balance to authorize this withdrawal.`
+                                : `⚠️ কমিশন ব্যালেন্স অপর্যাপ্ত! এই উইথড্র সম্পন্ন করতে আপনার কমিশন ব্যালেন্স-এ আরও অন্তত $${deficit.toFixed(2)} অ্যাড বা রিচার্জ করতে হবে।`}
+                            </p>
+                            <div className="pt-1">
+                              <button
+                                type="button"
+                                onClick={() => setActiveTab('Add Commission')}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-[10px] uppercase tracking-widest rounded-xl shadow-sm transition-all"
+                              >
+                                <span>🪙</span>
+                                {language === 'en' ? 'Add Commission Balance Now' : 'কমিশন ব্যালেন্স অ্যাড করুন'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-4 pt-3 border-t border-emerald-200/50 text-xs leading-relaxed">
+                            <p className="font-bold text-emerald-700 dark:text-emerald-400">
+                              {language === 'en'
+                                ? `✅ Perfect! You have enough Commission Balance. $${commissionNeeded.toFixed(2)} will be deducted upon submission.`
+                                : `✅ চমৎকার! আপনার পর্যাপ্ত কমিশন ব্যালেন্স রয়েছে। উইথড্র করার পর আপনার কমিশন ব্যালেন্স থেকে $${commissionNeeded.toFixed(2)} কেটে নেওয়া হবে।`}
+                            </p>
+                          </div>
+                        )}
                       </div>
+                    );
+                  })()}
 
-                      <button
-                        type="submit"
-                        className="w-full bg-zinc-950 hover:bg-zinc-900 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
-                      >
-                        {language === 'en' ? 'SUBMIT AGENT WITHDRAW REQUEST' : 'এজেন্ট উইথড্র রিকোয়েস্ট পাঠান'}
-                      </button>
-                    </form>
-                  )}
-
-                  {selectedWithdrawMethod === 'bank' && (
+                  {/* 1. USDT (TRC20) Form */}
+                  {selectedWithdrawMethod === 'crypto_usdt' && (
                     <form
                       onSubmit={async (e) => {
                         e.preventDefault();
@@ -2413,43 +2598,50 @@ export function Dashboard() {
                           return;
                         }
                         
+                        if (!declareWithdraw) {
+                          alert(language === 'en'
+                            ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal and understand fake requests lead to account suspension."
+                            : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
+                          return;
+                        }
+
                         const govFeePct = siteConfig.governmentFeePct ?? 10;
                         const commissionNeeded = amt * (govFeePct / 100);
                         const currentComm = user.commissionBalance || 0;
                         
                         if (currentComm < commissionNeeded) {
-                          alert(`⚠️ Insufficient Commission Balance! You need $${commissionNeeded.toFixed(2)} (${govFeePct}% of $${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have $${currentComm.toFixed(2)}.`);
+                          alert(`⚠️ Insufficient Commission Balance! You need USDT ${commissionNeeded.toFixed(2)} (${govFeePct}% of USDT ${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have USDT ${currentComm.toFixed(2)}.`);
                           return;
                         }
 
                         if (!withdrawPhoneOrAccount) {
-                          alert("Please enter your USDT (TRC20) Recipient Wallet Address.");
+                          alert("Please enter your Recipient USDT (TRC20) Wallet Address.");
                           return;
                         }
 
-                        const nextBalance = user.balance - amt;
+                        const nextBalance = parseFloat((user.balance - amt).toFixed(2));
                         const nextCommission = parseFloat((currentComm - commissionNeeded).toFixed(2));
                         await updateUserProfileFields(user.email, { balance: nextBalance, commissionBalance: nextCommission });
 
                         if (addWithdrawalRequest) {
-                          addWithdrawalRequest({
+                          await addWithdrawalRequest({
                             email: user.email,
                             amount: amt,
-                            bankName: 'USDT (TRC20)',
+                            bankName: 'Crypto USDT (TRC20)',
                             iban: withdrawPhoneOrAccount,
                             accountName: user.name,
                             commissionDeducted: commissionNeeded
                           });
                         }
 
-                        alert(`🎉 USDT Withdrawal request for $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+                        alert(`🎉 USDT Withdrawal request for USDT ${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission (USDT ${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
                         setWithdrawAmountInput('');
                         setWithdrawPhoneOrAccount('');
+                        setDeclareWithdraw(false);
                         setActiveTab('Transactions');
                       }}
-                      className="space-y-6"
+                      className="space-y-6 animate-fade-in"
                     >
-                      {/* Amount Input */}
                       <div>
                         <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
                           {language === 'en' ? 'Enter Withdrawal Amount ($)' : 'উইথড্র পরিমাণ লিখুন ($)'}
@@ -2460,17 +2652,44 @@ export function Dashboard() {
                           step="any"
                           value={withdrawAmountInput}
                           onChange={(e) => setWithdrawAmountInput(e.target.value)}
-                          className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-lg font-black outline-none focus:border-zinc-950 focus:bg-white text-zinc-900 transition-all"
+                          className="w-full bg-zinc-50 border border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800 p-3.5 rounded-xl text-lg font-black outline-none focus:border-zinc-950 dark:focus:border-amber-500 focus:bg-white text-zinc-900 dark:text-white transition-all"
                           placeholder="0.00"
                           required
                         />
+                        <p className="text-[10px] text-zinc-400 mt-1 font-semibold">
+                          {language === 'en' 
+                            ? `Minimum withdrawal amount: $${(siteConfig.minWithdrawalAmount ?? 10).toFixed(2)}` 
+                            : `সর্বনিম্ন উইথড্র পরিমাণ: $${(siteConfig.minWithdrawalAmount ?? 10).toFixed(2)}`}
+                        </p>
                       </div>
 
-                      {/* USDT fields */}
-                      <div className="bg-zinc-50 border border-zinc-200 p-5 rounded-2xl space-y-4">
-                        <div className="text-xs text-zinc-600 font-medium italic bg-white border border-zinc-150 p-4 rounded-xl">
-                          <p className="font-bold text-zinc-700 not-italic mb-1 uppercase tracking-wider text-[9px]">Instructions:</p>
-                          "Withdrawals via USDT (TRC20) are processed within 1-2 hours. Please double check your wallet address before submitting. A 10% commission fee is deducted from your commission balance."
+                      <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4">
+                        <div className="text-xs text-zinc-600 dark:text-zinc-400 font-medium bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-800 p-4 rounded-xl space-y-2">
+                          <p className="font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider text-[9px] flex items-center gap-1.5">
+                            <span>ℹ️</span> {language === 'en' ? 'USDT WITHDRAWAL INSTRUCTIONS' : 'ইউএসডিটি উইথড্র নির্দেশনা'}
+                          </p>
+                          <p className="text-zinc-600 dark:text-zinc-300">
+                            {language === 'en'
+                              ? "Withdrawals via USDT (TRC20) are processed securely within 1-2 hours. Please double check that you have pasted a valid TRC20 network address. Entering ERC20, BEP20, or other networks will result in permanent loss of funds."
+                              : "USDT (TRC20) এর মাধ্যমে উইথড্র ১ থেকে ২ ঘণ্টার মধ্যে সফলভাবে প্রসেস করা হয়। দয়া করে নিশ্চিত হোন যে আপনি একটি সঠিক TRC20 ওয়ালেট অ্যাড্রেস দিয়েছেন। অন্য কোনো নেটওয়ার্ক (যেমন ERC20, BEP20) ব্যবহার করলে আপনার ডলার চিরতরে হারিয়ে যেতে পারে।"}
+                          </p>
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                            {language === 'en'
+                              ? `⚠️ Make sure your Commission Balance has at least $${(parseFloat(withdrawAmountInput || '0') * (siteConfig.governmentFeePct ?? 10) / 100).toFixed(2)} to complete this request.`
+                              : `⚠️ নিশ্চিত করুন যে এই উইথড্র করার জন্য আপনার কমিশন ব্যালেন্স-এ অন্তত $${(parseFloat(withdrawAmountInput || '0') * (siteConfig.governmentFeePct ?? 10) / 100).toFixed(2)} রয়েছে।`}
+                          </p>
+                        </div>
+
+                        {/* Warning Banner */}
+                        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 p-4 rounded-xl text-left space-y-1">
+                          <p className="text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            ⚠️ Warning / সতর্কীকরণ
+                          </p>
+                          <p className="text-red-600 dark:text-red-400 text-[11px] leading-relaxed">
+                            {language === 'en'
+                              ? 'Entering false, invalid, or third-party addresses is strictly prohibited. Your withdrawal destination MUST be owned by you. Submitting fake or coordinated withdrawal requests will result in absolute account ban and forfeiture of all assets.'
+                              : 'ভুল, ভুল নেটওয়ার্কের (যেমন ERC20, BEP20) বা অন্যের অ্যাড্রেস দেওয়া কঠোরভাবে নিষিদ্ধ। উইথড্র অ্যাড্রেসটি অবশ্যই আপনার নিজের হতে হবে। কোনো ধরনের ভুয়া রিকোয়েস্ট সাবমিট করা হলে অ্যাকাউন্ট সাথে সাথে ব্যান করা হবে এবং ব্যালেন্স বাজেয়াপ্ত করা হবে।'}
+                          </p>
                         </div>
 
                         <div>
@@ -2482,17 +2701,545 @@ export function Dashboard() {
                             placeholder="e.g. T9yD14NjX..."
                             value={withdrawPhoneOrAccount}
                             onChange={(e) => setWithdrawPhoneOrAccount(e.target.value)}
-                            className="w-full bg-white border border-zinc-300 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 font-mono"
+                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 dark:text-white font-mono"
                             required
                           />
                         </div>
                       </div>
 
+                      {/* Declaration Checkbox */}
+                      <div className="flex items-start gap-3 bg-white p-3.5 border border-zinc-250 rounded-xl">
+                        <input
+                          id="declareWithdrawUSDT"
+                          type="checkbox"
+                          checked={declareWithdraw}
+                          onChange={(e) => setDeclareWithdraw(e.target.checked)}
+                          className="mt-1 h-4.5 w-4.5 rounded border-zinc-350 text-amber-600 focus:ring-amber-500 accent-amber-500 cursor-pointer"
+                        />
+                        <label htmlFor="declareWithdrawUSDT" className="text-[11px] text-zinc-600 font-bold select-none cursor-pointer leading-relaxed text-left">
+                          {language === 'en'
+                            ? 'I declare under full personal liability that I am the sole owner of this withdrawal wallet. I understand that submitting fake requests is fraud and leads to immediate account termination.'
+                            : 'আমি সম্পূর্ণ ব্যক্তিগত দায়িত্বে ঘোষণা করছি যে এই ওয়ালেট অ্যাড্রেসটির একমাত্র মালিক আমি নিজেই। আমি জানি যে ভুয়া রিকোয়েস্ট সাবমিট করা প্রতারণা এবং এর জন্য অ্যাকাউন্ট চিরতরে বাতিল করা হবে।'}
+                        </label>
+                      </div>
+
                       <button
                         type="submit"
-                        className="w-full bg-[#E52535] hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                        className="w-full bg-[#E1BC4A] hover:opacity-90 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
                       >
-                        {language === 'en' ? 'SUBMIT CRYPTO WITHDRAWAL REQUEST' : 'ক্রিপ্টো উইথড্র রিকোয়েস্ট পাঠান'}
+                        {language === 'en' ? 'SUBMIT USDT WITHDRAWAL REQUEST' : 'USDT উইথড্র রিকোয়েস্ট পাঠান'}
+                      </button>
+                    </form>
+                  )}
+
+                  {/* 2. LTC (Litecoin) Form */}
+                  {selectedWithdrawMethod === 'crypto_ltc' && (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!user) return;
+                        const amt = parseFloat(withdrawAmountInput);
+                        if (isNaN(amt) || amt <= 0) {
+                          alert("Please specify a valid withdrawal amount.");
+                          return;
+                        }
+                        const minWd = siteConfig.minWithdrawalAmount ?? 10;
+                        if (amt < minWd) {
+                          alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
+                          return;
+                        }
+                        if (user.balance < amt) {
+                          alert("Insufficient wallet balance for this withdrawal.");
+                          return;
+                        }
+
+                        if (!declareWithdraw) {
+                          alert(language === 'en'
+                            ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal and understand fake requests lead to account suspension."
+                            : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
+                          return;
+                        }
+                        
+                        const govFeePct = siteConfig.governmentFeePct ?? 10;
+                        const commissionNeeded = amt * (govFeePct / 100);
+                        const currentComm = user.commissionBalance || 0;
+                        
+                        if (currentComm < commissionNeeded) {
+                          alert(`⚠️ Insufficient Commission Balance! You need USDT ${commissionNeeded.toFixed(2)} (${govFeePct}% of USDT ${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have USDT ${currentComm.toFixed(2)}.`);
+                          return;
+                        }
+
+                        if (!withdrawPhoneOrAccount) {
+                          alert("Please enter your Recipient Litecoin (LTC) Wallet Address.");
+                          return;
+                        }
+
+                        const nextBalance = parseFloat((user.balance - amt).toFixed(2));
+                        const nextCommission = parseFloat((currentComm - commissionNeeded).toFixed(2));
+                        await updateUserProfileFields(user.email, { balance: nextBalance, commissionBalance: nextCommission });
+
+                        if (addWithdrawalRequest) {
+                          await addWithdrawalRequest({
+                            email: user.email,
+                            amount: amt,
+                            bankName: 'Crypto LTC (Litecoin)',
+                            iban: withdrawPhoneOrAccount,
+                            accountName: user.name,
+                            commissionDeducted: commissionNeeded
+                          });
+                        }
+
+                        alert(`🎉 LTC Withdrawal request for LTC equivalent of $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission (USDT ${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+                        setWithdrawAmountInput('');
+                        setWithdrawPhoneOrAccount('');
+                        setDeclareWithdraw(false);
+                        setActiveTab('Transactions');
+                      }}
+                      className="space-y-6 animate-fade-in"
+                    >
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
+                          {language === 'en' ? 'Enter Withdrawal Amount ($)' : 'উইথড্র পরিমাণ লিখুন ($)'}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="any"
+                          value={withdrawAmountInput}
+                          onChange={(e) => setWithdrawAmountInput(e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800 p-3.5 rounded-xl text-lg font-black outline-none focus:border-zinc-950 dark:focus:border-amber-500 focus:bg-white text-zinc-900 dark:text-white transition-all"
+                          placeholder="0.00"
+                          required
+                        />
+                        <p className="text-[10px] text-zinc-400 mt-1 font-semibold">
+                          {language === 'en' 
+                            ? `Minimum withdrawal amount: $${(siteConfig.minWithdrawalAmount ?? 10).toFixed(2)}` 
+                            : `সর্বনিম্ন উইথড্র পরিমাণ: $${(siteConfig.minWithdrawalAmount ?? 10).toFixed(2)}`}
+                        </p>
+                      </div>
+
+                      <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4">
+                        <div className="text-xs text-zinc-600 dark:text-zinc-400 font-medium bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-800 p-4 rounded-xl space-y-2">
+                          <p className="font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider text-[9px] flex items-center gap-1.5">
+                            <span>ℹ️</span> {language === 'en' ? 'LITECOIN WITHDRAWAL INSTRUCTIONS' : 'লাইটকয়েন উইথড্র নির্দেশনা'}
+                          </p>
+                          <p className="text-zinc-600 dark:text-zinc-300">
+                            {language === 'en'
+                              ? "Withdrawals via Litecoin (LTC) are processed within 1-2 hours. Ensure that you are providing a direct, valid Litecoin (LTC) recipient address. Market exchange rates will be automatically updated at the time of payout."
+                              : "Litecoin (LTC) উইথড্র ১ থেকে ২ ঘণ্টার মধ্যে সম্পন্ন হয়। আপনার ওয়ালেটটি সরাসরি লাইটকয়েন রিসিভ সমর্থন করে কিনা এবং অ্যাড্রেসটি সঠিক কিনা তা নিশ্চিত করুন। পেমেন্ট প্রসেসিংয়ের সময় লাইটকয়েনের বর্তমান মার্কেট রেট হিসাব করা হবে।"}
+                          </p>
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                            {language === 'en'
+                              ? `⚠️ Make sure your Commission Balance has at least $${(parseFloat(withdrawAmountInput || '0') * (siteConfig.governmentFeePct ?? 10) / 100).toFixed(2)} to complete this request.`
+                              : `⚠️ নিশ্চিত করুন যে এই উইথড্র করার জন্য আপনার কমিশন ব্যালেন্স-এ অন্তত $${(parseFloat(withdrawAmountInput || '0') * (siteConfig.governmentFeePct ?? 10) / 100).toFixed(2)} রয়েছে।`}
+                          </p>
+                        </div>
+
+                        {/* Warning Banner */}
+                        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 p-4 rounded-xl text-left space-y-1">
+                          <p className="text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            ⚠️ Warning / সতর্কীকরণ
+                          </p>
+                          <p className="text-red-600 dark:text-red-400 text-[11px] leading-relaxed">
+                            {language === 'en'
+                              ? 'Entering false, invalid, or third-party addresses is strictly prohibited. Your withdrawal destination MUST be owned by you. Submitting fake or coordinated withdrawal requests will result in absolute account ban and forfeiture of all assets.'
+                              : 'ভুল, ভুল নেটওয়ার্কের বা অন্যের অ্যাড্রেস দেওয়া কঠোরভাবে নিষিদ্ধ। উইথড্র অ্যাড্রেসটি অবশ্যই আপনার নিজের হতে হবে। কোনো ধরনের ভুয়া রিকোয়েস্ট সাবমিট করা হলে অ্যাকাউন্ট সাথে সাথে ব্যান করা হবে এবং ব্যালেন্স বাজেয়াপ্ত করা হবে।'}
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                            {language === 'en' ? 'Your Recipient Litecoin (LTC) Wallet Address' : 'আপনার প্রাপক লাইটকয়েন (LTC) ওয়ালেট অ্যাড্রেস'} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. LLyD14NjX..."
+                            value={withdrawPhoneOrAccount}
+                            onChange={(e) => setWithdrawPhoneOrAccount(e.target.value)}
+                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 dark:text-white font-mono"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {/* Declaration Checkbox */}
+                      <div className="flex items-start gap-3 bg-white p-3.5 border border-zinc-250 rounded-xl">
+                        <input
+                          id="declareWithdrawLTC"
+                          type="checkbox"
+                          checked={declareWithdraw}
+                          onChange={(e) => setDeclareWithdraw(e.target.checked)}
+                          className="mt-1 h-4.5 w-4.5 rounded border-zinc-350 text-amber-600 focus:ring-amber-500 accent-amber-500 cursor-pointer"
+                        />
+                        <label htmlFor="declareWithdrawLTC" className="text-[11px] text-zinc-600 font-bold select-none cursor-pointer leading-relaxed text-left">
+                          {language === 'en'
+                            ? 'I declare under full personal liability that I am the sole owner of this withdrawal wallet. I understand that submitting fake requests is fraud and leads to immediate account termination.'
+                            : 'আমি সম্পূর্ণ ব্যক্তিগত দায়িত্বে ঘোষণা করছি যে এই ওয়ালেট অ্যাড্রেসটির একমাত্র মালিক আমি নিজেই। আমি জানি যে ভুয়া রিকোয়েস্ট সাবমিট করা প্রতারণা এবং এর জন্য অ্যাকাউন্ট চিরতরে বাতিল করা হবে।'}
+                        </label>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full bg-[#E1BC4A] hover:opacity-90 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                      >
+                        {language === 'en' ? 'SUBMIT LTC WITHDRAWAL REQUEST' : 'LTC উইথড্র রিকোয়েস্ট পাঠান'}
+                      </button>
+                    </form>
+                  )}
+
+                  {/* 3. USD (Payeer/PM) Form */}
+                  {selectedWithdrawMethod === 'crypto_usd' && (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!user) return;
+                        const amt = parseFloat(withdrawAmountInput);
+                        if (isNaN(amt) || amt <= 0) {
+                          alert("Please specify a valid withdrawal amount.");
+                          return;
+                        }
+                        const minWd = siteConfig.minWithdrawalAmount ?? 10;
+                        if (amt < minWd) {
+                          alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
+                          return;
+                        }
+                        if (user.balance < amt) {
+                          alert("Insufficient wallet balance for this withdrawal.");
+                          return;
+                        }
+
+                        if (!declareWithdraw) {
+                          alert(language === 'en'
+                            ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal and understand fake requests lead to account suspension."
+                            : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
+                          return;
+                        }
+                        
+                        const govFeePct = siteConfig.governmentFeePct ?? 10;
+                        const commissionNeeded = amt * (govFeePct / 100);
+                        const currentComm = user.commissionBalance || 0;
+                        
+                        if (currentComm < commissionNeeded) {
+                          alert(`⚠️ Insufficient Commission Balance! You need USDT ${commissionNeeded.toFixed(2)} (${govFeePct}% of USDT ${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have USDT ${currentComm.toFixed(2)}.`);
+                          return;
+                        }
+
+                        if (!withdrawPhoneOrAccount) {
+                          alert("Please enter your Recipient USD Account ID.");
+                          return;
+                        }
+
+                        const nextBalance = parseFloat((user.balance - amt).toFixed(2));
+                        const nextCommission = parseFloat((currentComm - commissionNeeded).toFixed(2));
+                        await updateUserProfileFields(user.email, { balance: nextBalance, commissionBalance: nextCommission });
+
+                        if (addWithdrawalRequest) {
+                          await addWithdrawalRequest({
+                            email: user.email,
+                            amount: amt,
+                            bankName: 'Crypto USD (PM/Payeer)',
+                            iban: withdrawPhoneOrAccount,
+                            accountName: user.name,
+                            commissionDeducted: commissionNeeded
+                          });
+                        }
+
+                        alert(`🎉 USD Withdrawal request for $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission (USDT ${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+                        setWithdrawAmountInput('');
+                        setWithdrawPhoneOrAccount('');
+                        setDeclareWithdraw(false);
+                        setActiveTab('Transactions');
+                      }}
+                      className="space-y-6 animate-fade-in"
+                    >
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
+                          {language === 'en' ? 'Enter Withdrawal Amount ($)' : 'উইথড্র পরিমাণ লিখুন ($)'}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="any"
+                          value={withdrawAmountInput}
+                          onChange={(e) => setWithdrawAmountInput(e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800 p-3.5 rounded-xl text-lg font-black outline-none focus:border-zinc-950 dark:focus:border-amber-500 focus:bg-white text-zinc-900 dark:text-white transition-all"
+                          placeholder="0.00"
+                          required
+                        />
+                        <p className="text-[10px] text-zinc-400 mt-1 font-semibold">
+                          {language === 'en' 
+                            ? `Minimum withdrawal amount: $${(siteConfig.minWithdrawalAmount ?? 10).toFixed(2)}` 
+                            : `সর্বনিম্ন উইথড্র পরিমাণ: $${(siteConfig.minWithdrawalAmount ?? 10).toFixed(2)}`}
+                        </p>
+                      </div>
+
+                      <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4">
+                        <div className="text-xs text-zinc-600 dark:text-zinc-400 font-medium bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-800 p-4 rounded-xl space-y-2">
+                          <p className="font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider text-[9px] flex items-center gap-1.5">
+                            <span>ℹ️</span> {language === 'en' ? 'USD (PAYEER/PM) WITHDRAWAL INSTRUCTIONS' : 'পেয়ার/পিএম উইথড্র নির্দেশনা'}
+                          </p>
+                          <p className="text-zinc-600 dark:text-zinc-300">
+                            {language === 'en'
+                              ? "Withdrawals via USD (Perfect Money or Payeer Account) are completed within 1-2 hours. Payeer account IDs usually start with 'P' (e.g. P10294827), and Perfect Money account IDs start with 'U' (e.g. U1827492)."
+                              : "Perfect Money বা Payeer USD উইথড্র সাধারণত ১ থেকে ২ ঘণ্টার মধ্যে সম্পন্ন হয়ে থাকে। Payeer আইডি সাধারণত 'P' (যেমন: P10294827) এবং Perfect Money আইডি 'U' (যেমন: U1827492) দিয়ে শুরু হয়ে থাকে। সঠিক আইডি প্রদান নিশ্চিত করুন।"}
+                          </p>
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                            {language === 'en'
+                              ? `⚠️ Make sure your Commission Balance has at least $${(parseFloat(withdrawAmountInput || '0') * (siteConfig.governmentFeePct ?? 10) / 100).toFixed(2)} to complete this request.`
+                              : `⚠️ নিশ্চিত করুন যে এই উইথড্র করার জন্য আপনার কমিশন ব্যালেন্স-এ অন্তত $${(parseFloat(withdrawAmountInput || '0') * (siteConfig.governmentFeePct ?? 10) / 100).toFixed(2)} রয়েছে।`}
+                          </p>
+                        </div>
+
+                        {/* Warning Banner */}
+                        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 p-4 rounded-xl text-left space-y-1">
+                          <p className="text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            ⚠️ Warning / সতর্কীকরণ
+                          </p>
+                          <p className="text-red-600 dark:text-red-400 text-[11px] leading-relaxed">
+                            {language === 'en'
+                              ? 'Entering false, invalid, or third-party addresses is strictly prohibited. Your withdrawal destination MUST be owned by you. Submitting fake or coordinated withdrawal requests will result in absolute account ban and forfeiture of all assets.'
+                              : 'ভুল, অসত্য বা অন্যের অ্যাকাউন্ট আইডি দেওয়া কঠোরভাবে নিষিদ্ধ। উইথড্র অ্যাকাউন্টটি অবশ্যই আপনার নিজের হতে হবে। কোনো ধরনের ভুয়া রিকোয়েস্ট সাবমিট করা হলে অ্যাকাউন্ট সাথে সাথে ব্যান করা হবে এবং ব্যালেন্স বাজেয়াপ্ত করা হবে।'}
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                            {language === 'en' ? 'Your Recipient Perfect Money (U...) or Payeer (P...) Account ID' : 'আপনার প্রাপক Perfect Money (U...) অথবা Payeer (P...) অ্যাকাউন্ট আইডি'} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. P10294827 or U1827492"
+                            value={withdrawPhoneOrAccount}
+                            onChange={(e) => setWithdrawPhoneOrAccount(e.target.value)}
+                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 dark:text-white font-mono"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {/* Declaration Checkbox */}
+                      <div className="flex items-start gap-3 bg-white p-3.5 border border-zinc-250 rounded-xl">
+                        <input
+                          id="declareWithdrawUSD"
+                          type="checkbox"
+                          checked={declareWithdraw}
+                          onChange={(e) => setDeclareWithdraw(e.target.checked)}
+                          className="mt-1 h-4.5 w-4.5 rounded border-zinc-350 text-amber-600 focus:ring-amber-500 accent-amber-500 cursor-pointer"
+                        />
+                        <label htmlFor="declareWithdrawUSD" className="text-[11px] text-zinc-600 font-bold select-none cursor-pointer leading-relaxed text-left">
+                          {language === 'en'
+                            ? 'I declare under full personal liability that I am the sole owner of this withdrawal account. I understand that submitting fake requests is fraud and leads to immediate account termination.'
+                            : 'আমি সম্পূর্ণ ব্যক্তিগত দায়িত্বে ঘোষণা করছি যে এই অ্যাকাউন্ট অ্যাড্রেসটির একমাত্র মালিক আমি নিজেই। আমি জানি যে ভুয়া রিকোয়েস্ট সাবমিট করা প্রতারণা এবং এর জন্য অ্যাকাউন্ট চিরতরে বাতিল করা হবে।'}
+                        </label>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full bg-[#E1BC4A] hover:opacity-90 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                      >
+                        {language === 'en' ? 'SUBMIT USD WITHDRAWAL REQUEST' : 'USD উইথড্র রিকোয়েস্ট পাঠান'}
+                      </button>
+                    </form>
+                  )}
+
+                  {/* 4. Direct Bank Transfer Form */}
+                  {selectedWithdrawMethod === 'bank' && (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!user) return;
+                        const amt = parseFloat(withdrawAmountInput);
+                        if (isNaN(amt) || amt <= 0) {
+                          alert("Please specify a valid withdrawal amount.");
+                          return;
+                        }
+                        const minWd = siteConfig.minWithdrawalAmount ?? 10;
+                        if (amt < minWd) {
+                          alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
+                          return;
+                        }
+                        if (user.balance < amt) {
+                          alert("Insufficient wallet balance for this withdrawal.");
+                          return;
+                        }
+
+                        if (!declareWithdraw) {
+                          alert(language === 'en'
+                            ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal and understand fake requests lead to account suspension."
+                            : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
+                          return;
+                        }
+                        
+                        const govFeePct = siteConfig.governmentFeePct ?? 10;
+                        const commissionNeeded = amt * (govFeePct / 100);
+                        const currentComm = user.commissionBalance || 0;
+                        
+                        if (currentComm < commissionNeeded) {
+                          alert(`⚠️ Insufficient Commission Balance! You need USDT ${commissionNeeded.toFixed(2)} (${govFeePct}% of USDT ${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have USDT ${currentComm.toFixed(2)}.`);
+                          return;
+                        }
+
+                        if (!withdrawBankName || !withdrawBranch || !withdrawPhoneOrAccount || !withdrawAccountName) {
+                          alert("Please fill in all required bank fields.");
+                          return;
+                        }
+
+                        const nextBalance = parseFloat((user.balance - amt).toFixed(2));
+                        const nextCommission = parseFloat((currentComm - commissionNeeded).toFixed(2));
+                        await updateUserProfileFields(user.email, { balance: nextBalance, commissionBalance: nextCommission });
+
+                        if (addWithdrawalRequest) {
+                          await addWithdrawalRequest({
+                            email: user.email,
+                            amount: amt,
+                            bankName: `Bank (${withdrawBankName}, Branch: ${withdrawBranch})`,
+                            iban: withdrawPhoneOrAccount,
+                            accountName: withdrawAccountName,
+                            commissionDeducted: commissionNeeded
+                          });
+                        }
+
+                        alert(`🎉 Bank Withdrawal request of $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission (USDT ${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+                        setWithdrawAmountInput('');
+                        setWithdrawBankName('');
+                        setWithdrawBranch('');
+                        setWithdrawPhoneOrAccount('');
+                        setWithdrawAccountName('');
+                        setDeclareWithdraw(false);
+                        setActiveTab('Transactions');
+                      }}
+                      className="space-y-6 animate-fade-in"
+                    >
+                      <div>
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">
+                          {language === 'en' ? 'Enter Withdrawal Amount ($)' : 'উইথড্র পরিমাণ লিখুন ($)'}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="any"
+                          value={withdrawAmountInput}
+                          onChange={(e) => setWithdrawAmountInput(e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800 p-3.5 rounded-xl text-lg font-black outline-none focus:border-zinc-950 dark:focus:border-amber-500 focus:bg-white text-zinc-900 dark:text-white transition-all"
+                          placeholder="0.00"
+                          required
+                        />
+                        <p className="text-[10px] text-zinc-400 mt-1 font-semibold">
+                          {language === 'en' 
+                            ? `Minimum withdrawal amount: $${(siteConfig.minWithdrawalAmount ?? 10).toFixed(2)}` 
+                            : `সর্বনিম্ন উইথড্র পরিমাণ: $${(siteConfig.minWithdrawalAmount ?? 10).toFixed(2)}`}
+                        </p>
+                      </div>
+
+                      <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4">
+                        <div className="text-xs text-zinc-600 dark:text-zinc-400 font-medium bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-800 p-4 rounded-xl space-y-2">
+                          <p className="font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider text-[9px] flex items-center gap-1.5">
+                            <span>ℹ️</span> {language === 'en' ? 'BANK TRANSFER WITHDRAWAL INSTRUCTIONS' : 'ব্যাংক উইথড্র নির্দেশনা'}
+                          </p>
+                          <p className="text-zinc-600 dark:text-zinc-300">
+                            {language === 'en'
+                              ? "Withdrawals via Direct Bank Transfer are processed via local electronic channels within 1-2 business days. Please double check that you have filled in the Bank Name, Branch Name, Account Number, and Account Holder Name exactly as printed on your cheque book."
+                              : "সরাসরি ব্যাংক ট্রান্সফার স্থানীয় ব্যাংকিং চ্যানেলের মাধ্যমে ১ থেকে ২ কর্মদিবসের মধ্যে প্রসেস হয়। অনুগ্রহ করে ব্যাংক নাম, ব্রাঞ্চ নাম, সঠিক অ্যাকাউন্ট নম্বর এবং অ্যাকাউন্ট হোল্ডারের নাম চেক বইয়ের তথ্যের সাথে মিলিয়ে নিখুঁতভাবে টাইপ করুন।"}
+                          </p>
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                            {language === 'en'
+                              ? `⚠️ Make sure your Commission Balance has at least $${(parseFloat(withdrawAmountInput || '0') * (siteConfig.governmentFeePct ?? 10) / 100).toFixed(2)} to complete this request.`
+                              : `⚠️ নিশ্চিত করুন যে এই উইথড্র করার জন্য আপনার কমিশন ব্যালেন্স-এ অন্তত $${(parseFloat(withdrawAmountInput || '0') * (siteConfig.governmentFeePct ?? 10) / 100).toFixed(2)} রয়েছে।`}
+                          </p>
+                        </div>
+
+                        {/* Warning Banner */}
+                        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 p-4 rounded-xl text-left space-y-1">
+                          <p className="text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            ⚠️ Warning / সতর্কীকরণ
+                          </p>
+                          <p className="text-red-600 dark:text-red-400 text-[11px] leading-relaxed">
+                            {language === 'en'
+                              ? 'Entering false, invalid, or third-party bank accounts is strictly prohibited. Your withdrawal destination MUST be owned by you. Submitting fake or coordinated withdrawal requests will result in absolute account ban and forfeiture of all assets.'
+                              : 'ভুল, অসত্য বা অন্যের ব্যাংক অ্যাকাউন্ট দেওয়া কঠোরভাবে নিষিদ্ধ। উইথড্র ব্যাংক অ্যাকাউন্টটি অবশ্যই আপনার নিজের হতে হবে। কোনো ধরনের ভুয়া রিকোয়েস্ট সাবমিট করা হলে অ্যাকাউন্ট সাথে সাথে ব্যান করা হবে এবং ব্যালেন্স বাজেয়াপ্ত করা হবে।'}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                              Bank Name <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Dutch-Bangla Bank"
+                              value={withdrawBankName}
+                              onChange={(e) => setWithdrawBankName(e.target.value)}
+                              className="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 dark:text-white"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                              Branch Name <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Motijheel Branch"
+                              value={withdrawBranch}
+                              onChange={(e) => setWithdrawBranch(e.target.value)}
+                              className="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 dark:text-white"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                              Account Number <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. 102.120.49129"
+                              value={withdrawPhoneOrAccount}
+                              onChange={(e) => setWithdrawPhoneOrAccount(e.target.value)}
+                              className="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 dark:text-white font-mono"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 block mb-1">
+                              Account Holder Name <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Md. Ashraful Islam"
+                              value={withdrawAccountName}
+                              onChange={(e) => setWithdrawAccountName(e.target.value)}
+                              className="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 p-3 rounded-xl text-xs font-bold outline-none text-zinc-900 dark:text-white"
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Declaration Checkbox */}
+                      <div className="flex items-start gap-3 bg-white p-3.5 border border-zinc-250 rounded-xl">
+                        <input
+                          id="declareWithdrawBank"
+                          type="checkbox"
+                          checked={declareWithdraw}
+                          onChange={(e) => setDeclareWithdraw(e.target.checked)}
+                          className="mt-1 h-4.5 w-4.5 rounded border-zinc-350 text-amber-600 focus:ring-amber-500 accent-amber-500 cursor-pointer"
+                        />
+                        <label htmlFor="declareWithdrawBank" className="text-[11px] text-zinc-600 font-bold select-none cursor-pointer leading-relaxed text-left">
+                          {language === 'en'
+                            ? 'I declare under full personal liability that I am the sole owner of this bank account. I understand that submitting fake requests is fraud and leads to immediate account termination.'
+                            : 'আমি সম্পূর্ণ ব্যক্তিগত দায়িত্বে ঘোষণা করছি যে এই ব্যাংক অ্যাকাউন্টটির একমাত্র মালিক আমি নিজেই। আমি জানি যে ভুয়া রিকোয়েস্ট সাবমিট করা প্রতারণা এবং এর জন্য অ্যাকাউন্ট চিরতরে বাতিল করা হবে।'}
+                        </label>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full bg-[#E1BC4A] hover:opacity-90 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                      >
+                        {language === 'en' ? 'SUBMIT BANK WITHDRAWAL REQUEST' : 'ব্যাংক উইথড্র রিকোয়েস্ট পাঠান'}
                       </button>
                     </form>
                   )}
@@ -2503,14 +3250,14 @@ export function Dashboard() {
             {/* TAB: Add Commission */}
             {activeTab === 'Add Commission' && (
               <div className="space-y-6">
-                <div className="bg-white border border-emerald-200 rounded-3xl p-6 sm:p-8 shadow-sm text-left">
-                  <h3 className="text-lg font-black text-emerald-950 uppercase tracking-widest mb-2 flex items-center gap-2 border-b pb-4">
+                <div className="bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-sm text-left">
+                  <h3 className="text-lg font-black text-emerald-950 dark:text-white uppercase tracking-widest mb-2 flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-4">
                     <span className="text-emerald-600">🪙</span> 
                     {language === 'en' ? 'Add Commission Balance' : 'কমিশন ব্যালেন্স অ্যাড করুন'}
                   </h3>
                   
-                  <div className="bg-emerald-50 border border-emerald-150 p-4 rounded-2xl text-xs text-emerald-900 leading-relaxed mb-6">
-                    <p className="font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5 text-emerald-950">
+                  <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-150 dark:border-emerald-900/30 p-4 rounded-2xl text-xs text-emerald-900 dark:text-emerald-200 leading-relaxed mb-6">
+                    <p className="font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5 text-emerald-950 dark:text-emerald-100">
                       💡 {language === 'en' ? 'Why pay commission?' : 'কেন কমিশন পে করবেন?'}
                     </p>
                     <p>
@@ -2535,7 +3282,7 @@ export function Dashboard() {
                             className={`py-3.5 px-2 text-center font-bold text-xs rounded-xl border transition-all ${
                               commissionDepositAmount === val
                                 ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
-                                : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'
+                                : 'bg-white dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-850'
                             }`}
                           >
                             ${parseFloat(val).toLocaleString()}
@@ -2565,21 +3312,21 @@ export function Dashboard() {
                       </label>
                       <select
                         value={commissionGatewayName}
-                        onChange={(e) => setCommissionGatewayName(e.target.value as any)}
+                        onChange={(e) => setCommissionGatewayName(e.target.value)}
                         className="w-full bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl text-sm font-semibold outline-none focus:border-emerald-600 focus:bg-white text-zinc-900 transition-all cursor-pointer"
                       >
-                        <option value="bKash">bKash / বিকাশ</option>
-                        <option value="Nagad">Nagad / নগদ</option>
-                        <option value="Rocket">Rocket / রকেট</option>
-                        <option value="Upay">Upay / উপায়</option>
-                        <option value="Bank">Bank / ব্যাংক</option>
+                        {(siteConfig.paymentGateways || [])
+                          .filter(g => g.enabled && (g.type === 'both' || g.type === 'deposit'))
+                          .map(g => (
+                            <option key={g.id} value={g.name}>{g.name}</option>
+                          ))}
                       </select>
                     </div>
 
                     {/* Gateway Instructions & Fields */}
                     {(() => {
                       const matched = (siteConfig.paymentGateways || []).find(g => 
-                        g.enabled && g.name.toLowerCase().replace(/\s/g, '').includes(commissionGatewayName.toLowerCase())
+                        g.enabled && g.name === commissionGatewayName
                       );
 
                       return (
@@ -2607,6 +3354,18 @@ export function Dashboard() {
                                     " {matched.instructions} "
                                   </p>
                                 )}
+                              </div>
+
+                              {/* Warning Banner */}
+                              <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 p-4 rounded-xl text-left space-y-1">
+                                <p className="text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                                  ⚠️ Warning / সতর্কীকরণ
+                                </p>
+                                <p className="text-red-600 dark:text-red-400 text-[11px] leading-relaxed">
+                                  {language === 'en'
+                                    ? 'Submitting false, inaccurate, or reused transaction information is strictly forbidden. Fake commission deposit requests are automatically flagged. Any attempt to exploit or upload fake details will lead to immediate, irreversible account ban and confiscation of all assets.'
+                                    : 'ভুয়া, অসত্য বা পূর্বে ব্যবহৃত পেমেন্ট তথ্য সাবমিট করা কঠোরভাবে নিষিদ্ধ। কৃত্রিম বা ভুয়া কমিশন ডিপোজিট রিকোয়েস্ট স্বয়ংক্রিয়ভাবে ব্লক করা হবে। কোনো অ্যাকাউন্ট থেকে ভুয়া ট্রানজেকশন সাবমিট করার চেষ্টা করা হলে অ্যাকাউন্ট চিরতরে ব্যান করা হবে এবং ব্যালেন্স বাজেয়াপ্ত করা হবে।'}
+                                </p>
                               </div>
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2646,6 +3405,23 @@ export function Dashboard() {
                             </div>
                           )}
 
+                          {matched && (
+                            <div className="flex items-start gap-3 bg-white p-3.5 border border-zinc-250 rounded-xl">
+                              <input
+                                id="declareDepositCommission"
+                                type="checkbox"
+                                checked={declareCommission}
+                                onChange={(e) => setDeclareCommission(e.target.checked)}
+                                className="mt-1 h-4.5 w-4.5 rounded border-zinc-350 text-emerald-600 focus:ring-emerald-500 accent-emerald-500 cursor-pointer"
+                              />
+                              <label htmlFor="declareDepositCommission" className="text-[11px] text-zinc-600 font-bold select-none cursor-pointer leading-relaxed text-left">
+                                {language === 'en'
+                                  ? 'I declare under full personal liability that I have sent the correct commission amount from my own wallet/account and have specified the correct transaction info. I understand that submitting fake requests is fraud.'
+                                  : 'আমি সম্পূর্ণ ব্যক্তিগত দায়িত্বে ঘোষণা করছি যে আমি আমার নিজের ওয়ালেট থেকে সঠিক পরিমাণ টাকা পাঠিয়েছি এবং সঠিক ট্রানজেকশন তথ্য প্রদান করেছি। আমি জানি যে ভুয়া রিকোয়েস্ট সাবমিট করা একটি প্রতারণা।'}
+                              </label>
+                            </div>
+                          )}
+
                           <button
                             type="submit"
                             disabled={!matched}
@@ -2679,14 +3455,14 @@ export function Dashboard() {
                         <div key={t.id} className="border border-zinc-200 rounded-xl p-5 hover:bg-zinc-50 transition-colors">
                           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs font-semibold">
                             <div>
-                              <span className="text-[10.5px] font-black text-[#0F0D24] uppercase block tracking-wide">
+                              <span className="text-[10.5px] font-black text-white uppercase block tracking-wide">
                                 Invoice #ED-{t.id.toString().substring(0,6).toUpperCase()}
                               </span>
                               <span className="text-[10px] text-zinc-400 mt-0.5 block">{t.purchaseDate}</span>
                             </div>
 
                             <div className="text-right sm:text-right space-y-1">
-                              <span className="font-mono text-xs font-black text-[#0F0D24] block">${t.price.toFixed(2)}</span>
+                              <span className="font-mono text-xs font-black text-white block">${t.price.toFixed(2)}</span>
                               <span className="bg-green-150 bg-green-50 text-green-700 text-[9px] font-extrabold tracking-wider px-2 py-0.5 rounded border border-green-200">
                                 SUCCESSFUL
                               </span>
@@ -2714,7 +3490,7 @@ export function Dashboard() {
                       <button
                         type="button"
                         onClick={() => navigate('/')}
-                        className="bg-[#0F0D24] text-white hover:bg-[#1E1A3C] font-black text-xs uppercase px-8 py-3.5 rounded-xl tracking-wider select-none leading-none shadow-md transition-all active:scale-95"
+                        className="bg-[#2C3B69] text-white hover:bg-[#1E1A3C] font-black text-xs uppercase px-8 py-3.5 rounded-xl tracking-wider select-none leading-none shadow-md transition-all active:scale-95"
                       >
                         Buy Now
                       </button>
@@ -2791,32 +3567,32 @@ export function Dashboard() {
             {/* TAB 7: Transactions */}
             {activeTab === 'Transactions' && (
               <div className="space-y-6">
-                <div className="bg-white border border-zinc-200/50 rounded-2xl p-6">
-                  <h3 className="text-sm font-black text-zinc-900 uppercase tracking-widest mb-6">
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
+                  <h3 className="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-widest mb-6">
                     Audit Ledger Transactions
                   </h3>
 
-                  <div className="border border-zinc-200 rounded-xl overflow-hidden font-mono text-[11px]">
-                    <div className="grid grid-cols-3 bg-zinc-900 text-zinc-400 p-3.5 uppercase font-bold tracking-wider">
+                  <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden font-mono text-[11px]">
+                    <div className="grid grid-cols-3 bg-zinc-900 dark:bg-zinc-950 text-zinc-400 p-3.5 uppercase font-bold tracking-wider">
                       <span>Description</span>
                       <span className="text-center">Status</span>
                       <span className="text-right">Value</span>
                     </div>
 
-                    <div className="divide-y divide-zinc-150">
+                    <div className="divide-y divide-zinc-150 dark:divide-zinc-800">
                       {/* Real Deposits Ledger */}
                       {depositRequests.filter(d => d.email === user.email).map((dep) => (
-                        <div key={dep.id} className="grid grid-cols-3 p-3.5 hover:bg-zinc-55 font-semibold">
-                          <span className="text-zinc-800">Deposit: {dep.gateway}</span>
+                        <div key={dep.id} className="grid grid-cols-3 p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 font-semibold">
+                          <span className="text-zinc-800 dark:text-zinc-200">Deposit: {dep.gateway}</span>
                           <span className="text-center">
                             <span className={`px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase ${
-                              dep.status === 'Approved' ? 'bg-green-50 text-green-600' :
-                              dep.status === 'Pending' ? 'bg-yellow-50 text-yellow-600' : 'bg-red-50 text-red-600'
+                              dep.status === 'Approved' ? 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400' :
+                              dep.status === 'Pending' ? 'bg-yellow-50 dark:bg-yellow-950/30 text-yellow-600 dark:text-yellow-400' : 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400'
                             }`}>
                               {dep.status}
                             </span>
                           </span>
-                          <span className={`text-right ${dep.status === 'Approved' ? 'text-green-600' : 'text-zinc-400'}`}>
+                          <span className={`text-right ${dep.status === 'Approved' ? 'text-green-600' : 'text-zinc-400 dark:text-zinc-500'}`}>
                             +${dep.amount.toFixed(2)}
                           </span>
                         </div>
@@ -2824,12 +3600,12 @@ export function Dashboard() {
 
                       {/* Real Withdrawals Ledger */}
                       {withdrawalRequests.filter(w => w.email === user.email).map((wd) => (
-                        <div key={wd.id} className="grid grid-cols-3 p-3.5 hover:bg-zinc-55 font-semibold">
-                          <span className="text-zinc-800">Withdraw: {wd.bankName}</span>
+                        <div key={wd.id} className="grid grid-cols-3 p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 font-semibold">
+                          <span className="text-zinc-800 dark:text-zinc-200">Withdraw: {wd.bankName}</span>
                           <span className="text-center">
                             <span className={`px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase ${
-                              wd.status === 'Approved' ? 'bg-zinc-100 text-zinc-650' :
-                              wd.status === 'Pending' ? 'bg-yellow-50 text-yellow-600' : 'bg-red-50 text-red-600'
+                              wd.status === 'Approved' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-650 dark:text-zinc-300' :
+                              wd.status === 'Pending' ? 'bg-yellow-50 dark:bg-yellow-950/30 text-yellow-600 dark:text-yellow-400' : 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400'
                             }`}>
                               {wd.status}
                             </span>
@@ -2841,10 +3617,10 @@ export function Dashboard() {
                       ))}
 
                       {userTickets.map((t) => (
-                        <div key={t.id} className="grid grid-cols-3 p-3.5 hover:bg-zinc-55 font-semibold">
-                          <span className="text-zinc-800">Buy Ticket {t.gameName}</span>
-                          <span className="text-center"><span className="bg-zinc-100 text-zinc-650 px-1.5 py-0.5 rounded text-[9px]">DEBITED</span></span>
-                          <span className="text-right text-red-650 text-red-600">-${t.price.toFixed(2)}</span>
+                        <div key={t.id} className="grid grid-cols-3 p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 font-semibold">
+                          <span className="text-zinc-800 dark:text-zinc-200">Buy Ticket {t.gameName}</span>
+                          <span className="text-center"><span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-650 dark:text-zinc-300 px-1.5 py-0.5 rounded text-[9px]">DEBITED</span></span>
+                          <span className="text-right text-red-600">-${t.price.toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
@@ -2870,10 +3646,10 @@ export function Dashboard() {
                         type="checkbox"
                         checked={comEmail}
                         onChange={(e) => setComEmail(e.target.checked)}
-                        className="w-4 h-4 text-red-650 mt-0.5 rounded accent-[#E52535]"
+                        className="w-4 h-4 text-red-650 mt-0.5 rounded accent-[#E1BC4A]"
                       />
                       <div>
-                        <span className="text-xs font-extrabold text-[#0F0D24] block uppercase">Email Result alerts</span>
+                        <span className="text-xs font-extrabold text-white block uppercase">Email Result alerts</span>
                         <p className="text-zinc-400 text-[10.5px] mt-0.5 font-medium">Get lucky tickets payouts verification delivered directly to your register email inbox.</p>
                       </div>
                     </label>
@@ -2883,10 +3659,10 @@ export function Dashboard() {
                         type="checkbox"
                         checked={comSms}
                         onChange={(e) => setComSms(e.target.checked)}
-                        className="w-4 h-4 text-red-650 mt-0.5 rounded accent-[#E52535]"
+                        className="w-4 h-4 text-red-650 mt-0.5 rounded accent-[#E1BC4A]"
                       />
                       <div>
-                        <span className="text-xs font-extrabold text-[#0F0D24] block uppercase">SMS Notification bulletins</span>
+                        <span className="text-xs font-extrabold text-white block uppercase">SMS Notification bulletins</span>
                         <p className="text-zinc-400 text-[10.5px] mt-0.5 font-medium">Receive direct SMS notification bulletins moments after the weekly drawing halts.</p>
                       </div>
                     </label>
@@ -2896,10 +3672,10 @@ export function Dashboard() {
                         type="checkbox"
                         checked={comNewsletter}
                         onChange={(e) => setComNewsletter(e.target.checked)}
-                        className="w-4 h-4 text-red-650 mt-0.5 rounded accent-[#E52535]"
+                        className="w-4 h-4 text-red-650 mt-0.5 rounded accent-[#E1BC4A]"
                       />
                       <div>
-                        <span className="text-xs font-extrabold text-[#0F0D24] block uppercase">Golobal Lottery VIP newsletter</span>
+                        <span className="text-xs font-extrabold text-white block uppercase">Golobal Lottery VIP newsletter</span>
                         <p className="text-zinc-400 text-[10.5px] mt-0.5 font-medium">Be the first to know about grand prize resets, promotional voucher rules, and charity reports.</p>
                       </div>
                     </label>
@@ -2950,7 +3726,7 @@ export function Dashboard() {
 
                     <button
                       type="submit"
-                      className="w-full bg-[#0F0D24] text-white font-black text-xs uppercase tracking-widest py-3 rounded-xl hover:bg-zinc-800 transition-all font-sans"
+                      className="w-full bg-[#2C3B69] text-white font-black text-xs uppercase tracking-widest py-3 rounded-xl hover:bg-zinc-800 transition-all font-sans"
                     >
                       Update Password
                     </button>
@@ -2963,7 +3739,7 @@ export function Dashboard() {
             {activeTab === 'Play Responsibly' && (
               <div className="space-y-6 text-zinc-800">
                 <div className="bg-white border border-zinc-200/50 rounded-2xl p-6 relative">
-                  <div className="flex items-center gap-3 mb-4 text-[#E52535]">
+                  <div className="flex items-center gap-3 mb-4 text-[#E1BC4A]">
                     <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
                     <h3 className="text-sm font-black text-zinc-900 uppercase tracking-widest">Responsible Play Council</h3>
                   </div>
@@ -2975,7 +3751,7 @@ export function Dashboard() {
                   <div className="space-y-4">
                     <div className="bg-zinc-55 border p-4 rounded-xl flex justify-between items-center bg-gray-50">
                       <div>
-                        <span className="text-xs font-black block text-[#0F0D24]">Set Weekly Deposit Limit</span>
+                        <span className="text-xs font-black block text-white">Set Weekly Deposit Limit</span>
                         <p className="text-[10px] text-zinc-400 font-medium">Establish a ceiling constraints top-up value across any 7-day loop.</p>
                       </div>
                       <select className="border text-xs font-bold rounded p-1">
@@ -2988,10 +3764,10 @@ export function Dashboard() {
 
                     <div className="bg-zinc-55 border p-4 rounded-xl flex justify-between items-center bg-gray-50">
                       <div>
-                        <span className="text-xs font-black block text-[#0F0D24]">Cooling-Off Self Exclusion</span>
+                        <span className="text-xs font-black block text-white">Cooling-Off Self Exclusion</span>
                         <p className="text-[10px] text-zinc-400 font-medium font-semibold">Self-lock your account from ticketing for specified intervals.</p>
                       </div>
-                      <button className="bg-red-50 text-[#E52535] border border-red-200 hover:bg-red-100 font-black text-[9px] uppercase px-3 py-1.5 rounded-lg">
+                      <button className="bg-red-50 text-[#E1BC4A] border border-red-200 hover:bg-red-100 font-black text-[9px] uppercase px-3 py-1.5 rounded-lg">
                         LOCK ACCOUNT
                       </button>
                     </div>
@@ -3029,31 +3805,57 @@ export function Dashboard() {
                 <div className="bg-white border border-zinc-200/50 rounded-2xl p-6">
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-sm font-black text-zinc-900 uppercase tracking-widest">My Board Inbox Message</h3>
-                    <span className="text-[9px] font-black uppercase text-[#E52535] tracking-widest bg-red-50 border border-red-100 px-2 py-0.5 rounded">
-                      2 Unread
+                    <span className="text-[9px] font-black uppercase tracking-widest bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded" style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>
+                      {systemNotifications.filter(n => !n.read).length} Unread
                     </span>
                   </div>
 
                   <div className="space-y-3.5 select-none">
-                    <div className="border border-zinc-200 p-4 rounded-xl shadow-xs bg-zinc-50 border-l-4 border-l-[#E52535]">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-extrabold text-[#0F0D24] block uppercase">Verification Success! ✔</span>
-                        <span className="text-[9px] text-zinc-400 font-bold">1 hour ago</span>
+                    {systemNotifications.length === 0 ? (
+                      <div className="text-center py-8 text-zinc-400 font-semibold text-xs">
+                        No notifications or messages in your inbox.
                       </div>
-                      <p className="text-zinc-500 text-[11px] leading-relaxed mt-1 font-semibold">
-                        Your phone number (+8801986259552) was successfully verified. Advanced lucky analysis dashboard access is unlocked!
-                      </p>
-                    </div>
-
-                    <div className="border border-zinc-200 p-4 rounded-xl shadow-xs bg-zinc-50 border-l-4 border-l-[#E52535]">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-extrabold text-[#0F0D24] block uppercase">Voucher Code active! 🎁</span>
-                        <span className="text-[9px] text-zinc-400 font-bold">Yesterday</span>
-                      </div>
-                      <p className="text-zinc-500 text-[11px] leading-relaxed mt-1 font-semibold">
-                        Enjoy a 5% discount on Mega7 slips with discount code: GLOBALWIN. Enjoy and Win Big!
-                      </p>
-                    </div>
+                    ) : (
+                      systemNotifications.map((notif) => (
+                        <div 
+                          key={notif.id} 
+                          className={`border p-4 rounded-xl shadow-xs border-l-4 transition-all ${
+                            notif.read 
+                              ? 'border-zinc-150 bg-white/70 dark:bg-zinc-900 border-l-zinc-300 dark:border-l-zinc-700' 
+                              : 'border-zinc-200 bg-zinc-50 dark:bg-zinc-900 font-semibold shadow-xs'
+                          }`}
+                          style={!notif.read ? { borderLeftColor: siteConfig.primaryHex || '#E1BC4A' } : {}}
+                        >
+                          <div className="flex justify-between items-start gap-4">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs font-black block uppercase ${notif.read ? 'text-zinc-600 dark:text-zinc-400' : 'text-white dark:text-white'}`}>
+                                  {notif.title}
+                                </span>
+                                {!notif.read && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block shrink-0" />
+                                )}
+                              </div>
+                              <span className="text-[9px] text-zinc-400 font-bold block mt-0.5">{notif.date}</span>
+                            </div>
+                            
+                            {!notif.read && (
+                              <button
+                                type="button"
+                                onClick={() => markNotificationAsRead(notif.id)}
+                                className="text-[10px] font-black uppercase px-2 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-colors cursor-pointer shrink-0"
+                                style={{ color: siteConfig.primaryHex || '#E1BC4A' }}
+                              >
+                                Mark Read
+                              </button>
+                            )}
+                          </div>
+                          <p className={`text-xs leading-relaxed mt-1.5 ${notif.read ? 'text-zinc-400' : 'text-zinc-600 dark:text-zinc-300'}`}>
+                            {notif.message}
+                          </p>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>

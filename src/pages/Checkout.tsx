@@ -366,7 +366,7 @@ export function Checkout() {
                     
                     <div className="text-xs text-zinc-650 dark:text-zinc-400 space-y-2 leading-relaxed">
                       <p>
-                        To finalize payment, please Send Money or Cash Out exactly <b className="font-mono text-gray-900 dark:text-zinc-100 text-sm font-black">${totalAmount.toFixed(2)}</b> (Approx. <b className="font-mono font-black">{(totalAmount * (siteConfig.usdExchangeRate ?? 117)).toFixed(0)} BDT</b>) to the Admin bKash Account Number:
+                        To finalize payment, please Send Money or Cash Out exactly <b className="font-mono text-gray-900 dark:text-zinc-100 text-sm font-black">${totalAmount.toFixed(2)}</b> to the Admin bKash Account Number:
                       </p>
                       
                       {/* Copyable MFS Account box */}
@@ -430,7 +430,7 @@ export function Checkout() {
                     
                     <div className="text-xs text-zinc-650 dark:text-zinc-400 space-y-2 leading-relaxed">
                       <p>
-                        To finalize payment, please Send Money or Cash Out exactly <b className="font-mono text-gray-900 dark:text-zinc-100 text-sm font-black">${totalAmount.toFixed(2)}</b> (Approx. <b className="font-mono font-black">{(totalAmount * (siteConfig.usdExchangeRate ?? 117)).toFixed(0)} BDT</b>) to the Admin Nagad Account Number:
+                        To finalize payment, please Send Money or Cash Out exactly <b className="font-mono text-gray-900 dark:text-zinc-100 text-sm font-black">${totalAmount.toFixed(2)}</b> to the Admin Nagad Account Number:
                       </p>
                       
                       {/* Copyable MFS Account box */}

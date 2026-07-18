@@ -5,10 +5,11 @@ import { ShieldAlert, User, Key, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { resolveBannerImage } from '../components/Hero';
 
 export function Login() {
   const navigate = useNavigate();
-  const { setIsLoggedIn, setUser, allUsers, language } = useAuth();
+  const { setIsLoggedIn, setUser, allUsers, language, siteConfig } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -314,33 +315,46 @@ export function Login() {
   };
 
   return (
-    <div className="bg-gray-100 dark:bg-zinc-950 min-h-screen py-16 px-4 text-gray-900 dark:text-zinc-100 flex flex-col justify-center font-roboto-sans">
-      <div className="max-w-md w-full mx-auto bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-zinc-850 font-roboto-sans">
+    <div className="bg-[#F3F4F6] dark:bg-[#080c14] min-h-screen py-12 px-4 text-gray-900 dark:text-zinc-100 flex flex-col justify-center font-roboto-sans transition-colors duration-300">
+      <div className="max-w-md w-full mx-auto bg-white dark:bg-[#101622] rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.25)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden border border-gray-200/60 dark:border-zinc-800/60 font-roboto-sans relative">
         
-        {/* Luxury Banner with Gilded App Logo */}
-        <div className="bg-gradient-to-b from-zinc-900 to-zinc-950 text-white p-6 sm:p-8 text-center relative overflow-hidden font-roboto-sans">
-          <div className="absolute top-4 right-4 bg-white/10 border border-white/10 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider text-yellow-400 uppercase select-none">
+        {/* Luxury Header Area with SSL Badge and Logo */}
+        <div className="p-6 sm:p-8 pb-4 text-center relative overflow-hidden">
+          {/* SSL Badge in top right */}
+          <div className="absolute top-4 right-4 bg-gray-100 dark:bg-[#181f2f] border border-gray-200/50 dark:border-zinc-800/80 px-3 py-1 rounded-full text-[8px] font-black tracking-widest text-amber-500 dark:text-amber-400 uppercase select-none">
             {t('secureSsl')}
           </div>
           
           {/* Custom Designed App Logo Graphic */}
-          <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-rose-600 to-[#E52535] flex items-center justify-center shadow-lg shadow-red-500/20 mb-4 border border-white/10 relative">
-            <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-            </svg>
-            <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent rounded-2xl" />
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 via-[#E1BC4A] to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/30 mb-5 border border-white/20 relative mt-4">
+            {siteConfig.logoImageUrl ? (
+              <img 
+                src={resolveBannerImage(siteConfig.logoImageUrl)} 
+                alt="App Logo" 
+                className="w-12 h-12 object-contain rounded-xl"
+              />
+            ) : (
+              <svg className="w-9 h-9 text-white drop-shadow-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2.5" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m0 16v2M2 12h2m16 0h2m-3.172-6.828l-1.414 1.414M5.586 18.414l-1.414 1.414m0-12.728l1.414 1.414m11.314 11.314l1.414 1.414" />
+              </svg>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent rounded-2xl" />
           </div>
 
-          <h2 className="text-2xl font-black tracking-[0.18em] text-white uppercase">
+          <h2 className="text-2xl font-black tracking-[0.18em] text-zinc-900 dark:text-white uppercase">
             {t('globalLottery')}
           </h2>
-          <p className="text-gray-400 text-[10px] mt-1.5 uppercase tracking-widest font-bold">
+          <p className="text-gray-500 dark:text-zinc-400 text-[10px] mt-1.5 uppercase tracking-widest font-black">
             {isForgotMode ? t('secureResetPortal') : t('gatewayLuxury')}
           </p>
         </div>
 
+        {/* Divider line */}
+        <div className="border-b border-gray-100 dark:border-zinc-800/80 mx-6 sm:mx-8" />
+
         {/* Regular Login Form & Forgot Password Form */}
-        <div className="p-6 sm:p-8 font-roboto-sans">
+        <div className="p-6 sm:p-8 pt-6 font-roboto-sans">
           {errorMsg && (
             <div className="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-750 dark:text-red-400 text-xs font-semibold leading-relaxed">
               ⚠️ {errorMsg}
@@ -356,15 +370,15 @@ export function Login() {
           {!isForgotMode ? (
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400">{t('emailAddress')}</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-zinc-400">{t('emailAddress')}</label>
                 <div className="mt-1.5 relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 font-bold">@</span>
+                  <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 dark:text-zinc-500 font-bold text-sm">@</span>
                   <input 
                     type="email" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder=""
-                    className="pl-9 bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 block w-full border border-gray-250 dark:border-zinc-800 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all font-semibold" 
+                    placeholder="name@email.com"
+                    className="pl-11 bg-gray-50 dark:bg-[#0c111c] text-zinc-950 dark:text-zinc-100 block w-full border border-gray-200 dark:border-zinc-800/80 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:outline-none transition-all font-semibold shadow-inner" 
                     required 
                   />
                 </div>
@@ -372,7 +386,7 @@ export function Login() {
 
               <div>
                 <div className="flex justify-between items-center">
-                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400">{t('password')}</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-zinc-400">{t('password')}</label>
                   <button 
                     type="button"
                     onClick={() => {
@@ -381,27 +395,27 @@ export function Login() {
                       setForgotEmail(email);
                       setIsForgotMode(true);
                     }}
-                    className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:underline tracking-wide uppercase cursor-pointer"
+                    className="text-[10px] font-black text-amber-500 hover:text-amber-400 tracking-wide uppercase cursor-pointer"
                   >
                     {t('forgotPassword')}
                   </button>
                 </div>
                 <div className="mt-1.5 relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                    <Key className="w-4 h-4 text-gray-400 stroke-[2.5]" />
+                  <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 dark:text-zinc-500">
+                    <Key className="w-4 h-4 text-gray-400 dark:text-zinc-500 stroke-[2.5]" />
                   </span>
                   <input 
                     type={showPassword ? "text" : "password"} 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder=""
-                    className="pl-9 pr-10 bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 block w-full border border-gray-250 dark:border-zinc-800 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all font-mono" 
+                    placeholder="••••••••"
+                    className="pl-11 pr-10 bg-gray-50 dark:bg-[#0c111c] text-zinc-950 dark:text-zinc-100 block w-full border border-gray-200 dark:border-zinc-800/80 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:outline-none transition-all font-mono shadow-inner" 
                     required 
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 focus:outline-none"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -411,8 +425,8 @@ export function Login() {
               <button 
                 type="submit" 
                 disabled={loading}
-                style={{ backgroundColor: '#E52535' }}
-                className={`w-full font-black uppercase tracking-widest text-white py-4 px-6 rounded-xl shadow-lg ${loading ? 'opacity-70' : 'hover:brightness-105'} transition-all flex items-center justify-center gap-2 mt-4 text-xs cursor-pointer`}
+                className={`w-full font-black uppercase tracking-widest text-white py-4 px-6 rounded-xl shadow-lg ${loading ? 'opacity-70' : 'hover:brightness-105'} transition-all flex items-center justify-center gap-2 mt-4 text-xs cursor-pointer active:scale-[0.98]`}
+                style={{ backgroundColor: siteConfig.primaryHex || '#FF003C' }}
               >
                 {loading ? (
                   <>
@@ -426,26 +440,29 @@ export function Login() {
                 )}
               </button>
 
-              <p className="mt-6 text-xs text-center text-gray-500 dark:text-zinc-400 font-medium uppercase tracking-wider">
-                {t('newToLottery')} <Link to="/register" className="text-[#E52535] font-black hover:underline ml-1">{t('registerAccount')}</Link>
+              <p className="mt-6 text-xs text-center text-gray-500 dark:text-zinc-400 font-bold uppercase tracking-wider">
+                {t('newToLottery')}{' '}
+                <Link to="/register" className="text-amber-500 dark:text-amber-400 font-black hover:underline ml-1">
+                  {t('registerAccount')}
+                </Link>
               </p>
             </form>
           ) : (
             <form onSubmit={handleForgotPassword} className="space-y-5">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400">{t('emailAddress')}</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-zinc-400">{t('emailAddress')}</label>
                 <div className="mt-1.5 relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 font-bold">@</span>
+                  <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 dark:text-zinc-500 font-bold text-sm">@</span>
                   <input 
                     type="email" 
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
-                    placeholder={t('enterRegisteredEmail')}
-                    className="pl-9 bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 block w-full border border-gray-250 dark:border-zinc-800 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all font-semibold" 
+                    placeholder="name@email.com"
+                    className="pl-11 bg-gray-50 dark:bg-[#0c111c] text-zinc-950 dark:text-zinc-100 block w-full border border-gray-200 dark:border-zinc-800/80 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:outline-none transition-all font-semibold shadow-inner" 
                     required 
                   />
                 </div>
-                <span className="text-[10px] text-gray-400 dark:text-zinc-500 mt-1 block font-medium leading-relaxed">
+                <span className="text-[10px] text-gray-500 dark:text-zinc-400 mt-2 block font-medium leading-relaxed">
                   {t('resetInstructions')}
                 </span>
               </div>
@@ -458,14 +475,14 @@ export function Login() {
                     setSuccessMsg('');
                     setIsForgotMode(false);
                   }}
-                  className="flex-1 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300 py-3.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all text-center cursor-pointer bg-white dark:bg-zinc-900"
+                  className="flex-1 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300 py-3.5 px-4 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all text-center cursor-pointer bg-white dark:bg-[#151c2a]"
                 >
                   {t('backToSignIn')}
                 </button>
                 <button 
                   type="submit" 
-                  style={{ backgroundColor: '#E52535' }}
-                  className="flex-1 font-black uppercase tracking-wider text-white py-3.5 px-4 rounded-xl shadow-md hover:brightness-105 transition-all text-xs cursor-pointer"
+                  style={{ backgroundColor: siteConfig.primaryHex || '#FF003C' }}
+                  className="flex-1 font-black uppercase tracking-wider text-white py-3.5 px-4 rounded-xl shadow-md hover:brightness-105 transition-all text-xs cursor-pointer active:scale-[0.98]"
                 >
                   {t('sendResetLink')}
                 </button>

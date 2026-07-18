@@ -215,9 +215,9 @@ export function Winners() {
   
   // Custom video winners fallback
   const dbVideoWinners = siteConfig?.videoWinners || [];
-  const activeVideoWinners = dbVideoWinners.length > 0
-    ? dbVideoWinners.filter(vw => vw.isActive !== false)
-    : videoWinners;
+  const activeVideoWinners = dbVideoWinners.length > 0 ? dbVideoWinners.filter(vw => vw.isActive !== false) : videoWinners;
+  const activeGrandWinners = siteConfig?.grandPrizeWinners?.length ? siteConfig.grandPrizeWinners.filter(gw => gw.isActive !== false) : grandWinners;
+  const activeDrawResults = siteConfig?.drawResults || [];
 
   return (
     <div id="winners-root-view" className="bg-[#FAF9FC] dark:bg-zinc-950 min-h-screen text-zinc-900 dark:text-zinc-100 font-sans pb-16">
@@ -233,7 +233,7 @@ export function Winners() {
         
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-wider select-none drop-shadow-md">
           {activeTab === 'grand' && 'Grand Prize Hall'}
-          {activeTab === 'live' && 'Live Draw Winners'}
+          {activeTab === 'live' && 'All Game Winners'}
           {activeTab === 'video' && 'Winners Living the Dream'}
         </h1>
       </div>
@@ -304,7 +304,7 @@ export function Winners() {
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
-                {grandWinners.map((winner, idx) => (
+                {activeGrandWinners.map((winner, idx) => (
                   <div 
                     key={idx} 
                     className="flex flex-col items-center text-center p-4 rounded-3xl hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 hover:shadow-xs transition-all duration-200"
@@ -312,7 +312,7 @@ export function Winners() {
                     <div className="relative w-32 h-32 rounded-full p-0.5 border-2 border-gray-200 dark:border-zinc-800 shadow-sm shrink-0 bg-white dark:bg-zinc-900 group overflow-hidden">
                       <div className="w-full h-full rounded-full overflow-hidden relative">
                         <img 
-                          src={winner.avatarUrl} 
+                          src={winner.imageUrl || winner.avatarUrl || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=crop&q=80&w=250'} 
                           alt={winner.name} 
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           referrerPolicy="no-referrer"
@@ -331,7 +331,7 @@ export function Winners() {
                         )}
                         {winner.flagTheme === 'uae' && (
                           <div className="w-full h-full flex relative">
-                            <div className="w-[11px] h-full bg-[#E52535] shrink-0" />
+                            <div className="w-[11px] h-full bg-[#E1BC4A] shrink-0" />
                             <div className="flex-1 flex flex-col h-full">
                               <div className="bg-[#128807] flex-1" />
                               <div className="bg-white flex-1" />

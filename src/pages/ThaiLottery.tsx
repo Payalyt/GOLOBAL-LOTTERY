@@ -367,7 +367,7 @@ export default function ThaiLottery() {
                 <div className="bg-[#0b0821]/90 border border-zinc-900/80 rounded-full px-5 py-2 flex items-center gap-2 shadow-lg">
                   <Clock className="w-4 h-4 text-indigo-400" />
                   <span className="text-[11px] font-extrabold text-zinc-300 uppercase tracking-widest">
-                    Close Time: <b className="text-white text-yellow-400">Jul 16, 01:15 AM</b>
+                    Close Time: <b className="text-white text-yellow-400">{siteConfig?.thaiLotteryDrawTime || 'Jul 16, 01:15 AM'}</b>
                   </span>
                 </div>
               </div>
@@ -377,7 +377,7 @@ export default function ThaiLottery() {
                 <button
                   onClick={() => setActiveView('play')}
                   className={`flex-1 text-[10px] font-black uppercase tracking-wider py-2.5 rounded-lg transition-all ${
-                    activeView === 'play' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'
+                    activeView === 'play' ? 'bg-teal-600 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
                   Play Game
@@ -385,7 +385,7 @@ export default function ThaiLottery() {
                 <button
                   onClick={() => setActiveView('prizes')}
                   className={`flex-1 text-[10px] font-black uppercase tracking-wider py-2.5 rounded-lg transition-all ${
-                    activeView === 'prizes' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'
+                    activeView === 'prizes' ? 'bg-teal-600 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
                   Prize List
@@ -393,7 +393,7 @@ export default function ThaiLottery() {
                 <button
                   onClick={() => setActiveView('results')}
                   className={`flex-1 text-[10px] font-black uppercase tracking-wider py-2.5 rounded-lg transition-all ${
-                    activeView === 'results' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'
+                    activeView === 'results' ? 'bg-teal-600 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
                   Draw Results
@@ -448,16 +448,19 @@ export default function ThaiLottery() {
                 <div className="bg-[#0b0821]/50 border border-zinc-900 rounded-3xl p-5 shadow-xl space-y-4">
                   <h3 className="text-yellow-400 font-black text-center text-sm uppercase tracking-widest border-b border-zinc-900 pb-3">Official Prize Structure</h3>
                   <div className="space-y-2 text-xs">
-                    {[
-                      { name: '1st Prize', count: '1', prize: '6,000,000 Baht' },
-                      { name: '3-Digit Front', count: '2', prize: '4,000 Baht' },
-                      { name: '3-Digit Rear', count: '2', prize: '4,000 Baht' },
-                      { name: '2-Digit Last', count: '1', prize: '2,000 Baht' },
-                      { name: '2nd Prize', count: '5', prize: '200,000 Baht' },
-                      { name: '3rd Prize', count: '10', prize: '80,000 Baht' },
-                      { name: '4th Prize', count: '50', prize: '40,000 Baht' },
-                      { name: '5th Prize', count: '100', prize: '20,000 Baht' }
-                    ].map((row, i) => (
+                    {(siteConfig?.thaiPrizes && siteConfig.thaiPrizes.length > 0
+                      ? siteConfig.thaiPrizes
+                      : [
+                          { name: '1st Prize', count: '1', prize: '6,000,000 Baht' },
+                          { name: '3-Digit Front', count: '2', prize: '4,000 Baht' },
+                          { name: '3-Digit Rear', count: '2', prize: '4,000 Baht' },
+                          { name: '2-Digit Last', count: '1', prize: '2,000 Baht' },
+                          { name: '2nd Prize', count: '5', prize: '200,000 Baht' },
+                          { name: '3rd Prize', count: '10', prize: '80,000 Baht' },
+                          { name: '4th Prize', count: '50', prize: '40,000 Baht' },
+                          { name: '5th Prize', count: '100', prize: '20,000 Baht' }
+                        ]
+                    ).map((row, i) => (
                       <div key={i} className="flex justify-between items-center py-2.5 px-3 bg-[#070514] rounded-xl border border-zinc-900 hover:border-zinc-800 transition-colors">
                         <span className="text-white font-bold">{row.name}</span>
                         <div className="flex gap-6 items-center">
@@ -517,6 +520,32 @@ export default function ThaiLottery() {
                             </div>
                           </div>
 
+                          {/* 8 Categories Sub-results Breakdown */}
+                          {dr.thaiSubResults && (
+                            <div className="border border-zinc-900/80 rounded-2xl bg-[#050312]/40 p-4 space-y-3">
+                              <span className="text-[9.5px] font-black text-yellow-500 uppercase tracking-wider block border-b border-zinc-900 pb-1.5">
+                                Category Wise Winning Numbers Breakdown
+                              </span>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-left">
+                                {[
+                                  { label: '3UP', val: dr.thaiSubResults.up3 || '-' },
+                                  { label: '3DOWN', val: dr.thaiSubResults.down3 || '-' },
+                                  { label: '2UP', val: dr.thaiSubResults.up2 || '-' },
+                                  { label: '2DOWN', val: dr.thaiSubResults.down2 || '-' },
+                                  { label: '4UP', val: dr.thaiSubResults.up4 || '-' },
+                                  { label: '4DOWN', val: dr.thaiSubResults.down4 || '-' },
+                                  { label: '6UP', val: dr.thaiSubResults.up6 || '-' },
+                                  { label: '6DOWN', val: dr.thaiSubResults.down6 || '-' },
+                                ].map((cat, cIdx) => (
+                                  <div key={cIdx} className="bg-[#070514]/90 p-2 rounded-xl border border-zinc-900/60">
+                                    <span className="text-[8px] font-bold text-zinc-500 block uppercase tracking-wider">{cat.label}</span>
+                                    <span className="text-sm font-black text-white font-mono">{cat.val}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
                           <div className="grid grid-cols-2 gap-4 bg-[#050312]/60 p-3 rounded-2xl border border-zinc-900 text-left">
                             <div>
                               <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Total Winners</span>
@@ -559,7 +588,7 @@ export default function ThaiLottery() {
               </div>
 
               {/* Large Active Category Card Mockup 2 */}
-              <div className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-black text-center py-4 rounded-2xl shadow-xl border border-indigo-500/20 tracking-wider text-[14px]">
+              <div className="w-full bg-gradient-to-r from-teal-600 via-teal-500 to-emerald-600 text-white font-black text-center py-4 rounded-2xl shadow-xl border border-teal-500/20 tracking-wider text-[14px]">
                 {selectedGame.title.toUpperCase()}
               </div>
 
@@ -736,7 +765,15 @@ export default function ThaiLottery() {
                     disabled={placingBets}
                     className="w-full bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 text-white hover:opacity-95 disabled:opacity-50 font-black text-center py-4 rounded-2xl shadow-xl transition-all tracking-widest text-xs uppercase cursor-pointer"
                   >
-                    {placingBets ? 'SUBMITTING...' : 'SUBMIT'}
+                    {placingBets ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        SUBMITTING...
+                      </span>
+                    ) : 'SUBMIT'}
                   </button>
                 </form>
               )}

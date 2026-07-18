@@ -64,13 +64,28 @@ export function News() {
                   <div>
                     
                     {/* Photo Head with Premium Graphic Banners */}
-                    <div className="relative aspect-video w-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden select-none shrink-0">
-                      <img 
-                        src={article.imageUrl} 
-                        alt={article.title} 
-                        className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
-                        referrerPolicy="no-referrer"
-                      />
+                    <div 
+                      className="relative aspect-video w-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden select-none shrink-0"
+                      style={
+                        article.bgType === 'color' && article.bannerBg
+                          ? { backgroundColor: article.bannerBg }
+                          : article.bgType === 'gradient' && article.bannerBg
+                          ? { background: article.bannerBg }
+                          : {}
+                      }
+                    >
+                      {(!article.bgType || article.bgType === 'image') && article.imageUrl ? (
+                        <img 
+                          src={article.imageUrl} 
+                          alt={article.title} 
+                          className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (article.bgType === 'color' || article.bgType === 'gradient') ? (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Sparkles className="w-8 h-8 text-white/20 animate-pulse" />
+                        </div>
+                      ) : null}
 
                       {/* Highly styled banner representing screenshot's overlay elements */}
                       {article.bannerTitle && (
@@ -150,13 +165,28 @@ export function News() {
           <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl border border-gray-100 dark:border-zinc-800 max-w-lg w-full relative">
             
             {/* Image Header with styled banner decoration */}
-            <div className="relative aspect-video bg-zinc-100 dark:bg-zinc-800 select-none">
-              <img 
-                src={activeArticle.imageUrl} 
-                alt={activeArticle.title} 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
+            <div 
+              className="relative aspect-video bg-zinc-100 dark:bg-zinc-800 select-none"
+              style={
+                activeArticle.bgType === 'color' && activeArticle.bannerBg
+                  ? { backgroundColor: activeArticle.bannerBg }
+                  : activeArticle.bgType === 'gradient' && activeArticle.bannerBg
+                  ? { background: activeArticle.bannerBg }
+                  : {}
+              }
+            >
+              {(!activeArticle.bgType || activeArticle.bgType === 'image') && activeArticle.imageUrl ? (
+                <img 
+                  src={activeArticle.imageUrl} 
+                  alt={activeArticle.title} 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (activeArticle.bgType === 'color' || activeArticle.bgType === 'gradient') ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Sparkles className="w-12 h-12 text-white/20 animate-pulse" />
+                </div>
+              ) : null}
               {activeArticle.bannerSubtitle && (
                 <div className={`absolute bottom-0 inset-x-0 p-3 px-4 text-xs font-black flex items-center justify-between ${activeArticle.bannerBg}`}>
                   <span>{activeArticle.bannerTitle}</span>

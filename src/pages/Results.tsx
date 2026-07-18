@@ -479,7 +479,7 @@ export function Results() {
               {/* Headline */}
               <div className="pb-4 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center mb-6">
                 <div>
-                  <h2 className="text-xl font-black text-[#0F0D24] dark:text-white uppercase tracking-wide">
+                  <h2 className="text-xl font-black text-white dark:text-white uppercase tracking-wide">
                     {activeGame.name} Draw Results
                   </h2>
                   <div className="h-[2px] bg-zinc-800 dark:bg-zinc-600 w-12 mt-1.5 rounded-full" />
@@ -521,7 +521,7 @@ export function Results() {
                       <Calendar className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
                       {latestDraw.date}
                     </span>
-                    <div className="mt-2 text-xs font-black text-[#0F0D24] dark:text-zinc-300">
+                    <div className="mt-2 text-xs font-black text-white dark:text-zinc-300">
                       Total Winners: <span className="font-sans font-extrabold text-[#12A054] text-sm ml-0.5">{latestDraw.totalWinners}</span>
                     </div>
                   </div>
@@ -593,7 +593,7 @@ export function Results() {
                   <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
                 
-                <button type="button" className="w-7 h-7 rounded-lg bg-[#0F0D24] dark:bg-zinc-800 text-white font-black text-xs">01</button>
+                <button type="button" className="w-7 h-7 rounded-lg bg-[#2C3B69] dark:bg-zinc-800 text-white font-black text-xs">01</button>
                 <button type="button" className="w-7 h-7 rounded-lg text-zinc-600 dark:text-zinc-400 font-bold hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 text-xs">02</button>
                 <button type="button" className="w-7 h-7 rounded-lg text-zinc-600 dark:text-zinc-400 font-bold hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 text-xs">03</button>
                 <span className="text-zinc-350 dark:text-zinc-500 text-xs px-1">...</span>

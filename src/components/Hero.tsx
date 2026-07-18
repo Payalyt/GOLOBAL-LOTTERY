@@ -59,6 +59,8 @@ export function Hero() {
     const banner = activeBanners[currentSlide] || activeBanners[0];
     const resolvedImageUrl = resolveBannerImage(banner.imageUrl);
 
+    const hasText = !!((banner.title && banner.title.trim()) || (banner.subtitle && banner.subtitle.trim()) || (banner.buttonText && banner.buttonText.trim()));
+
     // Dynamic background styles based on customized configurations
     let bgStyle: React.CSSProperties = {};
     if (banner.bgType === 'color') {
@@ -73,7 +75,7 @@ export function Hero() {
       };
     } else {
       // Default / Image background
-      const shadowGradient = banner.hideShadow 
+      const shadowGradient = (banner.hideShadow || !hasText)
         ? 'linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0))'
         : 'linear-gradient(135deg, rgba(10, 10, 15, 0.95) 35%, rgba(15, 15, 25, 0.5) 65%, rgba(0, 0, 0, 0.95) 100%)';
         
@@ -91,15 +93,19 @@ export function Hero() {
     
     return (
       <div 
-        className="relative w-full overflow-hidden rounded-[24px] sm:rounded-[32px] min-h-[350px] sm:min-h-[420px] flex flex-col md:flex-row items-center justify-between p-6 sm:p-12 shadow-2xl border transition-all duration-750 ease-in-out"
+        className={`relative w-full overflow-hidden rounded-[16px] sm:rounded-[32px] ${
+          hasText 
+            ? 'min-h-[300px] sm:min-h-[380px] md:min-h-[420px] p-6 sm:p-12' 
+            : 'aspect-[2.1/1] md:aspect-[2.4/1] md:min-h-[350px] lg:min-h-[420px] p-0'
+        } flex flex-col md:flex-row items-center justify-between shadow-2xl border transition-all duration-750 ease-in-out`}
         style={bgStyle}
       >
         {/* Absolute ambient light overlays */}
-        {banner.bgType === 'image' && !banner.hideShadow && (
+        {banner.bgType === 'image' && !banner.hideShadow && hasText && (
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent pointer-events-none" />
         )}
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-white/10 via-transparent to-white/10 pointer-events-none" />
-        {!banner.hideShadow && (
+        {!banner.hideShadow && hasText && (
           <div className="absolute bottom-0 left-1/4 w-1/2 h-[120px] bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
         )}
         
@@ -205,7 +211,7 @@ export function Hero() {
   // FALLBACK: Default Golobal Lottery static hero banner (original style perfectly preserved!)
   return (
     <div 
-      className="relative w-full overflow-hidden rounded-[24px] sm:rounded-[32px] min-h-[350px] sm:min-h-[420px] flex flex-col md:flex-row items-center justify-between p-6 sm:p-12 shadow-2xl border"
+      className="relative w-full overflow-hidden rounded-[16px] sm:rounded-[32px] min-h-[320px] sm:min-h-[420px] flex flex-col md:flex-row items-center justify-between p-4 sm:p-12 shadow-2xl border"
       style={{ 
         background: siteConfig.heroBannerBgType === 'solid' 
           ? siteConfig.heroBannerBgSolidHex 
@@ -217,7 +223,7 @@ export function Hero() {
     >
       {/* Absolute background graphics & overlay particles */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent pointer-events-none" />
-      <div className="absolute top-[-80px] left-[-80px] w-[500px] h-[500px] bg-[#FF2E42] rounded-full blur-[150px] opacity-25 pointer-events-none" />
+      <div className="absolute top-[-80px] left-[-80px] w-[500px] h-[500px] bg-[#E1BC4A] rounded-full blur-[150px] opacity-25 pointer-events-none" />
       <div className="absolute bottom-[-100px] right-[-100px] w-[400px] h-[400px] bg-yellow-500 rounded-full blur-[130px] opacity-15 pointer-events-none" />
       
       {/* Dynamic Star Overlay */}
@@ -281,12 +287,12 @@ export function Hero() {
         </div>
 
         {/* Bold Headline & Subheadings */}
-        <div className="space-y-1.5">
-          <h2 className="text-white text-sm sm:text-xl md:text-2xl font-bold font-bold-font tracking-tight uppercase opacity-90">
-            {siteConfig.heroHeadline}
-          </h2>
-          <p className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-[#FFD700] tracking-tighter drop-shadow-[0_4px_25px_rgba(255,215,0,0.45)] select-all leading-none my-1 alfa-slab-one-regular">
-            {siteConfig.heroJackpotAmount}
+        <div className="space-y-2 flex flex-col items-center md:items-end">
+          <h1 className="gold-3d-text text-5xl sm:text-6xl md:text-7xl lg:text-8xl select-none leading-none tracking-wider text-center md:text-right uppercase">
+            {siteConfig.heroHeadline || 'GLOBAL LOTTERY'}
+          </h1>
+          <p className="neon-yellow-text text-5xl sm:text-7xl md:text-8xl font-bold select-all leading-none my-2 text-center md:text-right">
+            {siteConfig.heroJackpotAmount || '$50,000'}
           </p>
           <div className="pt-2">
             <span className="text-zinc-100 text-[9px] sm:text-[11px] font-semibold tracking-[0.14em] uppercase bg-black/45 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/5 inline-block">
@@ -300,10 +306,10 @@ export function Hero() {
           <button 
             type="button"
             onClick={() => navigate('/games/MEGA7')}
-            className="w-full sm:w-auto bg-[#FFD700] hover:bg-[#FFC800] text-zinc-950 font-black text-xs uppercase px-10 py-4 rounded-xl tracking-widest transition-all duration-300 hover:scale-[1.04] active:scale-[0.98] cursor-pointer shadow-[0_10px_25px_rgba(255,215,0,0.3)] flex items-center justify-center gap-2"
+            className="w-full sm:w-auto btn-premium-orange hover:opacity-95 text-white font-bold text-base sm:text-xl md:text-2xl uppercase px-10 py-4 rounded-full tracking-widest transition-all duration-300 hover:scale-[1.04] active:scale-[0.98] cursor-pointer shadow-lg flex items-center justify-center gap-2 border-none"
           >
-            {language === 'en' ? 'BUY TICKETS NOW' : 'টিকিট কিনুন এখনই'}
-            <ArrowRight className="w-4 h-4 text-zinc-950 stroke-[3]" />
+            {language === 'en' ? 'BUY TICKET NOW' : 'টিকিট কিনুন এখনই'}
+            <ArrowRight className="w-5 h-5 text-white stroke-[3]" />
           </button>
         </div>
 
