@@ -154,7 +154,7 @@ body {
 }
 
 .animate-marquee-left {
-  animation: marquee-left 40s linear infinite;
+  animation: marquee-left 180s linear infinite;
 }
 
 .group:hover .animate-marquee-left {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-export function CountdownTimer({ targetDate }: { targetDate: Date }) {
+export function CountdownTimer({ targetDate }: { targetDate: Date | string | any }) {
   const { language } = useAuth();
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -11,9 +11,27 @@ export function CountdownTimer({ targetDate }: { targetDate: Date }) {
   });
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const updateCountdown = () => {
       const now = new Date().getTime();
-      let targetTime = targetDate.getTime();
+      let targetTime: number;
+
+      if (!targetDate) {
+        targetTime = now;
+      } else if (typeof targetDate.toMillis === 'function') {
+        targetTime = targetDate.toMillis();
+      } else if (typeof targetDate.seconds === 'number') {
+        targetTime = targetDate.seconds * 1000 + (targetDate.nanoseconds || 0) / 1000000;
+      } else if (typeof targetDate === 'string' || typeof targetDate === 'number') {
+        targetTime = new Date(targetDate).getTime();
+      } else if (targetDate instanceof Date) {
+        targetTime = targetDate.getTime();
+      } else {
+        targetTime = new Date(targetDate).getTime();
+      }
+
+      if (isNaN(targetTime)) {
+        targetTime = now;
+      }
 
       // If the target date is in the past, roll it forward dynamically so a countdown is always active
       if (targetTime < now) {
@@ -32,7 +50,10 @@ export function CountdownTimer({ targetDate }: { targetDate: Date }) {
         mins: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
         secs: Math.floor((distance % (1000 * 60)) / 1000),
       });
-    }, 1000);
+    };
+
+    updateCountdown(); // Run immediately
+    const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
   }, [targetDate]);
 

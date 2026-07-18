@@ -45,16 +45,14 @@ export function Admin() {
   
   const [configForm, setConfigForm] = useState<Partial<SiteThemeConfig>>(siteConfig || {});
 
+  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
+
   useEffect(() => {
-    if (siteConfig && Object.keys(siteConfig).length > 0) {
-      setConfigForm(prev => {
-        if (!prev || Object.keys(prev).length === 0) {
-          return siteConfig;
-        }
-        return { ...siteConfig, ...prev };
-      });
+    if (siteConfig && Object.keys(siteConfig).length > 0 && !isConfigLoaded) {
+      setConfigForm(siteConfig);
+      setIsConfigLoaded(true);
     }
-  }, [siteConfig]);
+  }, [siteConfig, isConfigLoaded]);
   
   // Custom states for user list editing & searching
   const [selectedUserToEdit, setSelectedUserToEdit] = useState<any | null>(null);
