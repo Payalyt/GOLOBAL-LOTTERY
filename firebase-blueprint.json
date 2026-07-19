@@ -139,7 +139,9 @@
         "agentImoLink": { "type": "string" },
         "agentTelegramLink": { "type": "string" },
         "agentEnabled": { "type": "boolean" },
-        "agentInstructions": { "type": "string" }
+        "agentInstructions": { "type": "string" },
+        "drawResults": { "type": "array" },
+        "paymentGateways": { "type": "array" }
       }
     },
     "DynamicGame": {
