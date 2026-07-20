@@ -159,8 +159,9 @@ export function Header() {
   };
 
   return (
-    <header 
-      className={`sticky top-0 z-50 border-b transition-all duration-300 backdrop-blur-md ${
+    <>
+      <header 
+        className={`sticky top-0 z-50 border-b transition-all duration-300 backdrop-blur-md ${
         isScrolled
           ? isDark 
             ? "text-white border-teal-500/10 shadow-lg shadow-teal-950/10" 
@@ -341,12 +342,9 @@ export function Header() {
 
                 {/* User Info Text - Hidden on mobile */}
                 <div 
-                  className="hidden lg:flex items-center gap-2 bg-black border border-zinc-800 rounded-xl px-3 py-1.5 shadow-md text-white"
+                  className="hidden lg:flex items-center gap-2 bg-black border border-zinc-800 rounded-xl px-3.5 py-2 shadow-md text-white"
                 >
-                  <div className="flex flex-col text-right">
-                    <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wide">{t('wallet_balance', language)}</span>
-                    <span className="text-sm font-black text-emerald-400 leading-none mt-0.5">${user.balance.toFixed(2)}</span>
-                  </div>
+                  <span className="text-sm font-black text-emerald-400 leading-none">${user.balance.toFixed(2)}</span>
                 </div>
                 
                 {/* Purple initials avatar circle - Hidden on mobile, only in drawer */}
@@ -362,14 +360,7 @@ export function Header() {
                   )}
                 </div>
 
-                {user.role === 'admin' && (
-                  <button 
-                    onClick={() => navigate('/admin')}
-                    className="hidden lg:block text-[9px] font-extrabold text-white bg-amber-500 hover:bg-amber-600 cursor-pointer uppercase font-sans border border-amber-500 px-2 py-1.5 rounded shadow-sm transition-colors"
-                  >
-                    Admin
-                  </button>
-                )}
+
 
                 <button 
                   onClick={logout} 
@@ -390,24 +381,27 @@ export function Header() {
             )}
 
             {/* Premium Custom Animated Hamburger Button (Morphic Lines) */}
-            <button style={{ display: siteConfig.slideMenuEnabled === false ? "none" : "flex" }} onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden flex flex-col justify-center items-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 transition-colors focus:outline-none cursor-pointer group"
-              aria-label="Toggle Menu"
-            >
-              <div className="w-4 h-3.5 sm:w-5 sm:h-4 flex flex-col justify-between relative">
-                <span className={`w-full h-0.5 bg-zinc-800 dark:bg-zinc-200 rounded-full transition-all duration-300 origin-left ${isMobileMenuOpen ? 'rotate-45 translate-x-[2px] -translate-y-[1px]' : ''}`} />
-                <span className={`w-full h-0.5 bg-zinc-800 dark:bg-zinc-200 rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0 translate-x-3' : ''}`} />
-                <span className={`w-full h-0.5 bg-zinc-800 dark:bg-zinc-200 rounded-full transition-all duration-300 origin-left ${isMobileMenuOpen ? '-rotate-45 translate-x-[2px] translate-y-[1px]' : ''}`} />
-              </div>
-            </button>
+            {siteConfig.slideMenuEnabled !== false && (
+              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="lg:hidden flex flex-col justify-center items-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 transition-colors focus:outline-none cursor-pointer group"
+                aria-label="Toggle Menu"
+              >
+                <div className="w-4 h-3.5 sm:w-5 sm:h-4 flex flex-col justify-between relative">
+                  <span className={`w-full h-0.5 bg-zinc-800 dark:bg-zinc-200 rounded-full transition-all duration-300 origin-left ${isMobileMenuOpen ? 'rotate-45 translate-x-[2px] -translate-y-[1px]' : ''}`} />
+                  <span className={`w-full h-0.5 bg-zinc-800 dark:bg-zinc-200 rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0 translate-x-3' : ''}`} />
+                  <span className={`w-full h-0.5 bg-zinc-800 dark:bg-zinc-200 rounded-full transition-all duration-300 origin-left ${isMobileMenuOpen ? '-rotate-45 translate-x-[2px] translate-y-[1px]' : ''}`} />
+                </div>
+              </button>
+            )}
           </div>
         </div>
       </div>
+    </header>
 
-      {/* Mobile Menu Drawer Overlay & Content */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <>
+    {/* Mobile Menu Drawer Overlay & Content */}
+    <AnimatePresence>
+      {isMobileMenuOpen && (
+        <>
             {/* Backdrop Blur Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -468,71 +462,39 @@ export function Header() {
 
                 {/* Mobile Navigation Menu Items */}
                 <div className="space-y-5 text-left">
-                  {/* Section: Life Changing Games */}
-                  <div>
-                    <span className="text-[9px] font-black tracking-widest text-zinc-400 dark:text-zinc-500 uppercase block mb-2 flex items-center gap-1.5 font-sans">
-                      <Flame className="w-3.5 h-3.5 text-red-500" /> {t('thai_lottery', language)}
-                    </span>
-                    <div className="space-y-1">
-                      {finalMenuData['THAI LOTTERY'].items.map((item) => (
-                        <Link
-                          to={item.link}
-                          key={item.name}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 hover:bg-zinc-100/80 dark:hover:bg-zinc-800 transition-colors"
-                        >
-                          <span className="text-xs font-black text-zinc-800 dark:text-zinc-200">{item.name}</span>
-                          <span className="text-[9px] font-black px-1.5 py-0.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded">
-                            {language === 'en' ? `PLAY $${item.price}` : `$${item.price}-এ`}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
+                  {Object.keys(finalMenuData)
+                    .filter((key) => key !== 'RESULTS' && key !== 'WINNERS')
+                    .map((menuKey) => {
+                      const data = finalMenuData[menuKey] || {};
+                      if (!data.items || !Array.isArray(data.items)) return null;
 
-                  {/* Section: Daily Sure Raffles */}
-                  <div>
-                    <span className="text-[9px] font-black tracking-widest text-zinc-400 dark:text-zinc-500 uppercase block mb-2 flex items-center gap-1.5 font-sans">
-                      <Gift className="w-3.5 h-3.5 text-pink-500" /> {t('raffles', language)}
-                    </span>
-                    <div className="space-y-1">
-                      {finalMenuData.RAFFLES.items.map((item) => (
-                        <Link
-                          to={item.link}
-                          key={item.name}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 hover:bg-zinc-100/80 dark:hover:bg-zinc-800 transition-colors"
-                        >
-                          <span className="text-xs font-black text-zinc-800 dark:text-zinc-200">{item.name}</span>
-                          <span className="text-[9px] font-black px-1.5 py-0.5 bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 rounded">
-                            {language === 'en' ? `PLAY $${item.price}` : `$${item.price}-এ`}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
+                      let SectionIcon = Flame;
+                      if (menuKey === 'RAFFLES') SectionIcon = Gift;
+                      if (menuKey === 'RUSH') SectionIcon = Sparkles;
 
-                  {/* Section: Rush Draws */}
-                  <div>
-                    <span className="text-[9px] font-black tracking-widest text-zinc-400 dark:text-zinc-500 uppercase block mb-2 flex items-center gap-1.5 font-sans">
-                      <Sparkles className="w-3.5 h-3.5 text-orange-500" /> {t('rush_draws', language)}
-                    </span>
-                    <div className="space-y-1">
-                      {finalMenuData.RUSH.items.map((item) => (
-                        <Link
-                          to={item.link}
-                          key={item.name}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 hover:bg-zinc-100/80 dark:hover:bg-zinc-800 transition-colors"
-                        >
-                          <span className="text-xs font-black text-zinc-800 dark:text-zinc-200">{item.name}</span>
-                          <span className="text-[9px] font-black px-1.5 py-0.5 bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 rounded">
-                            {language === 'en' ? `PLAY $${item.price}` : `$${item.price}-এ`}
+                      return (
+                        <div key={menuKey}>
+                          <span className="text-[9px] font-black tracking-widest text-zinc-400 dark:text-zinc-500 uppercase block mb-2 flex items-center gap-1.5 font-sans">
+                            <SectionIcon className="w-3.5 h-3.5 text-amber-500" /> {getMenuLabel(menuKey, language)}
                           </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
+                          <div className="space-y-1">
+                            {data.items.map((item: any) => (
+                              <Link
+                                to={item.link}
+                                key={item.name}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 hover:bg-zinc-100/80 dark:hover:bg-zinc-800 transition-colors"
+                              >
+                                <span className="text-xs font-black text-zinc-800 dark:text-zinc-200">{item.name}</span>
+                                <span className="text-[9px] font-black px-1.5 py-0.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded">
+                                  {language === 'en' ? `PLAY $${item.price || '5'}` : `$${item.price || '5'}-এ`}
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   {/* Quick Sections Grid */}
                   <div className="grid grid-cols-2 gap-2 pt-2">
                     <Link
@@ -607,8 +569,7 @@ export function Header() {
                       </div>
                       <div className="leading-tight flex-1">
                         <span className="text-xs font-black text-zinc-300 block truncate max-w-[180px] uppercase tracking-wide mb-1">{user.name}</span>
-                        <div className="bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-800 inline-block">
-                          <span className="text-xs text-zinc-400 font-bold block uppercase tracking-wider mb-0.5">{t('wallet_balance', language)}</span>
+                        <div className="bg-zinc-900 px-3.5 py-2 rounded-lg border border-zinc-800 inline-block">
                           <span className="text-xl text-emerald-400 font-black block leading-none">${user.balance.toFixed(2)}</span>
                         </div>
                       </div>
@@ -623,15 +584,7 @@ export function Header() {
                         👤 {t('account_dashboard', language)}
                       </Link>
 
-                      {user.role === 'admin' && (
-                        <Link
-                          to="/admin"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="w-full text-center py-2.5 rounded-xl border border-amber-500 bg-amber-500 hover:bg-amber-600 text-xs font-bold text-white uppercase tracking-wider transition-all shadow-md"
-                        >
-                          ⚙️ Admin Panel
-                        </Link>
-                      )}
+
 
                       <button
                         onClick={() => {
@@ -667,7 +620,7 @@ export function Header() {
           </>
         )}
       </AnimatePresence>
-    </header>
+    </>
   );
 }
 

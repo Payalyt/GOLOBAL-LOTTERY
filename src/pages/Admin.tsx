@@ -75,6 +75,7 @@ export function Admin() {
   // Deposit Search, Filter, and Edit States
   const [depositFilter, setDepositFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
   const [depositSearch, setDepositSearch] = useState('');
+  const [showCommissionOnly, setShowCommissionOnly] = useState(false);
   const [editingDepositId, setEditingDepositId] = useState<string | null>(null);
   const [depositEditForm, setDepositEditForm] = useState({
     email: '',
@@ -125,6 +126,24 @@ export function Admin() {
     totalPaid: '$45,000.00',
     country: 'Bangladesh'
   });
+  
+  // Thai Lottery Draw state
+  const [selectedDrawGame, setSelectedDrawGame] = useState('THAI GOVT LOTTERY');
+  const [thaiDrawForm, setThaiDrawForm] = useState({
+    winningNumber: '',
+    date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    totalWinners: '1 Player',
+    totalPaid: '6,000,000 Baht',
+    up3: '',
+    down3: '',
+    up2: '',
+    down2: '',
+    up4: '',
+    down4: '',
+    up6: '',
+    down6: ''
+  });
+  const [thaiConfirming, setThaiConfirming] = useState(false);
   const [editingDrawId, setEditingDrawId] = useState<string | null>(null);
   const [editingDrawForm, setEditingDrawForm] = useState({
     gameName: '',
@@ -133,6 +152,21 @@ export function Admin() {
     totalWinners: '',
     totalPaid: '',
     country: ''
+  });
+
+  // Thai Lottery Prize Structure Editor State
+  const [newThaiPrize, setNewThaiPrize] = useState({ name: '', count: '', prize: '' });
+  const [editingPrizeIdx, setEditingPrizeIdx] = useState<number | null>(null);
+  const [editingPrizeForm, setEditingPrizeForm] = useState({ name: '', count: '', prize: '' });
+
+  // Promos & Referrals management states
+  const [showAddPromoModal, setShowAddPromoModal] = useState(false);
+  const [newPromoForm, setNewPromoForm] = useState({
+    code: '',
+    discountType: 'percentage' as 'percentage' | 'fixed',
+    value: 10,
+    minCartAmount: 0,
+    isActive: true
   });
 
   if (!user) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 font-bold">Loading Admin...</div>;
@@ -162,7 +196,19 @@ export function Admin() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await updateSiteConfig(configForm);
+      // Destructure to avoid overwriting database-populated arrays with potentially stale configForm states
+      const { 
+        drawResults, 
+        paymentGateways, 
+        grandPrizeWinners, 
+        videoWinners, 
+        banners, 
+        thaiPrizes, 
+        thaiLotteryPrizes, 
+        thaiLotteryDrawTime,
+        ...restConfig 
+      } = configForm;
+      await updateSiteConfig(restConfig);
       showAdminAlert('Settings updated successfully!', 'success');
     } catch (err) {
       console.error('Error saving config', err);
@@ -186,7 +232,8 @@ export function Admin() {
     { id: 'Design', icon: Paintbrush, label: 'Colors & Theme' },
     { id: 'Contact', icon: FileText, label: 'Contact Settings' },
     { id: 'Users', icon: Users, label: 'User List' },
-    { id: 'Draws', icon: Trophy, label: 'Game Draws' }
+    { id: 'Draws', icon: Trophy, label: 'Game Draws' },
+    { id: 'Promos', icon: Megaphone, label: 'Promos & Referrals' }
   ];
 
   return (
@@ -1037,21 +1084,37 @@ export function Admin() {
 
                   {/* Filter & Search Bar */}
                   <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-                    <div className="flex gap-1.5 self-start">
-                      {['All', 'Pending', 'Approved', 'Rejected'].map((f) => (
-                        <button
-                          key={f}
-                          onClick={() => setDepositFilter(f as any)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                            depositFilter === f
-                              ? 'bg-amber-500 text-white shadow'
-                              : 'bg-gray-100 dark:bg-zinc-900 text-gray-500 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-800'
-                          }`}
-                        >
-                          {f}
-                        </button>
-                      ))}
+                    <div className="flex flex-wrap gap-3 items-center">
+                      <div className="flex gap-1.5 self-start">
+                        {['All', 'Pending', 'Approved', 'Rejected'].map((f) => (
+                          <button
+                            key={f}
+                            onClick={() => setDepositFilter(f as any)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                              depositFilter === f
+                                ? 'bg-amber-500 text-white shadow'
+                                : 'bg-gray-100 dark:bg-zinc-900 text-gray-500 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-800'
+                            }`}
+                          >
+                            {f}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Commission Filter Checkbox */}
+                      <div className="flex items-center gap-2 self-start sm:self-center bg-gray-50 dark:bg-zinc-900/60 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5">
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-gray-750 dark:text-zinc-350">
+                          <input 
+                            type="checkbox" 
+                            checked={showCommissionOnly} 
+                            onChange={(e) => setShowCommissionOnly(e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-300 dark:border-zinc-750 text-amber-500 focus:ring-amber-500 cursor-pointer accent-amber-500"
+                          />
+                          <span className="flex items-center gap-1">⭐ Commission Only</span>
+                        </label>
+                      </div>
                     </div>
+
                     <div className="w-full sm:w-64">
                       <input 
                         type="text" 
@@ -1132,109 +1195,120 @@ export function Admin() {
                         {(depositRequests || [])
                           .filter(r => depositFilter === 'All' || r.status === depositFilter)
                           .filter(r => !depositSearch || r.email.toLowerCase().includes(depositSearch.toLowerCase()) || (r.transactionId || '').toLowerCase().includes(depositSearch.toLowerCase()))
-                          .map((req) => (
-                            <tr key={req.id} className="hover:bg-gray-50/50 dark:hover:bg-zinc-900/10">
-                              <td className="px-4 py-3">
-                                <div className="font-bold text-gray-900 dark:text-white">{req.email}</div>
-                                {req.details && <div className="text-[10px] text-gray-400 italic mt-0.5">{req.details}</div>}
-                              </td>
-                              <td className="px-4 py-3 font-semibold uppercase text-pink-500">{req.gateway}</td>
-                              <td className="px-4 py-3 font-mono">{req.transactionId || 'N/A'}</td>
-                              <td className="px-4 py-3 text-emerald-500 font-bold">${(req.amount || 0).toFixed(2)}</td>
-                              <td className="px-4 py-3 whitespace-nowrap">{req.date || 'N/A'}</td>
-                              <td className="px-4 py-3">
-                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                  req.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-500' :
-                                  req.status === 'Rejected' ? 'bg-red-500/10 text-red-500' :
-                                  'bg-amber-500/10 text-amber-500 animate-pulse'
-                                }`}>
-                                  {req.status}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-right whitespace-nowrap space-x-1">
-                                {req.status === 'Pending' && (
-                                  <>
-                                    {confirmDepositAction?.id === req.id && confirmDepositAction?.type === 'Approved' ? (
-                                      <button 
-                                        onClick={() => {
-                                          updateDepositStatus(req.id, 'Approved');
-                                          setConfirmDepositAction(null);
-                                          showAdminAlert(`Approved deposit of $${req.amount} for ${req.email}!`, 'success');
-                                        }}
-                                        className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[9px] font-black uppercase tracking-wider animate-pulse"
-                                      >
-                                        Click to Confirm Approve
-                                      </button>
-                                    ) : (
-                                      <button 
-                                        onClick={() => setConfirmDepositAction({ id: req.id, type: 'Approved' })}
-                                        className="px-2 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded text-[9px] font-black uppercase tracking-wider"
-                                      >
-                                        Approve
-                                      </button>
+                          .filter(r => !showCommissionOnly || (r.gateway || '').toLowerCase().includes('commission') || (r.details || '').toLowerCase().includes('commission'))
+                          .map((req) => {
+                            const isComm = (req.gateway || '').toLowerCase().includes('commission') || (req.details || '').toLowerCase().includes('commission');
+                            return (
+                              <tr key={req.id} className={`hover:bg-gray-50/50 dark:hover:bg-zinc-900/10 ${isComm ? 'bg-amber-500/5 dark:bg-amber-500/5 border-l-4 border-l-amber-500' : ''}`}>
+                                <td className="px-4 py-3">
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <span className="font-bold text-gray-900 dark:text-white">{req.email}</span>
+                                    {isComm && (
+                                      <span className="bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-500/30 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse whitespace-nowrap">
+                                        ⭐ Commission
+                                      </span>
                                     )}
+                                  </div>
+                                  {req.details && <div className="text-[10px] text-gray-400 italic mt-0.5">{req.details}</div>}
+                                </td>
+                                <td className="px-4 py-3 font-semibold uppercase text-pink-500">{req.gateway}</td>
+                                <td className="px-4 py-3 font-mono">{req.transactionId || 'N/A'}</td>
+                                <td className="px-4 py-3 text-emerald-500 font-bold">${(req.amount || 0).toFixed(2)}</td>
+                                <td className="px-4 py-3 whitespace-nowrap">{req.date || 'N/A'}</td>
+                                <td className="px-4 py-3">
+                                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                    req.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-500' :
+                                    req.status === 'Rejected' ? 'bg-red-500/10 text-red-500' :
+                                    'bg-amber-500/10 text-amber-500 animate-pulse'
+                                  }`}>
+                                    {req.status}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-right whitespace-nowrap space-x-1">
+                                  {req.status === 'Pending' && (
+                                    <>
+                                      {confirmDepositAction?.id === req.id && confirmDepositAction?.type === 'Approved' ? (
+                                        <button 
+                                          onClick={() => {
+                                            updateDepositStatus(req.id, 'Approved');
+                                            setConfirmDepositAction(null);
+                                            showAdminAlert(`Approved deposit of $${req.amount} for ${req.email}!`, 'success');
+                                          }}
+                                          className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[9px] font-black uppercase tracking-wider animate-pulse"
+                                        >
+                                          Click to Confirm Approve
+                                        </button>
+                                      ) : (
+                                        <button 
+                                          onClick={() => setConfirmDepositAction({ id: req.id, type: 'Approved' })}
+                                          className="px-2 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded text-[9px] font-black uppercase tracking-wider"
+                                        >
+                                          Approve
+                                        </button>
+                                      )}
 
-                                    {confirmDepositAction?.id === req.id && confirmDepositAction?.type === 'Rejected' ? (
-                                      <button 
-                                        onClick={() => {
-                                          updateDepositStatus(req.id, 'Rejected');
-                                          setConfirmDepositAction(null);
-                                          showAdminAlert(`Rejected deposit of $${req.amount} for ${req.email}.`, 'success');
-                                        }}
-                                        className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[9px] font-black uppercase tracking-wider animate-pulse"
-                                      >
-                                        Click to Confirm Reject
-                                      </button>
-                                    ) : (
-                                      <button 
-                                        onClick={() => setConfirmDepositAction({ id: req.id, type: 'Rejected' })}
-                                        className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-black uppercase tracking-wider"
-                                      >
-                                        Reject
-                                      </button>
-                                    )}
-                                  </>
-                                )}
-                                <button 
-                                  onClick={() => {
-                                    setEditingDepositId(req.id);
-                                    setDepositEditForm({
-                                      email: req.email,
-                                      amount: req.amount,
-                                      gateway: req.gateway,
-                                      transactionId: req.transactionId,
-                                      details: req.details || '',
-                                      status: req.status
-                                    });
-                                  }}
-                                  className="px-2 py-1 text-amber-500 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 rounded text-[9px] font-bold uppercase"
-                                >
-                                  Edit
-                                </button>
-                                
-                                {confirmDepositAction?.id === req.id && confirmDepositAction?.type === 'Delete' ? (
+                                      {confirmDepositAction?.id === req.id && confirmDepositAction?.type === 'Rejected' ? (
+                                        <button 
+                                          onClick={() => {
+                                            updateDepositStatus(req.id, 'Rejected');
+                                            setConfirmDepositAction(null);
+                                            showAdminAlert(`Rejected deposit of $${req.amount} for ${req.email}.`, 'success');
+                                          }}
+                                          className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[9px] font-black uppercase tracking-wider animate-pulse"
+                                        >
+                                          Click to Confirm Reject
+                                        </button>
+                                      ) : (
+                                        <button 
+                                          onClick={() => setConfirmDepositAction({ id: req.id, type: 'Rejected' })}
+                                          className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-black uppercase tracking-wider"
+                                        >
+                                          Reject
+                                        </button>
+                                      )}
+                                    </>
+                                  )}
                                   <button 
                                     onClick={() => {
-                                      deleteDoc(doc(db, 'depositRequests', req.id)).then(() => {
-                                        showAdminAlert('Deposit request deleted!', 'success');
-                                        setConfirmDepositAction(null);
+                                      setEditingDepositId(req.id);
+                                      setDepositEditForm({
+                                        email: req.email,
+                                        amount: req.amount,
+                                        gateway: req.gateway,
+                                        transactionId: req.transactionId,
+                                        details: req.details || '',
+                                        status: req.status
                                       });
                                     }}
-                                    className="px-2 py-1 bg-red-600 text-white rounded text-[9px] font-black uppercase tracking-wider animate-pulse"
+                                    className="px-2 py-1 text-amber-500 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 rounded text-[9px] font-bold uppercase"
                                   >
-                                    Click to Delete
+                                    Edit
                                   </button>
-                                ) : (
-                                  <button 
-                                    onClick={() => setConfirmDepositAction({ id: req.id, type: 'Delete' })}
-                                    className="px-2 py-1 text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 rounded text-[9px] font-bold uppercase"
-                                  >
-                                    Delete
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
+                                  
+                                  {confirmDepositAction?.id === req.id && confirmDepositAction?.type === 'Delete' ? (
+                                    <button 
+                                      onClick={() => {
+                                        deleteDoc(doc(db, 'depositRequests', req.id)).then(() => {
+                                          showAdminAlert('Deposit request deleted!', 'success');
+                                          setConfirmDepositAction(null);
+                                        });
+                                      }}
+                                      className="px-2 py-1 bg-red-600 text-white rounded text-[9px] font-black uppercase tracking-wider animate-pulse"
+                                    >
+                                      Click to Delete
+                                    </button>
+                                  ) : (
+                                    <button 
+                                      onClick={() => setConfirmDepositAction({ id: req.id, type: 'Delete' })}
+                                      className="px-2 py-1 text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 rounded text-[9px] font-bold uppercase"
+                                    >
+                                      Delete
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         {(!depositRequests || depositRequests.length === 0) && (
                           <tr>
                             <td colSpan={7} className="text-center py-6 text-gray-400 italic">No deposit requests found.</td>
@@ -1592,6 +1666,524 @@ export function Admin() {
             {activeTab === 'Pages' && <AdminPagesTab />}
             {activeTab === 'Draws' && (
               <div className="space-y-6">
+                {/* Unified Dynamic Draw Control Center */}
+                <div className="bg-white dark:bg-[#151c2a] rounded-2xl p-6 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-5">
+                  <div className="border-b border-gray-100 dark:border-zinc-850 pb-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-sm font-black uppercase text-teal-500 tracking-wider">
+                        🏆 Official Game Draw Control Center
+                      </h3>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Select any active game, process the official drawing, auto-evaluate tickets, and credit payouts instantly to user balances.
+                      </p>
+                    </div>
+                    <div className="min-w-[200px]">
+                      <label className="block text-[9px] font-black uppercase tracking-wider text-teal-500 mb-1">Select Game to Draw</label>
+                      <select
+                        value={selectedDrawGame}
+                        onChange={(e) => {
+                          setSelectedDrawGame(e.target.value);
+                          // Reset winning number format based on selected game
+                          setThaiDrawForm(prev => ({
+                            ...prev,
+                            winningNumber: '',
+                            totalWinners: e.target.value === 'THAI GOVT LOTTERY' ? '1 Player' : '12 Players',
+                            totalPaid: e.target.value === 'THAI GOVT LOTTERY' ? '6,000,000 Baht' : '$5,000.00'
+                          }));
+                          setThaiConfirming(false);
+                        }}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-250 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-gray-800 dark:text-zinc-200 focus:ring-2 focus:ring-teal-500 outline-none"
+                      >
+                        <option value="THAI GOVT LOTTERY">🇹🇭 THAI GOVT LOTTERY</option>
+                        {dynamicGames?.map(g => (
+                          <option key={g.id || g.name} value={g.name}>🎮 {g.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="md:col-span-1">
+                      {selectedDrawGame === 'THAI GOVT LOTTERY' ? (
+                        <>
+                          <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5">Winning Numbers (6 Digits)</label>
+                          <input 
+                            type="text" 
+                            maxLength={6} 
+                            placeholder="e.g. 123456" 
+                            value={thaiDrawForm.winningNumber}
+                            onChange={(e) => {
+                              const cleaned = e.target.value.replace(/\D/g, '');
+                              setThaiDrawForm(prev => {
+                                const updated = { ...prev, winningNumber: cleaned };
+                                if (cleaned.length === 6) {
+                                  updated.up3 = cleaned.slice(-3);
+                                  updated.down3 = cleaned.slice(0, 3);
+                                  updated.up2 = cleaned.slice(-2);
+                                  if (!updated.down2) {
+                                    updated.down2 = String(Math.floor(10 + Math.random() * 90));
+                                  }
+                                  updated.up4 = cleaned.slice(0, 4);
+                                  updated.down4 = cleaned.slice(-4);
+                                  updated.up6 = cleaned;
+                                  updated.down6 = cleaned.split('').reverse().join('');
+                                }
+                                return updated;
+                              });
+                            }}
+                            className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-lg font-mono font-bold text-center tracking-widest focus:ring-2 focus:ring-teal-500 outline-none" 
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5">Winning Numbers (comma split)</label>
+                          <input 
+                            type="text" 
+                            placeholder="e.g. 12, 45, 67, 89" 
+                            value={thaiDrawForm.winningNumber}
+                            onChange={(e) => setThaiDrawForm(prev => ({ ...prev, winningNumber: e.target.value }))}
+                            className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm font-mono font-bold text-center focus:ring-2 focus:ring-teal-500 outline-none" 
+                          />
+                        </>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5">Draw Date Text</label>
+                      <input 
+                        type="text" 
+                        value={thaiDrawForm.date} 
+                        onChange={(e) => setThaiDrawForm(prev => ({ ...prev, date: e.target.value }))}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-teal-500 outline-none" 
+                        placeholder="e.g. 16 Jul 2026, 01:15 AM"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5">Total Winners Description</label>
+                      <input 
+                        type="text" 
+                        value={thaiDrawForm.totalWinners} 
+                        onChange={(e) => setThaiDrawForm(prev => ({ ...prev, totalWinners: e.target.value }))}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-teal-500 outline-none" 
+                        placeholder="e.g. 1 Player"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5">Total Paid Description</label>
+                      <input 
+                        type="text" 
+                        value={thaiDrawForm.totalPaid} 
+                        onChange={(e) => setThaiDrawForm(prev => ({ ...prev, totalPaid: e.target.value }))}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-teal-500 outline-none" 
+                        placeholder="e.g. 6,000,000 Baht"
+                      />
+                    </div>
+                  </div>
+
+                  {selectedDrawGame === 'THAI GOVT LOTTERY' && thaiDrawForm.winningNumber.length === 6 && (
+                    <div className="bg-teal-500/5 dark:bg-teal-950/10 border border-teal-500/10 rounded-xl p-4 space-y-3 animate-fadeIn">
+                      <div className="flex justify-between items-center border-b border-teal-500/10 pb-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">
+                          🎯 Configure Sub-Results (Optional custom overrides)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const cleaned = thaiDrawForm.winningNumber;
+                            setThaiDrawForm(prev => ({
+                              ...prev,
+                              up3: cleaned.slice(-3),
+                              down3: cleaned.slice(0, 3),
+                              up2: cleaned.slice(-2),
+                              down2: String(Math.floor(10 + Math.random() * 90)),
+                              up4: cleaned.slice(0, 4),
+                              down4: cleaned.slice(-4),
+                              up6: cleaned,
+                              down6: cleaned.split('').reverse().join('')
+                            }));
+                          }}
+                          className="text-[9px] bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 font-extrabold uppercase px-2 py-1 rounded"
+                        >
+                          Reset sub-results to defaults
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div>
+                          <label className="block text-[8.5px] font-black uppercase tracking-widest text-gray-500 dark:text-zinc-400 mb-1">3UP / Rear 3 (up3)</label>
+                          <input
+                            type="text"
+                            maxLength={3}
+                            value={thaiDrawForm.up3}
+                            onChange={(e) => setThaiDrawForm(prev => ({ ...prev, up3: e.target.value.replace(/\D/g, '') }))}
+                            className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-teal-600 dark:text-teal-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8.5px] font-black uppercase tracking-widest text-gray-500 dark:text-zinc-400 mb-1">Front 3-Digit (down3)</label>
+                          <input
+                            type="text"
+                            maxLength={3}
+                            value={thaiDrawForm.down3}
+                            onChange={(e) => setThaiDrawForm(prev => ({ ...prev, down3: e.target.value.replace(/\D/g, '') }))}
+                            className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-teal-600 dark:text-teal-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8.5px] font-black uppercase tracking-widest text-gray-500 dark:text-zinc-400 mb-1">2UP / Last 2 (up2)</label>
+                          <input
+                            type="text"
+                            maxLength={2}
+                            value={thaiDrawForm.up2}
+                            onChange={(e) => setThaiDrawForm(prev => ({ ...prev, up2: e.target.value.replace(/\D/g, '') }))}
+                            className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-teal-600 dark:text-teal-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8.5px] font-black uppercase tracking-widest text-gray-500 dark:text-zinc-400 mb-1">Down Direct (down2)</label>
+                          <input
+                            type="text"
+                            maxLength={2}
+                            value={thaiDrawForm.down2}
+                            onChange={(e) => setThaiDrawForm(prev => ({ ...prev, down2: e.target.value.replace(/\D/g, '') }))}
+                            className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-amber-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row justify-end items-center gap-3 pt-2">
+                    {thaiConfirming ? (
+                      <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-xl">
+                        <span className="text-xs font-black uppercase text-amber-500 tracking-wider text-center sm:text-left">
+                          ⚠️ Confirm drawing "{thaiDrawForm.winningNumber.trim()}" for game "{selectedDrawGame}"? All pending user tickets will be processed instantly!
+                        </span>
+                        <div className="flex gap-2 w-full sm:w-auto justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setThaiConfirming(false)}
+                            className="px-3.5 py-1.5 bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-750 text-gray-700 dark:text-zinc-200 text-[10px] font-black uppercase tracking-wider rounded-lg transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const winningStr = thaiDrawForm.winningNumber.trim();
+                              
+                              if (selectedDrawGame === 'THAI GOVT LOTTERY') {
+                                const nums = winningStr.split('').map(Number);
+                                const winningSeq = winningStr;
+                                
+                                const subResultsObj = {
+                                  up3: thaiDrawForm.up3 || winningSeq.slice(-3),
+                                  down3: thaiDrawForm.down3 || winningSeq.slice(0, 3),
+                                  up2: thaiDrawForm.up2 || winningSeq.slice(-2),
+                                  down2: thaiDrawForm.down2 || String(Math.floor(10 + Math.random() * 90)),
+                                  up4: thaiDrawForm.up4 || winningSeq.slice(0, 4),
+                                  down4: thaiDrawForm.down4 || winningSeq.slice(-4),
+                                  up6: winningSeq,
+                                  down6: winningSeq.split('').reverse().join('')
+                                };
+
+                                // 1. Create and save DrawResult in siteConfig
+                                const drawObj = {
+                                  id: 'dr-' + Date.now().toString(),
+                                  gameName: 'THAI GOVT LOTTERY',
+                                  date: thaiDrawForm.date,
+                                  numbers: nums,
+                                  totalWinners: thaiDrawForm.totalWinners || '1 Player',
+                                  totalPaid: thaiDrawForm.totalPaid || '6,000,000 Baht',
+                                  country: 'Thailand',
+                                  thaiSubResults: subResultsObj
+                                };
+                                
+                                const currentDraws = siteConfig?.drawResults || [];
+                                updateSiteConfig({ drawResults: [drawObj, ...currentDraws] });
+                                
+                                // 2. Perform Automatic Matching and Balance Crediting
+                                triggerDraw('THAI GOVT LOTTERY', nums, subResultsObj);
+                                
+                                showAdminAlert(`Thai Govt Lottery Draw completed for sequence "${winningStr}"! Results published & payouts credited.`, 'success');
+                              } else {
+                                // Standard dynamic games drawing
+                                const nums = winningStr.split(/[\s,]+/).map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
+                                if (nums.length === 0) {
+                                  showAdminAlert("Please enter valid winning numbers separated by commas!", "error");
+                                  return;
+                                }
+
+                                const drawObj = {
+                                  id: 'dr-' + Date.now().toString(),
+                                  gameName: selectedDrawGame,
+                                  date: thaiDrawForm.date,
+                                  numbers: nums,
+                                  totalWinners: thaiDrawForm.totalWinners || '12 Players',
+                                  totalPaid: thaiDrawForm.totalPaid || '$5,000.00',
+                                  country: 'Bangladesh'
+                                };
+
+                                const currentDraws = siteConfig?.drawResults || [];
+                                updateSiteConfig({ drawResults: [drawObj, ...currentDraws] });
+
+                                triggerDraw(selectedDrawGame, nums);
+
+                                showAdminAlert(`${selectedDrawGame} draw completed with numbers ${nums.join(", ")}! Results published & payouts processed.`, 'success');
+                              }
+
+                              setThaiDrawForm(prev => ({ 
+                                ...prev, 
+                                winningNumber: '',
+                                up3: '',
+                                down3: '',
+                                up2: '',
+                                down2: '',
+                                up4: '',
+                                down4: '',
+                                up6: '',
+                                down6: ''
+                              }));
+                              setThaiConfirming(false);
+                            }}
+                            className="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-colors shadow-md shadow-teal-600/10"
+                          >
+                            Yes, Draw Now
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const winningStr = thaiDrawForm.winningNumber.trim();
+                          if (!winningStr) {
+                            showAdminAlert("Please enter winning digits first!", "error");
+                            return;
+                          }
+                          if (selectedDrawGame === 'THAI GOVT LOTTERY' && winningStr.length !== 6) {
+                            showAdminAlert("Please enter exactly 6 winning digits for Thai Govt Lottery!", "error");
+                            return;
+                          }
+                          setThaiConfirming(true);
+                        }}
+                        className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-teal-600/10 transition-all hover:scale-[1.01]"
+                      >
+                        Run Official {selectedDrawGame === 'THAI GOVT LOTTERY' ? 'Thai Lottery' : selectedDrawGame} Draw
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 1.5. Thai Govt Lottery Prize Structure Manager */}
+                <div className="bg-white dark:bg-[#151c2a] rounded-2xl p-6 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-5">
+                  <div className="border-b border-gray-100 dark:border-zinc-850 pb-3">
+                    <h3 className="text-sm font-black uppercase text-amber-500 tracking-wider">
+                      🇹🇭 Thai Govt Lottery Prize Structure Manager
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Customize the official prize categories, counts, and prize values shown in the Official Prize Pool Structure table on the user-facing Thai Lottery page.
+                    </p>
+                  </div>
+
+                  {/* Add New Prize Tier form */}
+                  <div className="bg-gray-50 dark:bg-zinc-900/30 border border-gray-200/60 dark:border-zinc-800 p-4 rounded-xl space-y-4">
+                    <h4 className="text-xs font-black uppercase text-amber-500">Add New Prize Tier / Category</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1">Category Name</label>
+                        <input 
+                          type="text" 
+                          value={newThaiPrize.name}
+                          onChange={(e) => setNewThaiPrize(p => ({ ...p, name: e.target.value }))}
+                          placeholder="e.g. 1st Prize"
+                          className="w-full bg-white dark:bg-zinc-900 border border-gray-250 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-medium outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1">Winners Count</label>
+                        <input 
+                          type="text" 
+                          value={newThaiPrize.count}
+                          onChange={(e) => setNewThaiPrize(p => ({ ...p, count: e.target.value }))}
+                          placeholder="e.g. 1 or 2"
+                          className="w-full bg-white dark:bg-zinc-900 border border-gray-250 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-medium outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1">Prize Amount</label>
+                        <input 
+                          type="text" 
+                          value={newThaiPrize.prize}
+                          onChange={(e) => setNewThaiPrize(p => ({ ...p, prize: e.target.value }))}
+                          placeholder="e.g. 6,000,000 Baht"
+                          className="w-full bg-white dark:bg-zinc-900 border border-gray-250 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs font-medium outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newThaiPrize.name || !newThaiPrize.count || !newThaiPrize.prize) {
+                            showAdminAlert('Please fill out all fields to add a prize tier!', 'error');
+                            return;
+                          }
+                          const currentPrizes = siteConfig?.thaiPrizes || [
+                            { name: '1st Prize', count: '1', prize: '6,000,000 Baht' },
+                            { name: '3-Digit Front', count: '2', prize: '4,000 Baht' },
+                            { name: '3-Digit Rear', count: '2', prize: '4,000 Baht' },
+                            { name: '2-Digit Last', count: '1', prize: '2,000 Baht' },
+                            { name: '2nd Prize', count: '5', prize: '200,000 Baht' },
+                            { name: '3rd Prize', count: '10', prize: '80,000 Baht' },
+                            { name: '4th Prize', count: '50', prize: '40,000 Baht' },
+                            { name: '5th Prize', count: '100', prize: '20,000 Baht' }
+                          ];
+                          const updated = [...currentPrizes, { name: newThaiPrize.name, count: newThaiPrize.count, prize: newThaiPrize.prize }];
+                          updateSiteConfig({ thaiPrizes: updated });
+                          setNewThaiPrize({ name: '', count: '', prize: '' });
+                          showAdminAlert('New Thai prize tier added successfully!', 'success');
+                        }}
+                        className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-[10.5px] font-black uppercase tracking-wider rounded-lg transition-colors"
+                      >
+                        Add Prize Tier
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Editing Row Form */}
+                  {editingPrizeIdx !== null && (
+                    <div className="p-4 border border-teal-500/50 bg-teal-500/5 dark:bg-teal-500/10 rounded-xl space-y-4">
+                      <h4 className="text-xs font-black uppercase text-teal-500">Currently Editing Prize Tier</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-black uppercase text-gray-500 dark:text-zinc-400 mb-1">Category Name</label>
+                          <input 
+                            type="text" 
+                            value={editingPrizeForm.name} 
+                            onChange={(e) => setEditingPrizeForm(p => ({ ...p, name: e.target.value }))} 
+                            className="w-full bg-white dark:bg-zinc-900 border border-gray-250 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-medium outline-none" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black uppercase text-gray-500 dark:text-zinc-400 mb-1">Winners Count</label>
+                          <input 
+                            type="text" 
+                            value={editingPrizeForm.count} 
+                            onChange={(e) => setEditingPrizeForm(p => ({ ...p, count: e.target.value }))} 
+                            className="w-full bg-white dark:bg-zinc-900 border border-gray-250 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-medium outline-none" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black uppercase text-gray-500 dark:text-zinc-400 mb-1">Prize Amount</label>
+                          <input 
+                            type="text" 
+                            value={editingPrizeForm.prize} 
+                            onChange={(e) => setEditingPrizeForm(p => ({ ...p, prize: e.target.value }))} 
+                            className="w-full bg-white dark:bg-zinc-900 border border-gray-250 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-medium outline-none" 
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button 
+                          type="button"
+                          onClick={() => setEditingPrizeIdx(null)} 
+                          className="px-4 py-1.5 bg-gray-100 hover:bg-gray-250 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 rounded-lg text-xs font-bold uppercase"
+                        >
+                          Cancel
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            if (!editingPrizeForm.name || !editingPrizeForm.count || !editingPrizeForm.prize) {
+                              showAdminAlert('Please fill out all fields!', 'error');
+                              return;
+                            }
+                            const currentPrizes = siteConfig?.thaiPrizes || [];
+                            const updated = currentPrizes.map((p: any, idx: number) => {
+                              if (idx === editingPrizeIdx) {
+                                return { name: editingPrizeForm.name, count: editingPrizeForm.count, prize: editingPrizeForm.prize };
+                              }
+                              return p;
+                            });
+                            updateSiteConfig({ thaiPrizes: updated });
+                            setEditingPrizeIdx(null);
+                            showAdminAlert('Prize tier updated successfully!', 'success');
+                          }}
+                          className="px-4 py-1.5 bg-teal-500 hover:bg-teal-600 text-white rounded-lg text-xs font-bold uppercase"
+                        >
+                          Save Changes
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Prize list table */}
+                  <div className="overflow-x-auto border border-gray-150 dark:border-zinc-800 rounded-xl">
+                    <table className="w-full text-left text-xs text-gray-500 dark:text-zinc-400">
+                      <thead className="bg-gray-50 dark:bg-zinc-900/50 uppercase font-black tracking-wider text-[10px] text-gray-700 dark:text-zinc-300 border-b border-gray-200 dark:border-zinc-800">
+                        <tr>
+                          <th className="px-4 py-3">Category Name</th>
+                          <th className="px-4 py-3 text-center">Winners Count</th>
+                          <th className="px-4 py-3">Prize Amount</th>
+                          <th className="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-zinc-850">
+                        {(siteConfig?.thaiPrizes || [
+                          { name: '1st Prize', count: '1', prize: '6,000,000 Baht' },
+                          { name: '3-Digit Front', count: '2', prize: '4,000 Baht' },
+                          { name: '3-Digit Rear', count: '2', prize: '4,000 Baht' },
+                          { name: '2-Digit Last', count: '1', prize: '2,000 Baht' },
+                          { name: '2nd Prize', count: '5', prize: '200,000 Baht' },
+                          { name: '3rd Prize', count: '10', prize: '80,000 Baht' },
+                          { name: '4th Prize', count: '50', prize: '40,000 Baht' },
+                          { name: '5th Prize', count: '100', prize: '20,000 Baht' }
+                        ]).map((row: any, i: number) => (
+                          <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-zinc-900/10">
+                            <td className="px-4 py-3 font-bold text-gray-900 dark:text-white">{row.name}</td>
+                            <td className="px-4 py-3 text-center font-mono font-medium">{row.count}</td>
+                            <td className="px-4 py-3 font-semibold text-amber-500">{row.prize}</td>
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                              <button 
+                                onClick={() => {
+                                  setEditingPrizeIdx(i);
+                                  setEditingPrizeForm({
+                                    name: row.name,
+                                    count: row.count,
+                                    prize: row.prize
+                                  });
+                                }} 
+                                className="px-2.5 py-1 text-teal-500 hover:bg-teal-500/10 rounded font-bold uppercase text-[10px] mr-1"
+                              >
+                                Edit
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  const currentPrizes = siteConfig?.thaiPrizes || [
+                                    { name: '1st Prize', count: '1', prize: '6,000,000 Baht' },
+                                    { name: '3-Digit Front', count: '2', prize: '4,000 Baht' },
+                                    { name: '3-Digit Rear', count: '2', prize: '4,000 Baht' },
+                                    { name: '2-Digit Last', count: '1', prize: '2,000 Baht' },
+                                    { name: '2nd Prize', count: '5', prize: '200,000 Baht' },
+                                    { name: '3rd Prize', count: '10', prize: '80,000 Baht' },
+                                    { name: '4th Prize', count: '50', prize: '40,000 Baht' },
+                                    { name: '5th Prize', count: '100', prize: '20,000 Baht' }
+                                  ];
+                                  const updated = currentPrizes.filter((_, idx) => idx !== i);
+                                  updateSiteConfig({ thaiPrizes: updated });
+                                  showAdminAlert('Prize tier deleted successfully!', 'success');
+                                }} 
+                                className="px-2.5 py-1 text-red-500 hover:bg-red-500/10 rounded font-bold uppercase text-[10px]"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
                 {/* 1. Run Live Draw Section */}
                 <div className="bg-white dark:bg-[#151c2a] rounded-2xl p-6 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-5">
                   <h3 className="text-sm font-black uppercase text-gray-800 dark:text-gray-200 mb-4 border-b border-gray-100 dark:border-zinc-800 pb-3">Run Live Draw & Simulate</h3>
@@ -1611,24 +2203,22 @@ export function Admin() {
                               const input = document.getElementById(`draw-${game.id}`) as HTMLInputElement;
                               const nums = input.value.split(",").map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
                               if (nums.length > 0) {
-                                if (confirm(`Are you sure you want to draw ${nums.join(", ")} for ${game.name}?`)) {
-                                  const newDrawResult = {
-                                    id: Date.now().toString(),
-                                    gameName: game.name,
-                                    date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-                                    numbers: nums,
-                                    totalWinners: '1 Player',
-                                    totalPaid: game.prize || '$10,000.00',
-                                    country: 'Bangladesh'
-                                  };
-                                  const currentDraws = siteConfig?.drawResults || [];
-                                  updateSiteConfig({ drawResults: [newDrawResult, ...currentDraws] });
-                                  triggerDraw(game.name, nums);
-                                  input.value = "";
-                                  alert("Draw completed & result appended!");
-                                }
+                                const newDrawResult = {
+                                  id: Date.now().toString(),
+                                  gameName: game.name,
+                                  date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                                  numbers: nums,
+                                  totalWinners: '1 Player',
+                                  totalPaid: game.prize || '$10,000.00',
+                                  country: 'Bangladesh'
+                                };
+                                const currentDraws = siteConfig?.drawResults || [];
+                                updateSiteConfig({ drawResults: [newDrawResult, ...currentDraws] });
+                                triggerDraw(game.name, nums);
+                                input.value = "";
+                                showAdminAlert(`${game.name} live draw completed with numbers ${nums.join(", ")}! Results published.`, 'success');
                               } else {
-                                alert("Please enter valid numbers");
+                                showAdminAlert("Please enter valid numbers separated by commas!", "error");
                               }
                             }}
                             className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg transition-colors shrink-0"
@@ -1713,7 +2303,7 @@ export function Admin() {
                       onClick={() => {
                         const nums = newDraw.numbersStr.split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
                         if (nums.length === 0) {
-                          alert('Please enter valid drawing numbers!');
+                          showAdminAlert('Please enter valid drawing numbers!', 'error');
                           return;
                         }
                         const drawObj = {
@@ -1727,7 +2317,7 @@ export function Admin() {
                         };
                         const updated = [drawObj, ...(siteConfig?.drawResults || [])];
                         updateSiteConfig({ drawResults: updated });
-                        alert('Custom Draw Result added!');
+                        showAdminAlert('Custom Draw Result added!', 'success');
                         setNewDraw(prev => ({ ...prev, numbersStr: '' }));
                       }}
                       className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-widest rounded-xl shadow-md transition-colors"
@@ -1772,12 +2362,19 @@ export function Admin() {
                         </div>
                       </div>
                       <div className="flex justify-end gap-2">
-                        <button onClick={() => setEditingDrawId(null)} className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 rounded-lg text-xs font-bold uppercase">Cancel</button>
                         <button 
+                          type="button"
+                          onClick={() => setEditingDrawId(null)} 
+                          className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 rounded-lg text-xs font-bold uppercase"
+                        >
+                          Cancel
+                        </button>
+                        <button 
+                          type="button"
                           onClick={() => {
                             const nums = editingDrawForm.numbersStr.split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
                             if (nums.length === 0) {
-                              alert('Please enter valid drawing numbers!');
+                              showAdminAlert('Please enter valid drawing numbers!', 'error');
                               return;
                             }
                             const updated = (siteConfig?.drawResults || []).map((d: any) => {
@@ -1795,7 +2392,7 @@ export function Admin() {
                               return d;
                             });
                             updateSiteConfig({ drawResults: updated });
-                            alert('Draw Result updated!');
+                            showAdminAlert('Draw Result updated successfully!', 'success');
                             setEditingDrawId(null);
                           }}
                           className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase"
@@ -1855,11 +2452,9 @@ export function Admin() {
                               </button>
                               <button 
                                 onClick={() => {
-                                  if (confirm('Are you sure you want to delete this draw result?')) {
-                                    const updated = (siteConfig?.drawResults || []).filter((d: any) => d.id !== draw.id);
-                                    updateSiteConfig({ drawResults: updated });
-                                    alert('Draw Result deleted!');
-                                  }
+                                  const updated = (siteConfig?.drawResults || []).filter((d: any) => d.id !== draw.id);
+                                  updateSiteConfig({ drawResults: updated });
+                                  showAdminAlert('Draw Result deleted successfully!', 'success');
                                 }} 
                                 className="px-2.5 py-1 text-red-500 hover:bg-red-500/10 rounded font-bold uppercase text-[10px]"
                               >
@@ -1877,6 +2472,248 @@ export function Admin() {
                     </table>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'Promos' && (
+              <div className="bg-white dark:bg-[#151c2a] p-6 sm:p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-zinc-800 space-y-8 font-roboto-sans">
+                <div className="border-b border-gray-150 dark:border-zinc-850 pb-4">
+                  <h3 className="text-xl font-black uppercase tracking-wider text-amber-500">Promos & Referrals Control</h3>
+                  <p className="text-xs text-gray-500 dark:text-zinc-400 uppercase font-bold tracking-wider mt-1">Manage active website coupon codes and signup referral rewards</p>
+                </div>
+
+                {/* Referral Settings */}
+                <div className="space-y-4 bg-gray-50 dark:bg-zinc-950 p-6 rounded-2xl border border-gray-200 dark:border-zinc-800">
+                  <h4 className="text-sm font-extrabold uppercase tracking-widest text-gray-800 dark:text-zinc-200">Referral Commission System</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Referral Deposit Commission Rate (%)</label>
+                      <input 
+                        type="number" 
+                        name="referralCommissionPct"
+                        value={configForm.referralCommissionPct ?? 10}
+                        onChange={(e) => setConfigForm({ ...configForm, referralCommissionPct: parseInt(e.target.value) || 0 })}
+                        className="bg-white dark:bg-[#0f141f] text-gray-900 dark:text-zinc-150 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 font-mono focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        min="0"
+                        max="100"
+                        step="1"
+                      />
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={async () => {
+                        setIsSaving(true);
+                        try {
+                          await updateSiteConfig({ referralCommissionPct: configForm.referralCommissionPct ?? 10 });
+                          showAdminAlert('Referral commission rate updated successfully!', 'success');
+                        } catch (e) {
+                          showAdminAlert('Failed to update referral commission rate.', 'error');
+                        } finally {
+                          setIsSaving(false);
+                        }
+                      }}
+                      className="px-6 py-3 bg-amber-500 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-amber-600 transition-colors shadow"
+                    >
+                      Update Commission Rate
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-gray-400 dark:text-zinc-500 uppercase tracking-wide font-bold">This commission percentage is paid automatically in real-time to the referrer whenever their referred player makes an approved deposit.</p>
+                </div>
+
+                {/* Promo Codes Management */}
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h4 className="text-sm font-extrabold uppercase tracking-widest text-gray-800 dark:text-zinc-200">Active Website Promo Codes</h4>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setShowAddPromoModal(true);
+                        setNewPromoForm({ code: '', discountType: 'percentage', value: 10, minCartAmount: 0, isActive: true });
+                      }}
+                      className="px-4 py-2 bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl text-xs font-black uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-1.5"
+                    >
+                      + Create New Code
+                    </button>
+                  </div>
+
+                  {/* Promo Codes List */}
+                  <div className="space-y-3">
+                    {((configForm.promoCodes && configForm.promoCodes.length > 0) ? configForm.promoCodes : [
+                      { code: 'GLOBAL50', discountType: 'percentage', value: 50, minCartAmount: 0, isActive: true },
+                      { code: 'SXL10', discountType: 'percentage', value: 10, minCartAmount: 0, isActive: true },
+                      { code: 'WELCOME5', discountType: 'fixed', value: 5, minCartAmount: 10, isActive: true }
+                    ]).map((promo, idx) => (
+                      <div key={idx} className="bg-white dark:bg-[#111622] p-4 rounded-2xl border border-gray-150 dark:border-zinc-850 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-extrabold text-sm uppercase px-2 py-0.5 bg-amber-500/10 text-amber-500 rounded border border-amber-500/25">
+                              {promo.code}
+                            </span>
+                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${promo.isActive ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                              {promo.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-zinc-400 font-semibold uppercase">
+                            Discount: <span className="font-mono text-gray-800 dark:text-zinc-200">{promo.discountType === 'percentage' ? `${promo.value}%` : `$${promo.value}`}</span>
+                            {promo.minCartAmount ? ` • Min Purchase: $${promo.minCartAmount}` : ''}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const updatedPromos = [...(configForm.promoCodes || [])];
+                              const currentPromos = configForm.promoCodes && configForm.promoCodes.length > 0 ? updatedPromos : [
+                                { code: 'GLOBAL50', discountType: 'percentage', value: 50, minCartAmount: 0, isActive: true },
+                                { code: 'SXL10', discountType: 'percentage', value: 10, minCartAmount: 0, isActive: true },
+                                { code: 'WELCOME5', discountType: 'fixed', value: 5, minCartAmount: 10, isActive: true }
+                              ];
+                              
+                              currentPromos[idx] = { ...currentPromos[idx], isActive: !currentPromos[idx].isActive };
+                              
+                              setConfigForm({ ...configForm, promoCodes: currentPromos });
+                              setIsSaving(true);
+                              try {
+                                await updateSiteConfig({ promoCodes: currentPromos });
+                                showAdminAlert('Promo code status toggled!', 'success');
+                              } catch (e) {
+                                showAdminAlert('Failed to toggle status.', 'error');
+                              } finally {
+                                setIsSaving(false);
+                              }
+                            }}
+                            className="px-3 py-1.5 border border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-lg text-xs font-bold transition-all"
+                          >
+                            Toggle Status
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const currentPromos = configForm.promoCodes && configForm.promoCodes.length > 0 ? [...configForm.promoCodes] : [
+                                { code: 'GLOBAL50', discountType: 'percentage', value: 50, minCartAmount: 0, isActive: true },
+                                { code: 'SXL10', discountType: 'percentage', value: 10, minCartAmount: 0, isActive: true },
+                                { code: 'WELCOME5', discountType: 'fixed', value: 5, minCartAmount: 10, isActive: true }
+                              ];
+                              currentPromos.splice(idx, 1);
+                              setConfigForm({ ...configForm, promoCodes: currentPromos });
+                              setIsSaving(true);
+                              try {
+                                await updateSiteConfig({ promoCodes: currentPromos });
+                                showAdminAlert('Promo code deleted successfully!', 'success');
+                              } catch (e) {
+                                showAdminAlert('Failed to delete promo code.', 'error');
+                              } finally {
+                                setIsSaving(false);
+                              }
+                            }}
+                            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Add Promo Code Modal */}
+                {showAddPromoModal && (
+                  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99] flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-[#151c2a] w-full max-w-md rounded-3xl p-6 sm:p-8 border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-zinc-150 space-y-4 shadow-2xl animate-fade-in">
+                      <div className="flex justify-between items-center border-b border-gray-150 dark:border-zinc-800 pb-3">
+                        <h4 className="text-base font-black uppercase tracking-wider text-amber-500">Create Promo Code</h4>
+                        <button type="button" onClick={() => setShowAddPromoModal(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg">
+                          <X className="w-5 h-5 text-gray-500" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-3.5">
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Coupon Code</label>
+                          <input 
+                            type="text" 
+                            placeholder="e.g. DISCOUNT20"
+                            value={newPromoForm.code}
+                            onChange={(e) => setNewPromoForm({ ...newPromoForm, code: e.target.value.toUpperCase() })}
+                            className="bg-gray-50 dark:bg-[#0f141f] text-gray-900 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 font-mono uppercase focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Discount Type</label>
+                            <select
+                              value={newPromoForm.discountType}
+                              onChange={(e) => setNewPromoForm({ ...newPromoForm, discountType: e.target.value as 'fixed' | 'percentage' })}
+                              className="bg-gray-50 dark:bg-[#0f141f] text-gray-900 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            >
+                              <option value="percentage">Percentage (%)</option>
+                              <option value="fixed">Fixed Amount ($)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Discount Value</label>
+                            <input 
+                              type="number" 
+                              value={newPromoForm.value}
+                              onChange={(e) => setNewPromoForm({ ...newPromoForm, value: parseFloat(e.target.value) || 0 })}
+                              className="bg-gray-50 dark:bg-[#0f141f] text-gray-900 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 font-mono focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Minimum Cart Amount (Optional)</label>
+                          <input 
+                            type="number" 
+                            value={newPromoForm.minCartAmount}
+                            onChange={(e) => setNewPromoForm({ ...newPromoForm, minCartAmount: parseFloat(e.target.value) || 0 })}
+                            className="bg-gray-50 dark:bg-[#0f141f] text-gray-900 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 font-mono focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!newPromoForm.code.trim()) {
+                            alert('Please enter a coupon code!');
+                            return;
+                          }
+                          const currentPromos = configForm.promoCodes && configForm.promoCodes.length > 0 ? [...configForm.promoCodes] : [
+                            { code: 'GLOBAL50', discountType: 'percentage', value: 50, minCartAmount: 0, isActive: true },
+                            { code: 'SXL10', discountType: 'percentage', value: 10, minCartAmount: 0, isActive: true },
+                            { code: 'WELCOME5', discountType: 'fixed', value: 5, minCartAmount: 10, isActive: true }
+                          ];
+                          
+                          currentPromos.push({
+                            code: newPromoForm.code.trim().toUpperCase(),
+                            discountType: newPromoForm.discountType,
+                            value: newPromoForm.value,
+                            minCartAmount: newPromoForm.minCartAmount || 0,
+                            isActive: true
+                          });
+
+                          setConfigForm({ ...configForm, promoCodes: currentPromos });
+                          setIsSaving(true);
+                          setShowAddPromoModal(false);
+                          try {
+                            await updateSiteConfig({ promoCodes: currentPromos });
+                            showAdminAlert('Promo code created successfully!', 'success');
+                          } catch (e) {
+                            showAdminAlert('Failed to save promo code.', 'error');
+                          } finally {
+                            setIsSaving(false);
+                          }
+                        }}
+                        className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                      >
+                        Save Code
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

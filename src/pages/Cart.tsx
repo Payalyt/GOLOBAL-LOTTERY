@@ -1,31 +1,149 @@
 import React, { useState } from 'react';
-import { Trash2, Heart, Sparkles, CreditCard, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Trash2, Heart, Sparkles, CreditCard, ShoppingBag, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 
 export function Cart() {
-  const { tickets, removeTicket, toggleFavorite } = useCart();
-  const { user, isLoggedIn } = useAuth();
+  const { tickets, removeTicket, toggleFavorite, clearCart } = useCart();
+  const { user, isLoggedIn, buyTickets, language, siteConfig } = useAuth();
   const navigate = useNavigate();
   const subtotal = tickets.reduce((acc, t) => acc + t.price, 0);
   const [coupon, setCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
   const [couponSuccess, setCouponSuccess] = useState(false);
 
+  // States for direct seamless checkout
+  const [completed, setCompleted] = useState(false);
+  const [receiptId, setReceiptId] = useState('');
+  const [purchasedTicketsSnapshot, setPurchasedTicketsSnapshot] = useState<any[]>([]);
+  const [paidTotal, setPaidTotal] = useState(0);
+
   const handleApplyCoupon = () => {
-    const enteredCoupon = coupon.trim().toLowerCase();
-    if (enteredCoupon === 'golobal50' || enteredCoupon === 'sxl10') {
-      setDiscount(subtotal * 0.5);
+    const enteredCoupon = coupon.trim().toUpperCase();
+    const dynamicCodes = siteConfig?.promoCodes || [];
+    const foundPromo = dynamicCodes.find(p => p.code.toUpperCase() === enteredCoupon && p.isActive);
+
+    if (foundPromo) {
+      if (foundPromo.minCartAmount && subtotal < foundPromo.minCartAmount) {
+        alert(language === 'en'
+          ? `This promo code requires a minimum purchase amount of $${foundPromo.minCartAmount.toFixed(2)}.`
+          : `এই প্রোমো কোডটির জন্য নূন্যতম $${foundPromo.minCartAmount.toFixed(2)} মূল্যের টিকিট কিনতে হবে।`);
+        return;
+      }
+      
+      let calcDiscount = 0;
+      if (foundPromo.discountType === 'percentage') {
+        calcDiscount = subtotal * (foundPromo.value / 100);
+      } else {
+        calcDiscount = foundPromo.value;
+      }
+      setDiscount(Math.min(subtotal, calcDiscount));
+      setCouponSuccess(true);
+    } else if (enteredCoupon === 'GOLOBAL50' || enteredCoupon === 'SXL10') {
+      const pct = enteredCoupon === 'GOLOBAL50' ? 0.5 : 0.1;
+      setDiscount(subtotal * pct);
       setCouponSuccess(true);
     } else {
-      alert("Invalid coupon code! Please check the code and try again.");
+      alert(language === 'en' ? "Invalid or inactive promo code!" : "অকার্যকর বা নিষ্ক্রিয় প্রোমো কোড!");
       setCouponSuccess(false);
       setDiscount(0);
     }
   };
 
   const finalTotal = Math.max(0, subtotal - discount);
+
+  const handleProceedCheckout = () => {
+    if (!isLoggedIn || !user) {
+      navigate('/login');
+      return;
+    }
+
+    if (tickets.length === 0) {
+      alert("Your cart is empty! Pick numbers from active games first.");
+      return;
+    }
+
+    // Check if user has sufficient balance before executing direct checkout
+    if (user.balance < finalTotal) {
+      alert(language === 'en'
+        ? `Insufficient balance! Your current wallet balance is $${user.balance.toFixed(2)}, but this checkout requires $${finalTotal.toFixed(2)}. Please add funds to your wallet from your Dashboard.`
+        : `আপনার ব্যালেন্স পর্যাপ্ত নয়! আপনার বর্তমান ব্যালেন্স $${user.balance.toFixed(2)}, কিন্তু এই ক্রয়ের জন্য $${finalTotal.toFixed(2)} প্রয়োজন। অনুগ্রহ করে ড্যাশবোর্ড থেকে ওয়ালেটে ফান্ড যুক্ত করুন।`
+      );
+      return;
+    }
+
+    // Store the exact total paid before clearing cart
+    setPaidTotal(finalTotal);
+
+    // Capture tickets snapshot for display on completion screen
+    setPurchasedTicketsSnapshot([...tickets]);
+
+    // Execute direct purchase from wallet balance
+    const success = buyTickets(tickets);
+    if (success) {
+      setReceiptId('REC-' + Math.floor(100000 + Math.random() * 900000) + '-BD');
+      clearCart();
+      setCompleted(true);
+    } else {
+      alert("Direct purchase failed! Please try again.");
+    }
+  };
+
+  if (completed) {
+    return (
+      <div className="bg-gray-100 dark:bg-zinc-950 min-h-screen py-16 px-4 text-gray-900 dark:text-zinc-100 flex justify-center items-center">
+        <div className="max-w-md w-full bg-white dark:bg-[#111726] rounded-3xl shadow-xl p-8 border border-gray-150 dark:border-zinc-800 text-center space-y-6">
+          <div className="mx-auto bg-green-50 dark:bg-emerald-950/30 w-20 h-20 rounded-full flex items-center justify-center text-green-500 dark:text-green-400 animate-bounce">
+            <CheckCircle2 className="w-12 h-12" />
+          </div>
+          
+          <div className="space-y-2">
+            <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white uppercase">PAYMENT SECURED</h1>
+            <p className="text-xs text-gray-400 dark:text-zinc-500 font-mono tracking-widest uppercase">Transaction: {receiptId}</p>
+          </div>
+
+          <div className="bg-gray-50 dark:bg-zinc-950 rounded-2xl p-5 border border-gray-150 dark:border-zinc-800 text-left text-sm space-y-3">
+            <div className="flex justify-between text-gray-500 dark:text-zinc-400">
+              <span>Account Holder:</span>
+              <span className="font-bold text-gray-850 dark:text-zinc-200">{user?.name}</span>
+            </div>
+            <div className="flex justify-between text-gray-500 dark:text-zinc-400">
+              <span>Account Email:</span>
+              <span className="font-semibold text-gray-700 dark:text-zinc-300 truncate max-w-[200px]">{user?.email}</span>
+            </div>
+            <div className="flex justify-between text-gray-500 dark:text-zinc-400">
+              <span>Purchased Items:</span>
+              <span className="font-medium text-gray-800 dark:text-zinc-200">{purchasedTicketsSnapshot.length} Draw Tickets</span>
+            </div>
+            <div className="border-t border-gray-200 dark:border-zinc-800 pt-2 flex justify-between font-black text-gray-900 dark:text-zinc-100 text-base">
+              <span>Total Deducted:</span>
+              <span className="text-green-600 dark:text-green-400">${paidTotal.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-400 dark:text-zinc-500">
+            Tickets have been safely deployed to your active account list! You can check your draw matches, ticket details, and winnings history under your dashboard panel.
+          </p>
+
+          <div className="flex gap-3 pt-2">
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="flex-1 bg-black dark:bg-zinc-100 hover:bg-gray-850 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-colors cursor-pointer"
+            >
+              My Dashboard
+            </button>
+            <button 
+              onClick={() => navigate('/')}
+              className="flex-1 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-zinc-200 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-colors cursor-pointer border border-gray-200 dark:border-zinc-700"
+            >
+              Play More
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-100 min-h-screen p-8 text-gray-900">
@@ -175,14 +293,8 @@ export function Cart() {
               {/* Action Buttons */}
               {tickets.length > 0 && (
                 <button 
-                  onClick={() => {
-                    if (!isLoggedIn) {
-                      navigate('/login');
-                      return;
-                    }
-                    navigate('/checkout', { state: { discount } });
-                  }}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md uppercase tracking-widest text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                  onClick={handleProceedCheckout}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-md uppercase tracking-widest text-xs flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
                 >
                   Proceed to Checkout <ArrowRight className="w-4 h-4" />
                 </button>

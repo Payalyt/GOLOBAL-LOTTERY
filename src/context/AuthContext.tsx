@@ -21,6 +21,10 @@ export interface UserProfile {
   nidNumber?: string;
   passportNumber?: string;
   password?: string;
+  referralCode?: string;
+  referredBy?: string;
+  referralCount?: number;
+  referralEarnings?: number;
 }
 
 export interface WithdrawalRequest {
@@ -400,6 +404,9 @@ export interface SiteThemeConfig {
   drawResults?: DrawResult[];
   navMenuData?: any; // To store dynamic header menus
   thaiPrizes?: { name: string; count: string; prize: string }[];
+  promoCodes?: { code: string; discountType: 'fixed' | 'percentage'; value: number; minCartAmount?: number; isActive: boolean; }[];
+  referralBonusAmount?: number;
+  referralCommissionPct?: number;
 }
 
 interface AuthContextType {
@@ -414,7 +421,7 @@ interface AuthContextType {
   updateUserBalance: (email: string, amount: number) => void;
   updateUserProfileFields: (email: string, fields: Partial<UserProfile>) => Promise<void>;
   deleteUserFirestore: (email: string) => Promise<void>;
-  triggerDraw: (gameName: string, winningNumbers: number[]) => { matchedIds: number[]; payoutTotal: number };
+  triggerDraw: (gameName: string, winningNumbers: number[], thaiSubResults?: any) => Promise<{ matchedIds: any[]; payoutTotal: number }>;
   logout: () => void;
   historicalDraws: HistoricalDraw[];
   addHistoricalDraw: (draw: HistoricalDraw) => void;
@@ -795,7 +802,14 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
     { name: '3rd Prize', count: '10', prize: '80,000 Baht' },
     { name: '4th Prize', count: '50', prize: '40,000 Baht' },
     { name: '5th Prize', count: '100', prize: '20,000 Baht' }
-  ]
+  ],
+  promoCodes: [
+    { code: 'GLOBAL50', discountType: 'percentage', value: 50, minCartAmount: 0, isActive: true },
+    { code: 'SXL10', discountType: 'percentage', value: 10, minCartAmount: 0, isActive: true },
+    { code: 'WELCOME5', discountType: 'fixed', value: 5, minCartAmount: 10, isActive: true }
+  ],
+  referralBonusAmount: 5.00,
+  referralCommissionPct: 10
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -809,7 +823,7 @@ const AuthContext = createContext<AuthContextType>({
   buyTickets: () => false,
   updateUserBalance: () => {},
   updateUserProfileFields: async () => {},
-  triggerDraw: () => ({ matchedIds: [], payoutTotal: 0 }),
+  triggerDraw: async () => ({ matchedIds: [], payoutTotal: 0 }),
   logout: () => {},
   historicalDraws: [],
   addHistoricalDraw: () => {},
@@ -859,7 +873,7 @@ export const getInitialGames = (): DynamicGame[] => [
   { name: 'EASY6', prize: '$4,000,000', price: 6, drawTime: 'Friday', targetDateStr: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#12A054', isSolidStyle: false, ballCount: 6, maxBallValue: 39 },
   { name: 'FAST5', prize: '$6,000', price: 8, drawTime: 'Saturday', targetDateStr: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#1AA3E5', isSolidStyle: false, ballCount: 5, maxBallValue: 39 },
   { name: 'LOTTERY', prize: '$1,000,000', price: 5, drawTime: 'Daily', targetDateStr: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#F9A825', isSolidStyle: false, ballCount: 6, maxBallValue: 45 },
-  { name: 'THAI GOVE KOTTERY', prize: '16,000,000 Baht', price: 10, drawTime: 'Twice Monthly', targetDateStr: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#4F46E5', isSolidStyle: true, ballCount: 6, maxBallValue: 9, isActive: true },
+  { name: 'THAI GOVT LOTTERY', prize: '16,000,000 Baht', price: 10, drawTime: 'Twice Monthly', targetDateStr: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#4F46E5', isSolidStyle: true, ballCount: 6, maxBallValue: 9, isActive: true },
   { name: 'SCRATCH CARDS', prize: 'INSTANT WIN', price: 5, drawTime: 'Play Now', targetDateStr: new Date().toISOString(), bgHex: '#9C27B0', isSolidStyle: false, ballCount: 0, maxBallValue: 0 },
   { name: 'SURE 1', prize: '$10,000', price: 10, drawTime: 'Daily', targetDateStr: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#EC4899', isSolidStyle: false, ballCount: 1, maxBallValue: 10 },
   { name: 'SURE 2', prize: '$25,000', price: 15, drawTime: 'Weekly', targetDateStr: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#8B5CF6', isSolidStyle: false, ballCount: 2, maxBallValue: 20 },
@@ -1023,6 +1037,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             { name: 'FAST5', prize: '$6,000', price: 8, drawTime: 'Saturday', targetDateStr: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 13 * 60 * 60 * 1000).toISOString(), bgHex: '#1AA3E5', isSolidStyle: false, ballCount: 5, maxBallValue: 39 },
             { name: 'LOTTERY', prize: '$1,000,000', price: 5, drawTime: 'Daily', targetDateStr: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#F9A825', isSolidStyle: false, ballCount: 6, maxBallValue: 45 },
             { name: 'SCRATCH CARDS', prize: 'INSTANT WIN', price: 5, drawTime: 'Play Now', targetDateStr: new Date().toISOString(), bgHex: '#9C27B0', isSolidStyle: false, ballCount: 0, maxBallValue: 0 },
+            { name: 'THAI GOVT LOTTERY', prize: '16,000,000 Baht', price: 10, drawTime: 'Twice Monthly', targetDateStr: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#4F46E5', isSolidStyle: true, ballCount: 6, maxBallValue: 9, isActive: true },
             { name: 'SURE 1', prize: '$10,000', price: 10, drawTime: 'Daily', targetDateStr: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#EC4899', isSolidStyle: false, ballCount: 1, maxBallValue: 10 },
             { name: 'SURE 2', prize: '$25,000', price: 15, drawTime: 'Weekly', targetDateStr: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#8B5CF6', isSolidStyle: false, ballCount: 2, maxBallValue: 20 },
             { name: 'SURE 3', prize: '$50,000', price: 30, drawTime: 'Monthly', targetDateStr: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), bgHex: '#14B8A6', isSolidStyle: false, ballCount: 3, maxBallValue: 10 },
@@ -1468,7 +1483,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               phone: firebaseUser.phoneNumber || '+8801986555111',
               country: 'Bangladesh',
               winningsBalance: isAdminEmail ? 5000.0 : 0,
-              commissionBalance: isAdminEmail ? 1200.0 : 0
+              commissionBalance: isAdminEmail ? 1200.0 : 0,
+              referralCode: (firebaseUser.displayName || 'PLAYER').replace(/\s+/g, '').toUpperCase() + Math.floor(100 + Math.random() * 900),
+              referredBy: '',
+              referralCount: 0,
+              referralEarnings: 0
             };
             await setDoc(doc(db, 'users', emailLower), defaultProfile);
             setUser(defaultProfile);
@@ -1734,6 +1753,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const applyReferralCommission = async (email: string, depositAmount: number) => {
+    try {
+      const userTarget = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+      let referredByEmail = '';
+      let userName = '';
+      
+      if (userTarget) {
+        referredByEmail = userTarget.referredBy || '';
+        userName = userTarget.name || userTarget.email;
+      } else {
+        const userRef = doc(db, 'users', email.toLowerCase());
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const uData = userSnap.data() as UserProfile;
+          referredByEmail = uData.referredBy || '';
+          userName = uData.name || uData.email;
+        }
+      }
+
+      if (referredByEmail) {
+        const referrerEmail = referredByEmail.trim().toLowerCase();
+        const rate = siteConfig?.referralCommissionPct ?? 10;
+        const commissionAmount = parseFloat((depositAmount * (rate / 100)).toFixed(2));
+        
+        if (commissionAmount > 0) {
+          const referrerTarget = allUsers.find(u => u.email.toLowerCase() === referrerEmail);
+          
+          if (referrerTarget) {
+            const currentComm = referrerTarget.commissionBalance || 0;
+            const currentEarnings = referrerTarget.referralEarnings || 0;
+            
+            await updateUserProfileFields(referrerEmail, {
+              commissionBalance: parseFloat((currentComm + commissionAmount).toFixed(2)),
+              referralEarnings: parseFloat((currentEarnings + commissionAmount).toFixed(2))
+            });
+          } else {
+            const referrerRef = doc(db, 'users', referrerEmail);
+            const referrerSnap = await getDoc(referrerRef);
+            if (referrerSnap.exists()) {
+              const rData = referrerSnap.data() as UserProfile;
+              const currentComm = rData.commissionBalance || 0;
+              const currentEarnings = rData.referralEarnings || 0;
+              await setDoc(referrerRef, {
+                commissionBalance: parseFloat((currentComm + commissionAmount).toFixed(2)),
+                referralEarnings: parseFloat((currentEarnings + commissionAmount).toFixed(2))
+              }, { merge: true });
+            }
+          }
+
+          await addNotification({
+            email: referrerEmail,
+            title: "🎉 Referral Commission Received!",
+            message: `You earned ${rate}% commission ($${commissionAmount.toFixed(2)}) from your referred friend ${userName}'s deposit of $${depositAmount.toFixed(2)}!`,
+            type: 'success'
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("Could not process referral commission:", err);
+    }
+  };
+
   const deleteUserFirestore = async (email: string) => {
     try {
       const userRef = doc(db, 'users', email.toLowerCase());
@@ -1751,12 +1832,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const triggerDraw = (gameName: string, winningNumbers: number[]) => {
+  const triggerDraw = async (gameName: string, winningNumbers: number[], thaiSubResults?: any) => {
     let payoutTotal = 0;
     const matchedIds: any[] = [];
 
-    // Evaluate won tickets
-    tickets.forEach(async (t) => {
+    // Evaluate won tickets sequentially to avoid race conditions on user balances
+    for (const t of tickets) {
       if (t.gameName.toUpperCase() === gameName.toUpperCase() && t.status === 'Pending') {
         let won = false;
         let payout = 0;
@@ -1766,30 +1847,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const winningSeq = winningNumbers.join('');
           const ticketNum = t.thaiLotteryNumber || '';
           
-                    const prizes = siteConfig?.thaiLotteryPrizes || {
+          const prizes = siteConfig?.thaiLotteryPrizes || {
             firstPrize: 66666.66, front3: 40, rear3: 40, last2: 20, consolation: 1000,
             threeUpDirect: 500, threeUpRumble: 100, threeUpSingle: 10, threeUpSum: 15,
             twoUpDirect: 90, downDirect: 90, downSingle: 8, downSum: 15
           };
+
+          const sub = {
+            up3: thaiSubResults?.up3 || winningSeq.slice(-3),
+            down3: thaiSubResults?.down3 || winningSeq.slice(0, 3),
+            up2: thaiSubResults?.up2 || winningSeq.slice(-2),
+            down2: thaiSubResults?.down2 || winningSeq.slice(-2),
+          };
+
           if (t.thaiLotteryType === '1st Prize Category') {
             if (ticketNum === winningSeq) {
               won = true;
               payout = (t.directBet || t.price || 3) * prizes.firstPrize;
             }
           } else if (t.thaiLotteryType === 'Front 3-Digit Category') {
-            const winFront3 = winningSeq.slice(0, 3);
+            const winFront3 = sub.down3 || winningSeq.slice(0, 3);
             if (ticketNum === winFront3) {
               won = true;
               payout = (t.directBet || t.price || 3) * prizes.front3;
             }
           } else if (t.thaiLotteryType === 'Rear 3-Digit Category') {
-            const winRear3 = winningSeq.slice(-3);
+            const winRear3 = sub.up3 || winningSeq.slice(-3);
             if (ticketNum === winRear3) {
               won = true;
               payout = (t.directBet || t.price || 3) * prizes.rear3;
             }
           } else if (t.thaiLotteryType === 'Last 2-Digit Category') {
-            const winLast2 = winningSeq.slice(-2);
+            const winLast2 = sub.up2 || winningSeq.slice(-2);
             if (ticketNum === winLast2) {
               won = true;
               payout = (t.directBet || t.price || 3) * prizes.last2;
@@ -1802,8 +1891,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               payout = (t.directBet || t.price || 3) * prizes.consolation;
             }
           } else if (t.thaiLotteryType === '3Up Direct + Rumble') {
-            const isDirectMatch = ticketNum === winningSeq;
-            const sortedWin = winningSeq.split('').sort().join('');
+            const targetUp3 = sub.up3 || winningSeq.slice(-3);
+            const isDirectMatch = ticketNum === targetUp3;
+            const sortedWin = targetUp3.split('').sort().join('');
             const sortedTicket = ticketNum.split('').sort().join('');
             const isRumbleMatch = sortedTicket === sortedWin;
             if (isDirectMatch) {
@@ -1814,39 +1904,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               payout = (t.rumbleBet || 0) * prizes.threeUpRumble;
             }
           } else if (t.thaiLotteryType === '3Up Single Digit') {
+            const targetUp3 = sub.up3 || winningSeq.slice(-3);
             const ticketDigits = ticketNum.split('');
-            const matches = ticketDigits.filter(d => winningSeq.includes(d)).length;
+            const matches = ticketDigits.filter(d => targetUp3.includes(d)).length;
             if (matches > 0) {
               won = true;
               payout = (t.directBet || t.price || 0) * prizes.threeUpSingle * matches;
             }
           } else if (t.thaiLotteryType === '3Up Total Sum') {
-            const winningSum = winningSeq.split('').reduce((sum, d) => sum + parseInt(d), 0);
+            const targetUp3 = sub.up3 || winningSeq.slice(-3);
+            const winningSum = targetUp3.split('').reduce((sum, d) => sum + parseInt(d), 0);
             if (parseInt(ticketNum) === winningSum) {
               won = true;
               payout = (t.directBet || t.price || 0) * prizes.threeUpSum;
             }
           } else if (t.thaiLotteryType === '2Up Direct') {
-            const winning2Up = winningSeq.slice(-2);
-            if (ticketNum === winning2Up) {
+            const target2Up = sub.up2 || winningSeq.slice(-2);
+            if (ticketNum === target2Up) {
               won = true;
               payout = (t.directBet || t.price || 0) * prizes.twoUpDirect;
             }
           } else if (t.thaiLotteryType === 'Down Direct') {
-            const winningDown = winningSeq.slice(-2);
-            if (ticketNum === winningDown) {
+            const targetDown = sub.down2 || winningSeq.slice(-2);
+            if (ticketNum === targetDown) {
               won = true;
               payout = (t.directBet || t.price || 0) * prizes.downDirect;
             }
           } else if (t.thaiLotteryType === 'Down Single Digit') {
-            const winningDown = winningSeq.slice(-2);
-            if (winningDown.includes(ticketNum)) {
+            const targetDown = sub.down2 || winningSeq.slice(-2);
+            if (targetDown.includes(ticketNum)) {
               won = true;
               payout = (t.directBet || t.price || 0) * prizes.downSingle;
             }
           } else if (t.thaiLotteryType === 'Down Total Sum') {
-            const winningDown = winningSeq.slice(-2);
-            const downSum = winningDown.split('').reduce((sum, d) => sum + parseInt(d), 0);
+            const targetDown = sub.down2 || winningSeq.slice(-2);
+            const downSum = targetDown.split('').reduce((sum, d) => sum + parseInt(d), 0);
             if (parseInt(ticketNum) === downSum) {
               won = true;
               payout = (t.directBet || t.price || 0) * prizes.downSum;
@@ -1858,9 +1950,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (matchesCount >= 3) {
             won = true;
             payout = t.price * (matchesCount === 3 ? 5 : matchesCount === 4 ? 20 : matchesCount === 5 ? 100 : 1000);
-            payoutTotal += payout;
-            matchedIds.push(t.id);
           }
+        }
+
+        if (won) {
+          payoutTotal += payout;
+          matchedIds.push(t.id);
         }
 
         const updatedStatus = (won ? 'Won' : 'Lost') as 'Won' | 'Lost';
@@ -1890,7 +1985,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           handleFirestoreError(err, OperationType.UPDATE, `purchasedTickets/${t.id}`);
         }
       }
-    });
+    }
 
     // Global notification about the draw results
     addNotification({
@@ -2196,9 +2291,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await setDoc(doc(db, 'depositRequests', id), newReq);
       await updateUserBalance(req.email, req.amount);
+      await applyReferralCommission(req.email, req.amount);
     } catch (err) {
       console.warn("Firebase failed to save approved deposit. Using local fallback.", err);
       await updateUserBalance(req.email, req.amount);
+      await applyReferralCommission(req.email, req.amount);
     }
   };
 
@@ -2223,6 +2320,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await updateUserProfileFields(finalEmail, { commissionBalance: currentComm + reqToUpdate.amount });
       } else {
         await updateUserBalance(finalEmail, reqToUpdate.amount);
+        await applyReferralCommission(finalEmail, reqToUpdate.amount);
       }
     }
 

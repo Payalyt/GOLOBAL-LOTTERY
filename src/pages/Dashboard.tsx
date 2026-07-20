@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { t } from '../utils/translations';
+import { Login } from './Login';
 import { 
   User, 
   CreditCard, 
@@ -397,31 +398,11 @@ export function Dashboard() {
     { label: 'Favorites', icon: Heart },
     { label: 'Inbox', icon: InboxIcon },
     { label: 'Our Games', icon: Activity },
+    { label: 'Refer & Earn', icon: Sparkles },
   ];
 
   if (!isLoggedIn) {
-    return (
-      <div className="max-w-md mx-auto my-24 p-8 bg-white dark:bg-[#111726] border border-gray-200 dark:border-zinc-800/80 rounded-[2rem] shadow-xl text-center space-y-6 text-zinc-900 dark:text-white transition-all duration-300">
-        <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400 flex items-center justify-center mx-auto shadow-inner">
-          <User className="w-8 h-8" />
-        </div>
-        <h2 className="text-2xl font-black tracking-wider text-zinc-900 dark:text-white uppercase">
-          {language === 'en' ? 'Access Restricted' : 'অ্যাক্সেস সীমাবদ্ধ'}
-        </h2>
-        <p className="text-zinc-650 dark:text-zinc-300 text-sm leading-relaxed font-semibold font-roboto-sans">
-          {language === 'en' 
-            ? 'Unlock advanced probability checkers, transaction wallets, and tickets. Please log in first.'
-            : 'অ্যাডভান্সড প্রবাবিলিটি চেকার, ট্রানজেকশন ওয়ালেট এবং টিকিট আনলক করতে অনুগ্রহ করে প্রথমে লগইন করুন।'}
-        </p>
-        <button 
-          onClick={() => navigate('/login')}
-          className="w-full text-white font-black py-4 px-6 rounded-xl text-xs uppercase tracking-widest transition-all duration-300 shadow-md active:scale-95 cursor-pointer"
-          style={{ backgroundColor: siteConfig.primaryHex || '#FF003C' }}
-        >
-          {language === 'en' ? 'LOG IN TO MY ACCOUNT' : 'আমার অ্যাকাউন্টে লগইন করুন'}
-        </button>
-      </div>
-    );
+    return <Login />;
   }
 
   if (!user) {
@@ -1029,6 +1010,7 @@ export function Dashboard() {
       case 'Favorites': return 'প্রিয়সমূহ';
       case 'Inbox': return 'ইনবক্স';
       case 'Our Games': return 'আমাদের গেম';
+      case 'Refer & Earn': return 'রেফার ও ইনকাম';
       default: return label;
     }
   };
@@ -1323,6 +1305,101 @@ export function Dashboard() {
           {/* RIGHT COLUMN: View Contents */}
           <div className="lg:col-span-9 min-h-[460px]">
             
+            {/* TAB: Refer & Earn */}
+            {activeTab === 'Refer & Earn' && (
+              <div className="bg-white dark:bg-zinc-900 p-6 sm:p-8 border border-zinc-200 dark:border-zinc-800 rounded-[24px] shadow-sm text-zinc-900 dark:text-zinc-100 space-y-6">
+                <div>
+                  <h2 className="text-2xl font-black tracking-tight flex items-center gap-2 text-[#E1BC4A]">
+                    <Sparkles className="w-6 h-6 animate-pulse text-[#E1BC4A]" />
+                    {language === 'en' ? 'Refer & Earn Rewards' : 'রেফার এবং ইনকাম পুরস্কার'}
+                  </h2>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 uppercase font-bold tracking-wider">
+                    {language === 'en' ? 'Invite friends and earn 10% real-time commission on every deposit they make!' : 'বন্ধুদের আমন্ত্রণ জানান এবং তাদের প্রতিটা ডিপোজিটের ওপর সাথে সাথে ১০% কমিশন পান!'}
+                  </p>
+                </div>
+
+                {/* Referral Link & Code Copy Card */}
+                <div className="bg-gray-50 dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-150 dark:border-zinc-850 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Code copy */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Your Referral Code</label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-white dark:bg-[#0f141f] border border-zinc-250 dark:border-zinc-800 px-4 py-3 rounded-xl font-mono font-black text-lg text-amber-500 text-center tracking-widest select-all">
+                          {user.referralCode || 'NOT_FOUND'}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(user.referralCode || '');
+                            alert(language === 'en' ? 'Referral code copied!' : 'রেফারেল কোড কপি করা হয়েছে!');
+                          }}
+                          className="px-4 py-3.5 bg-[#2C3B69] hover:bg-[#E1BC4A] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors"
+                        >
+                          {language === 'en' ? 'Copy' : 'কপি'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* URL copy */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Your Referral Invitation Link</label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-white dark:bg-[#0f141f] border border-zinc-250 dark:border-zinc-800 px-4 py-3.5 rounded-xl font-mono text-xs text-zinc-500 dark:text-zinc-400 truncate select-all">
+                          {`${window.location.origin}/register?ref=${user.referralCode || ''}`}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/register?ref=${user.referralCode || ''}`);
+                            alert(language === 'en' ? 'Referral link copied!' : 'রেফারেল লিংক কপি করা হয়েছে!');
+                          }}
+                          className="px-4 py-3.5 bg-[#2C3B69] hover:bg-[#E1BC4A] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors"
+                        >
+                          {language === 'en' ? 'Link' : 'লিংক'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats Bento Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Total Referred count */}
+                  <div className="bg-[#111622] text-white p-5 rounded-2xl border border-zinc-800 flex flex-col justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Total Referred Friends</span>
+                    <span className="text-3xl font-black font-sans text-amber-500 mt-2">{user.referralCount || 0} Players</span>
+                    <span className="text-[9px] text-zinc-500 font-bold uppercase mt-1">Successfully registered</span>
+                  </div>
+
+                  {/* Earnings */}
+                  <div className="bg-[#111622] text-white p-5 rounded-2xl border border-zinc-800 flex flex-col justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Referral Earnings</span>
+                    <span className="text-3xl font-black font-sans text-[#E1BC4A] mt-2">USDT {(user.referralEarnings || 0).toFixed(2)}</span>
+                    <span className="text-[9px] text-zinc-500 font-bold uppercase mt-1">Credited to commission balance</span>
+                  </div>
+
+                  {/* Promo Banner / Info */}
+                  <div className="bg-yellow-500/10 dark:bg-yellow-500/5 text-zinc-900 dark:text-yellow-400/90 p-5 rounded-2xl border border-yellow-500/20 flex flex-col justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Commission Rate</span>
+                    <span className="text-3xl font-black font-sans text-amber-500 mt-2">10% Deposit</span>
+                    <span className="text-[9px] text-zinc-400 dark:text-zinc-500 font-bold uppercase mt-1">Paid instantly on approval</span>
+                  </div>
+                </div>
+
+                {/* Detailed Guide */}
+                <div className="bg-zinc-50 dark:bg-zinc-950/40 p-5 rounded-2xl border border-zinc-200/50 dark:border-zinc-800 space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-zinc-800 dark:text-zinc-200">{language === 'en' ? 'How does it work?' : 'কিভাবে কাজ করে?'}</h4>
+                  <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-decimal list-inside font-medium leading-relaxed">
+                    <li>{language === 'en' ? 'Copy your unique link or invitation code.' : 'আপনার ইউনিক রেফারেল লিংক অথবা ইনভাইটেশন কোডটি কপি করুন।'}</li>
+                    <li>{language === 'en' ? 'Share it with your friends via WhatsApp, Telegram, IMO or social media.' : 'এটি আপনার বন্ধুদের সাথে WhatsApp, Telegram, IMO বা সোশ্যাল মিডিয়ায় শেয়ার করুন।'}</li>
+                    <li>{language === 'en' ? 'When they register using your code, they will be marked as referred by you. There is no instant reward on registration.' : 'তারা যখন আপনার কোড দিয়ে একাউন্ট খুলবে, তখন তারা আপনার সাথে যুক্ত হবে। রেজিস্ট্রেশনে কোনো তাৎক্ষণিক বোনাস নেই।'}</li>
+                    <li>{language === 'en' ? 'Whenever they deposit money into their account, you will instantly receive 10% of their deposit amount credited to your Commission Balance!' : 'তারা যখনই তাদের একাউন্টে ডিপোজিট করবে, আপনি সাথে সাথে তাদের ডিপোজিটকৃত টাকার ১০% কমিশন আপনার কমিশন ব্যালেন্সে পেয়ে যাবেন!'}</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+
             {/* TAB: Our Games */}
             {activeTab === 'Our Games' && (
               <div className="bg-white dark:bg-zinc-900 p-6 sm:p-8 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm text-zinc-900 dark:text-zinc-100">

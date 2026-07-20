@@ -3,11 +3,84 @@ import { DynamicGame, useAuth } from '../../context/AuthContext';
 import { Plus, Trash2, Save } from 'lucide-react';
 
 export function AdminGamesTab() {
-  const { dynamicGames, updateDynamicGame, addDynamicGame, deleteDynamicGame } = useAuth();
+  const { dynamicGames, updateDynamicGame, addDynamicGame, deleteDynamicGame, siteConfig, updateSiteConfig } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
   const [newGameName, setNewGameName] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // 🇹🇭 Thai Lottery Config States
+  const DEFAULT_THAI_PRIZES = [
+    { name: '1st Prize', count: '1', prize: '6,000,000 Baht' },
+    { name: '3-Digit Front', count: '2', prize: '4,000 Baht' },
+    { name: '3-Digit Rear', count: '2', prize: '4,000 Baht' },
+    { name: '2-Digit Last', count: '1', prize: '2,000 Baht' },
+    { name: '2nd Prize', count: '5', prize: '200,000 Baht' },
+    { name: '3rd Prize', count: '10', prize: '80,000 Baht' },
+    { name: '4th Prize', count: '50', prize: '40,000 Baht' },
+    { name: '5th Prize', count: '100', prize: '20,000 Baht' }
+  ];
+
+  const DEFAULT_THAI_MULTIPLIERS = {
+    firstPrize: 66666.66,
+    front3: 40,
+    rear3: 40,
+    last2: 20,
+    consolation: 1000,
+    threeUpDirect: 500,
+    threeUpRumble: 100,
+    threeUpSingle: 10,
+    threeUpSum: 15,
+    twoUpDirect: 90,
+    downDirect: 90,
+    downSingle: 8,
+    downSum: 15
+  };
+
+  const [thaiDrawTime, setThaiDrawTime] = useState(siteConfig?.thaiLotteryDrawTime || 'Jul 16, 01:15 AM');
+  const [thaiPrizes, setThaiPrizes] = useState(siteConfig?.thaiPrizes || DEFAULT_THAI_PRIZES);
+  const [thaiMultipliers, setThaiMultipliers] = useState(siteConfig?.thaiLotteryPrizes || DEFAULT_THAI_MULTIPLIERS);
+  const [thaiSuccess, setThaiSuccess] = useState('');
+
+  useEffect(() => {
+    if (siteConfig) {
+      if (siteConfig.thaiLotteryDrawTime) setThaiDrawTime(siteConfig.thaiLotteryDrawTime);
+      if (siteConfig.thaiPrizes) setThaiPrizes(siteConfig.thaiPrizes);
+      if (siteConfig.thaiLotteryPrizes) setThaiMultipliers(siteConfig.thaiLotteryPrizes);
+    }
+  }, [siteConfig]);
+
+  const handleSaveThaiConfig = async () => {
+    try {
+      setThaiSuccess('');
+      await updateSiteConfig({
+        thaiLotteryDrawTime: thaiDrawTime,
+        thaiPrizes: thaiPrizes,
+        thaiLotteryPrizes: thaiMultipliers
+      });
+      setThaiSuccess('Thai Lottery settings and prize structures saved successfully!');
+      setTimeout(() => setThaiSuccess(''), 4000);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save Thai Lottery settings.');
+    }
+  };
+
+  const addThaiPrizeRow = () => {
+    setThaiPrizes(prev => [...prev, { name: 'New Prize Tier', count: '1', prize: '1,000 Baht' }]);
+  };
+
+  const removeThaiPrizeRow = (idx: number) => {
+    setThaiPrizes(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const updateThaiPrizeField = (idx: number, key: 'name' | 'count' | 'prize', value: string) => {
+    setThaiPrizes(prev => {
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], [key]: value };
+      return copy;
+    });
+  };
 
   const handleCreateGame = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +165,255 @@ export function AdminGamesTab() {
         {dynamicGames?.map((game, index) => (
           <GameEditor key={game.id || index} game={game} updateDynamicGame={updateDynamicGame} deleteDynamicGame={deleteDynamicGame} />
         ))}
+      </div>
+
+      {/* 🇹🇭 Thai Govt Lottery Settings & Prize Structure */}
+      <div className="border-t border-gray-200 dark:border-zinc-850 pt-8 mt-12 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-zinc-800 pb-4">
+          <div>
+            <h4 className="text-base font-black uppercase text-teal-500 tracking-wider flex items-center gap-2">
+              <span>🇹🇭</span> Thai Govt Lottery Global Settings
+            </h4>
+            <p className="text-xs text-gray-400 mt-1">
+              Configure Thai Lottery close timings, custom payout multipliers, and the official prize display pool.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleSaveThaiConfig}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all hover:scale-[1.01] shadow-lg shadow-teal-600/10 self-start sm:self-center"
+          >
+            <Save size={14} /> Save Thai Config
+          </button>
+        </div>
+
+        {thaiSuccess && (
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-xl text-xs font-bold">
+            {thaiSuccess}
+          </div>
+        )}
+
+        {/* Section 1: Draw Close Time */}
+        <div className="bg-gray-50/50 dark:bg-zinc-900/30 p-5 rounded-2xl border border-gray-100 dark:border-zinc-850 space-y-4">
+          <h5 className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-zinc-300">
+            1. Draw Close Timing
+          </h5>
+          <div className="max-w-md">
+            <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5">
+              Thai Lottery Draw Close Time Text
+            </label>
+            <input
+              type="text"
+              value={thaiDrawTime}
+              onChange={(e) => setThaiDrawTime(e.target.value)}
+              className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white font-semibold outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="e.g. Jul 16, 01:15 AM"
+            />
+            <p className="text-[10px] text-gray-400 dark:text-zinc-500 mt-1">
+              This text is displayed on the main Thai Lottery ticket purchasing board.
+            </p>
+          </div>
+        </div>
+
+        {/* Section 2: Payout Multipliers */}
+        <div className="bg-gray-50/50 dark:bg-zinc-900/30 p-5 rounded-2xl border border-gray-100 dark:border-zinc-850 space-y-4">
+          <h5 className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-zinc-300">
+            2. Payout Multipliers (x of Bet Amount)
+          </h5>
+          <p className="text-xs text-gray-400">
+            Configure the dynamic multiplier rates used to compute real-time payouts for matching slips.
+          </p>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 uppercase mb-1">1st Prize (6UP)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={thaiMultipliers.firstPrize}
+                onChange={(e) => setThaiMultipliers(p => ({ ...p, firstPrize: Number(e.target.value) }))}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 uppercase mb-1">Front 3 Digits</label>
+              <input
+                type="number"
+                value={thaiMultipliers.front3}
+                onChange={(e) => setThaiMultipliers(p => ({ ...p, front3: Number(e.target.value) }))}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 uppercase mb-1">Rear 3 Digits</label>
+              <input
+                type="number"
+                value={thaiMultipliers.rear3}
+                onChange={(e) => setThaiMultipliers(p => ({ ...p, rear3: Number(e.target.value) }))}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 uppercase mb-1">Last 2 Digits</label>
+              <input
+                type="number"
+                value={thaiMultipliers.last2}
+                onChange={(e) => setThaiMultipliers(p => ({ ...p, last2: Number(e.target.value) }))}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 uppercase mb-1">3UP Direct</label>
+              <input
+                type="number"
+                value={thaiMultipliers.threeUpDirect}
+                onChange={(e) => setThaiMultipliers(p => ({ ...p, threeUpDirect: Number(e.target.value) }))}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 uppercase mb-1">3UP Rumble</label>
+              <input
+                type="number"
+                value={thaiMultipliers.threeUpRumble}
+                onChange={(e) => setThaiMultipliers(p => ({ ...p, threeUpRumble: Number(e.target.value) }))}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 uppercase mb-1">3UP Single</label>
+              <input
+                type="number"
+                value={thaiMultipliers.threeUpSingle}
+                onChange={(e) => setThaiMultipliers(p => ({ ...p, threeUpSingle: Number(e.target.value) }))}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 uppercase mb-1">3UP Sum</label>
+              <input
+                type="number"
+                value={thaiMultipliers.threeUpSum}
+                onChange={(e) => setThaiMultipliers(p => ({ ...p, threeUpSum: Number(e.target.value) }))}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 uppercase mb-1">2UP Direct</label>
+              <input
+                type="number"
+                value={thaiMultipliers.twoUpDirect}
+                onChange={(e) => setThaiMultipliers(p => ({ ...p, twoUpDirect: Number(e.target.value) }))}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 uppercase mb-1">Down Direct</label>
+              <input
+                type="number"
+                value={thaiMultipliers.downDirect}
+                onChange={(e) => setThaiMultipliers(p => ({ ...p, downDirect: Number(e.target.value) }))}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 uppercase mb-1">Down Single</label>
+              <input
+                type="number"
+                value={thaiMultipliers.downSingle}
+                onChange={(e) => setThaiMultipliers(p => ({ ...p, downSingle: Number(e.target.value) }))}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 uppercase mb-1">Down Sum</label>
+              <input
+                type="number"
+                value={thaiMultipliers.downSum}
+                onChange={(e) => setThaiMultipliers(p => ({ ...p, downSum: Number(e.target.value) }))}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 3: Official Prize Pool Display */}
+        <div className="bg-gray-50/50 dark:bg-zinc-900/30 p-5 rounded-2xl border border-gray-100 dark:border-zinc-850 space-y-4">
+          <div className="flex items-center justify-between">
+            <h5 className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-zinc-300">
+              3. Official Prize Structure List
+            </h5>
+            <button
+              type="button"
+              onClick={addThaiPrizeRow}
+              className="text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1 hover:underline"
+            >
+              <Plus size={14} /> Add New Row
+            </button>
+          </div>
+          <p className="text-xs text-gray-400">
+            Edit the prize tiers shown on the user page under the "Official Prize Pool Structure" table.
+          </p>
+
+          <div className="grid gap-2">
+            {thaiPrizes.map((p, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 bg-white dark:bg-zinc-900 p-2.5 rounded-xl border border-gray-200 dark:border-zinc-800"
+              >
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Prize Name (e.g. 1st Prize)"
+                    value={p.name}
+                    onChange={(e) => updateThaiPrizeField(i, 'name', e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+                <div className="w-24">
+                  <input
+                    type="text"
+                    placeholder="Count"
+                    value={p.count}
+                    onChange={(e) => updateThaiPrizeField(i, 'count', e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Prize Value"
+                    value={p.prize}
+                    onChange={(e) => updateThaiPrizeField(i, 'prize', e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-900 dark:text-white font-semibold text-emerald-500 outline-none focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeThaiPrizeRow(i)}
+                  className="text-red-500 p-2 hover:bg-red-500/10 rounded-lg transition-colors shrink-0"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+            {thaiPrizes.length === 0 && (
+              <p className="text-xs text-gray-400 italic">No prize tiers configured. Click "Add New Row" to start.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={handleSaveThaiConfig}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-teal-600/15"
+          >
+            <Save size={14} /> Save Thai Lottery Settings
+          </button>
+        </div>
       </div>
     </div>
   );

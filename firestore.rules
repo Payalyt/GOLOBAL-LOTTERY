@@ -1,7 +1,114 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
+    
+    // Helper function to check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    // Helper function to check if the user is the owner of the document
+    function isOwner(email) {
+      return isAuthenticated() && 
+             request.auth.token.email != null && 
+             request.auth.token.email.lower() == email.lower();
+    }
+
+    // Helper function to check if the authenticated user has the 'admin' role
+    function isAdmin() {
+      return isAuthenticated() && 
+             request.auth.token.email != null && 
+             exists(/databases/$(database)/documents/users/$(request.auth.token.email.lower())) && 
+             get(/databases/$(database)/documents/users/$(request.auth.token.email.lower())).data.role == 'admin';
+    }
+
+    // --- COLLECTION RULES ---
+
+    // Users Collection
+    match /users/{email} {
+      allow read: if isOwner(email) || isAdmin();
+      allow create: if isAuthenticated() && (isOwner(email) || isAdmin());
+      allow update: if isAdmin() || (
+        isOwner(email) && 
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['balance', 'role', 'commissionBalance', 'referralEarnings', 'referralCount'])
+      ) || (
+        isAuthenticated() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['referralCount']) &&
+        (resource.data.referralCount == null ? request.resource.data.referralCount == 1 : request.resource.data.referralCount == resource.data.referralCount + 1)
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Purchased Tickets
+    match /purchasedTickets/{ticketId} {
+      allow read: if isAuthenticated() && (resource.data.email.lower() == request.auth.token.email.lower() || isAdmin());
+      allow create: if isAuthenticated() && (request.resource.data.email.lower() == request.auth.token.email.lower() || isAdmin());
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Deposit Requests
+    match /depositRequests/{requestId} {
+      allow read: if isAuthenticated() && (resource.data.email.lower() == request.auth.token.email.lower() || isAdmin());
+      allow create: if isAuthenticated() && (request.resource.data.email.lower() == request.auth.token.email.lower() || isAdmin());
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Withdrawal Requests
+    match /withdrawalRequests/{requestId} {
+      allow read: if isAuthenticated() && (resource.data.email.lower() == request.auth.token.email.lower() || isAdmin());
+      allow create: if isAuthenticated() && (request.resource.data.email.lower() == request.auth.token.email.lower() || isAdmin());
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // System Notifications
+    match /systemNotifications/{notificationId} {
+      allow read: if isAuthenticated() && (resource.data.email.lower() == request.auth.token.email.lower() || isAdmin());
+      allow create: if isAuthenticated() && (request.resource.data.email.lower() == request.auth.token.email.lower() || isAdmin());
+      allow update: if isAuthenticated() && (resource.data.email.lower() == request.auth.token.email.lower() || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Public / Read-Only Collections (Admin Write)
+    match /dynamicGames/{gameName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /raffleWinners/{winnerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /historicalDraws/{drawId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /promotions/{promoId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /newsArticles/{articleId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /menuPages/{pageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /siteConfigs/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Connection test collection
+    match /test/{testId} {
       allow read, write: if true;
     }
   }

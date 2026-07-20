@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth, UserProfile } from '../context/AuthContext';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, increment } from 'firebase/firestore';
 import { Eye, EyeOff, X } from 'lucide-react';
 
 const COUNTRIES_LIST = [
@@ -32,7 +32,8 @@ const COUNTRIES_LIST = [
 
 export function Register() {
   const navigate = useNavigate();
-  const { setIsLoggedIn, setUser, isLoggedIn, language } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { setIsLoggedIn, setUser, isLoggedIn, language, siteConfig } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -42,7 +43,8 @@ export function Register() {
     country: 'Bangladesh',
     nidNumber: '',
     passportNumber: '',
-    agreeTerms: false
+    agreeTerms: false,
+    referredBy: searchParams.get('ref') || ''
   });
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -261,6 +263,35 @@ export function Register() {
 
       // 3. Build user profile
       const emailLower = formData.email.trim().toLowerCase();
+      
+      // Generate referral code for this user
+      const userReferralCode = formData.name.trim().replace(/\s+/g, '').toUpperCase() + Math.floor(100 + Math.random() * 900);
+      let verifiedReferredByEmail = '';
+
+      if (formData.referredBy.trim()) {
+        try {
+          const refCodeClean = formData.referredBy.trim().toUpperCase();
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('referralCode', '==', refCodeClean));
+          const querySnap = await getDocs(q);
+          if (!querySnap.empty) {
+            const referrerDoc = querySnap.docs[0];
+            const referrerData = referrerDoc.data() as UserProfile;
+            const bonusAmount = siteConfig?.referralBonusAmount || 5.00;
+            
+            // Register the referral by incrementing referral count
+            await updateDoc(referrerDoc.ref, {
+              referralCount: increment(1)
+            });
+            
+            verifiedReferredByEmail = referrerData.email;
+            console.log(`Successfully linked referred user to referrer ${referrerData.email}`);
+          }
+        } catch (refErr) {
+          console.warn("Could not process referral verification:", refErr);
+        }
+      }
+
       const newProfile: UserProfile = {
         name: formData.name.trim(),
         email: emailLower,
@@ -273,7 +304,11 @@ export function Register() {
         passportNumber: formData.passportNumber ? formData.passportNumber.trim() : '',
         password: formData.password,
         winningsBalance: isAdminEmail ? 5000.00 : 0,
-        commissionBalance: isAdminEmail ? 1200.00 : 0
+        commissionBalance: isAdminEmail ? 1200.00 : 0,
+        referralCode: userReferralCode,
+        referredBy: verifiedReferredByEmail,
+        referralCount: 0,
+        referralEarnings: 0
       };
 
       if (isCancelled) return;
@@ -611,6 +646,19 @@ export function Register() {
                 )}
               </div>
             )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
+              {language === 'en' ? 'Referral Code (Optional)' : 'রেফারেল কোড (ঐচ্ছিক)'}
+            </label>
+            <input 
+              type="text" 
+              placeholder={language === 'en' ? "e.g. PAYAL123" : "যেমন: PAYAL123"}
+              className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans uppercase" 
+              value={formData.referredBy}
+              onChange={(e) => setFormData({ ...formData, referredBy: e.target.value })}
+            />
           </div>
 
           <div className="flex items-start pt-2">

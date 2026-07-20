@@ -237,83 +237,96 @@ export function Results() {
   }, []);
 
   const getHistoricalDraws = (gameName: string) => {
-    // Return custom draw results if they exist in siteConfig
-    const custom = siteConfig?.drawResults?.filter(dr => dr.gameName === gameName);
-    if (custom && custom.length > 0) {
-      return custom;
-    }
+    const normName = gameName.replace(/\s+/g, '').toUpperCase();
+    const custom = (siteConfig?.drawResults || []).filter(dr => 
+      (dr.gameName || '').replace(/\s+/g, '').toUpperCase() === normName
+    );
 
-    switch(gameName) {
+    let defaults: any[] = [];
+    switch(normName) {
       case 'MEGA7':
-        return [
+        defaults = [
           { date: '14 June 2026', numbers: [4, 12, 18, 32, 49, 15, 21], totalWinners: '1,250 Players', totalPaid: '$45,000.00' },
           { date: '07 June 2026', numbers: [8, 11, 23, 27, 35, 42, 45], totalWinners: '1,090 Players', totalPaid: '$38,200.00' },
           { date: '31 May 2026', numbers: [1, 9, 14, 22, 30, 39, 48], totalWinners: '1,430 Players', totalPaid: '$53,100.00' },
           { date: '24 May 2026', numbers: [3, 7, 19, 25, 34, 41, 47], totalWinners: '990 Players', totalPaid: '$31,400.00' },
         ];
+        break;
       case 'WILD5':
-        return [
+        defaults = [
           { date: '13 June 2026', numbers: [5, 12, 19, 27, 35], totalWinners: '840 Players', totalPaid: '$18,500.00' },
           { date: '06 June 2026', numbers: [2, 10, 15, 22, 31], totalWinners: '750 Players', totalPaid: '$14,200.00' },
           { date: '30 May 2026', numbers: [1, 5, 12, 18, 29], totalWinners: '910 Players', totalPaid: '$21,000.00' },
         ];
+        break;
       case 'EASY6':
-        return [
+        defaults = [
           { date: '12 June 2026', numbers: [23, 11, 35, 39, 31, 25], totalWinners: '540 Players', totalPaid: '$4,512.00' },
           { date: '05 June 2026', numbers: [4, 18, 22, 29, 33, 9], totalWinners: '412 Players', totalPaid: '$3,110.00' },
           { date: '29 May 2026', numbers: [12, 15, 19, 21, 30, 37], totalWinners: '625 Players', totalPaid: '$5,980.00' },
           { date: '22 May 2026', numbers: [2, 10, 16, 27, 34, 38], totalWinners: '390 Players', totalPaid: '$3,400.00' },
         ];
+        break;
       case 'FAST5':
-        return [
+        defaults = [
           { date: '13 June 2026', numbers: [7, 14, 22, 35, 41], totalWinners: '640 Players', totalPaid: '1 Grand Winner (Monthly)' },
           { date: '06 June 2026', numbers: [3, 11, 25, 30, 39], totalWinners: '430 Players', totalPaid: '$11,000.00' },
           { date: '30 May 2026', numbers: [9, 15, 18, 26, 33], totalWinners: '580 Players', totalPaid: '$12,500.00' },
         ];
-      case 'SURE 1':
-        return [
+        break;
+      case 'SURE1':
+        defaults = [
           { date: '16 June 2026', numbers: [7], totalWinners: '3,210 Players', totalPaid: '$31,000.00' },
           { date: '15 June 2026', numbers: [4], totalWinners: '2,890 Players', totalPaid: '$27,500.00' },
           { date: '14 June 2026', numbers: [9], totalWinners: '3,100 Players', totalPaid: '$30,000.00' },
         ];
-      case 'SURE 2':
-        return [
+        break;
+      case 'SURE2':
+        defaults = [
           { date: '15 June 2026', numbers: [2, 9], totalWinners: '1,450 Players', totalPaid: '$36,000.00' },
           { date: '08 June 2026', numbers: [5, 0], totalWinners: '1,120 Players', totalPaid: '$29,000.00' },
           { date: '01 June 2026', numbers: [3, 7], totalWinners: '1,280 Players', totalPaid: '$32,000.00' },
         ];
-      case 'SURE 3':
-        return [
+        break;
+      case 'SURE3':
+        defaults = [
           { date: '11 June 2026', numbers: [1, 9, 5], totalWinners: '610 Players', totalPaid: '$52,000.00' },
           { date: '01 June 2026', numbers: [6, 2, 8], totalWinners: '480 Players', totalPaid: '$41,000.00' },
           { date: '21 May 2026', numbers: [3, 0, 7], totalWinners: '520 Players', totalPaid: '$44,500.00' },
         ];
-      case 'PICK 1':
-        return [
+        break;
+      case 'PICK1':
+        defaults = [
           { date: '16 June 2026', numbers: [1], totalWinners: '110 Players', totalPaid: '$60,000.00' },
           { date: '15 June 2026', numbers: [15], totalWinners: '95 Players', totalPaid: '$5,000.00' },
           { date: '14 June 2026', numbers: [7], totalWinners: '105 Players', totalPaid: '$6,000.00' },
         ];
-      case 'PICK 2':
-        return [
+        break;
+      case 'PICK2':
+        defaults = [
           { date: '16 June 2026', numbers: [4, 18], totalWinners: '125 Players', totalPaid: '$100,000.00' },
           { date: '15 June 2026', numbers: [7, 12], totalWinners: '88 Players', totalPaid: '$5,000.00' },
           { date: '14 June 2026', numbers: [3, 9], totalWinners: '102 Players', totalPaid: '$8,000.00' },
         ];
+        break;
       case 'LOTTERY':
-        return [
+        defaults = [
           { date: '16 June 2026', numbers: [5, 12, 19, 27, 33, 41], totalWinners: '241 Players', totalPaid: '$1,000,000.00' },
           { date: '09 June 2026', numbers: [1, 10, 15, 22, 38, 44], totalWinners: '189 Players', totalPaid: '$15,000.00' },
         ];
-      case 'SCRATCH CARDS':
-        return [
+        break;
+      case 'SCRATCHCARDS':
+        defaults = [
           { date: 'Instant', numbers: [], totalWinners: 'Thousands Daily', totalPaid: '$50,000.00' },
         ];
+        break;
       default:
-        return [
+        defaults = [
           { date: '16 June 2026', numbers: Array.from({ length: maxSelections }, (_, i) => (i * 5 + 3) % numRange + 1), totalWinners: '241 Players', totalPaid: '$2,100.00' },
         ];
+        break;
     }
+    return [...custom, ...defaults];
   };
 
   const currentDrawList = getHistoricalDraws(activeGame.name);
