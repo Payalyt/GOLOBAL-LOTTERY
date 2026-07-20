@@ -409,25 +409,24 @@ app.post("/api/gemini/lucky-numbers", async (req, res) => {
 });
 
 // --- VITE MIDDLEWARE / STATIC ASSETS ---
-async function mountViteMiddleware() {
-  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
-    console.log("[Server] Development mode: Mounting Vite live development server middleware.");
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+  console.log("[Server] Development mode: Mounting Vite live development server middleware.");
+  createViteServer({
+    server: { middlewareMode: true },
+    appType: "spa",
+  }).then(vite => {
     app.use(vite.middlewares);
-  } else {
-    console.log("[Server] Production mode: Serving static files from 'dist' folder.");
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
+  }).catch(err => {
+    console.error("[Server] Failed to create Vite server:", err);
+  });
+} else {
+  console.log("[Server] Production mode: Serving static files from 'dist' folder.");
+  const distPath = path.join(process.cwd(), 'dist');
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
 }
-
-mountViteMiddleware();
 
 // --- STANDALONE LISTENER (Cloud Run, Local, VPS) ---
 // Only listen on port 3000 if not running within a Serverless Vercel environment
