@@ -2,7 +2,6 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
-import { createServer as createViteServer } from "vite";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import { GoogleGenAI } from "@google/genai";
@@ -31,17 +30,26 @@ const firebaseConfig = {
   measurementId: configData.measurementId || process.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-let db: any = null;
-if (firebaseConfig.projectId) {
+let dbInstance: any = null;
+let firebaseAppInstance: any = null;
+
+function getDb() {
+  if (dbInstance) return dbInstance;
+  if (!firebaseConfig.projectId) {
+    console.warn("[Server] Firebase Project ID is missing. Firestore operations will be disabled.");
+    return null;
+  }
   try {
-    const firebaseApp = initializeApp(firebaseConfig);
-    db = getFirestore(firebaseApp, configData.firestoreDatabaseId || "(default)");
+    if (!firebaseAppInstance) {
+      firebaseAppInstance = initializeApp(firebaseConfig);
+    }
+    dbInstance = getFirestore(firebaseAppInstance, configData.firestoreDatabaseId || "(default)");
     console.log("[Server] Firebase Firestore initialized successfully on backend.");
+    return dbInstance;
   } catch (err) {
     console.error("[Server] Failed to initialize Firestore on backend:", err);
+    return null;
   }
-} else {
-  console.warn("[Server] Firebase Project ID is missing. Firestore operations will be disabled.");
 }
 
 // --- GEMINI INITIALIZATION ---
@@ -67,6 +75,7 @@ function getGeminiClient() {
 
 // --- HELPER FUNCTIONS ---
 async function creditUserBalance(email: string, amount: number, paymentId: string) {
+  const db = getDb();
   if (!db) {
     console.error("[Server] Firestore is not initialized. Cannot credit user balance.");
     return false;
@@ -240,6 +249,7 @@ app.post("/api/nowpayments/ipn", async (req, res) => {
 
     console.log(`[NOWPayments IPN] Validation status: ${isVerified ? "SUCCESS" : "FAILED/BYPASSED"}`);
 
+    const db = getDb();
     if (db) {
       try {
         const rawLogRef = doc(db, 'nowpayments_raw_ipns', paymentIdStr);
@@ -267,6 +277,7 @@ app.post("/api/nowpayments/ipn", async (req, res) => {
         }
       }
 
+      const db = getDb();
       if (db) {
         const txRef = doc(db, 'nowpayments_transactions', paymentIdStr);
         const txSnap = await getDoc(txRef);
@@ -411,13 +422,17 @@ app.post("/api/gemini/lucky-numbers", async (req, res) => {
 // --- VITE MIDDLEWARE / STATIC ASSETS ---
 if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   console.log("[Server] Development mode: Mounting Vite live development server middleware.");
-  createViteServer({
-    server: { middlewareMode: true },
-    appType: "spa",
-  }).then(vite => {
-    app.use(vite.middlewares);
+  import("vite").then(({ createServer: createViteServer }) => {
+    createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    }).then(vite => {
+      app.use(vite.middlewares);
+    }).catch(err => {
+      console.error("[Server] Failed to create Vite server:", err);
+    });
   }).catch(err => {
-    console.error("[Server] Failed to create Vite server:", err);
+    console.error("[Server] Failed to dynamically import vite:", err);
   });
 } else {
   console.log("[Server] Production mode: Serving static files from 'dist' folder.");
