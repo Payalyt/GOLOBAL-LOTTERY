@@ -7,7 +7,7 @@ import { AdminWinnersTab } from '../components/admin/AdminWinnersTab';
 import { AdminNewsTab } from '../components/admin/AdminNewsTab';
 import { AdminPagesTab } from '../components/admin/AdminPagesTab';
 
-import { Menu, X, Settings, Image as ImageIcon, Type, CreditCard, Paintbrush, Users, FileText, Trophy, Award, Gamepad2, Newspaper, Megaphone, Headphones } from 'lucide-react';
+import { Menu, X, Settings, Image as ImageIcon, Type, CreditCard, Paintbrush, Users, FileText, Trophy, Award, Gamepad2, Newspaper, Megaphone, Headphones, Plus, Trash2, ArrowUp, ArrowDown, Eye, EyeOff, Sparkles, ExternalLink, Layers, Check } from 'lucide-react';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -200,16 +200,24 @@ export function Admin() {
       // Destructure to avoid overwriting database-populated arrays with potentially stale configForm states
       const { 
         drawResults, 
-        paymentGateways, 
         grandPrizeWinners, 
         videoWinners, 
-        banners, 
         thaiPrizes, 
         thaiLotteryPrizes, 
         thaiLotteryDrawTime,
         ...restConfig 
       } = configForm;
-      await updateSiteConfig(restConfig);
+
+      // Sync logo image url if edited
+      const logoVal = configForm.logoImageUrl || configForm.logoUrl || '';
+
+      await updateSiteConfig({
+        ...restConfig,
+        logoUrl: logoVal,
+        logoImageUrl: logoVal,
+        banners: configForm.banners ?? siteConfig.banners ?? [],
+        paymentGateways: configForm.paymentGateways ?? siteConfig.paymentGateways ?? []
+      });
       showAdminAlert('Settings updated successfully!', 'success');
     } catch (err) {
       console.error('Error saving config', err);
@@ -225,10 +233,10 @@ export function Admin() {
     { id: 'Withdrawals', icon: CreditCard, label: 'Withdrawals' },
     { id: 'News', icon: FileText, label: 'News & Promos' },
     { id: 'Winners', icon: Award, label: 'Global Winners' },
-    { id: 'Pages', icon: FileText, label: 'Pages & Rules' },
+    { id: 'Pages', icon: FileText, label: 'Pages & Navigation Menu' },
     { id: 'General', icon: Settings, label: 'General Settings' },
     { id: 'Text', icon: Type, label: 'Text & Content' },
-    { id: 'Media', icon: ImageIcon, label: 'Logos & Banners' },
+    { id: 'Media', icon: ImageIcon, label: 'Logos & Banners (Unlimited)' },
     { id: 'Payment', icon: CreditCard, label: 'Payment Gateways' },
     { id: 'Design', icon: Paintbrush, label: 'Colors & Theme' },
     { id: 'Contact', icon: FileText, label: 'Contact Settings' },
@@ -500,13 +508,409 @@ export function Admin() {
             )}
 
             {activeTab === 'Media' && (
-              <div className="bg-white dark:bg-[#151c2a] rounded-2xl p-6 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-5">
-                <h3 className="text-sm font-black uppercase text-gray-800 dark:text-gray-200 mb-4 border-b border-gray-100 dark:border-zinc-800 pb-3">Logo URLs</h3>
-                <div className="grid gap-5">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5">Main Logo URL</label>
-                    <input type="text" name="logoUrl" value={configForm.logoUrl || ''} onChange={handleChange} className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none" />
+              <div className="space-y-8">
+                {/* 1. Logos & Brand Assets */}
+                <div className="bg-white dark:bg-[#151c2a] rounded-2xl p-6 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-6">
+                  <div className="border-b border-gray-100 dark:border-zinc-800 pb-3">
+                    <h3 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-amber-500" />
+                      Logo & Mascot Configuration
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+                      Manage site header logo, branding text, mascot graphic, and default promotional posters.
+                    </p>
                   </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Logo Image URL */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-300">
+                        Main Logo Image URL (PNG / JPG / WebP)
+                      </label>
+                      <input 
+                        type="text" 
+                        name="logoImageUrl" 
+                        value={configForm.logoImageUrl || configForm.logoUrl || ''} 
+                        onChange={(e) => setConfigForm(prev => ({ ...prev, logoImageUrl: e.target.value, logoUrl: e.target.value }))} 
+                        placeholder="https://i.ibb.co/... or /images/3d_lottery_logo.jpg"
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none text-gray-900 dark:text-white" 
+                      />
+                      {(configForm.logoImageUrl || configForm.logoUrl) && (
+                        <div className="mt-2 p-2 bg-zinc-900 rounded-lg border border-zinc-800 inline-block">
+                          <p className="text-[10px] text-zinc-400 font-bold mb-1">Logo Preview:</p>
+                          <img 
+                            src={configForm.logoImageUrl || configForm.logoUrl} 
+                            alt="Logo Preview" 
+                            className="h-10 object-contain rounded"
+                            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} 
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Primary Logo Text */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-300">
+                        Header Brand Name / Text
+                      </label>
+                      <input 
+                        type="text" 
+                        name="primaryLogoText" 
+                        value={configForm.primaryLogoText || ''} 
+                        onChange={handleChange} 
+                        placeholder="GLOBAL LOTTERY UAE"
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none text-gray-900 dark:text-white" 
+                      />
+                      <p className="text-[10px] text-gray-400">Displayed next to logo if no graphic logo image is provided or in text header.</p>
+                    </div>
+
+                    {/* Banner Mascot URL */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-300">
+                        Banner Mascot / Winner Mascot Image
+                      </label>
+                      <input 
+                        type="text" 
+                        name="bannerMascotUrl" 
+                        value={configForm.bannerMascotUrl || ''} 
+                        onChange={handleChange} 
+                        placeholder="/images/emirates_winner_mascot_1781774955947.jpg"
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none text-gray-900 dark:text-white" 
+                      />
+                      {configForm.bannerMascotUrl && (
+                        <div className="mt-2 p-2 bg-zinc-900 rounded-lg border border-zinc-800 inline-block">
+                          <p className="text-[10px] text-zinc-400 font-bold mb-1">Mascot Preview:</p>
+                          <img 
+                            src={configForm.bannerMascotUrl} 
+                            alt="Mascot Preview" 
+                            className="h-12 w-12 object-cover rounded-lg"
+                            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} 
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. UNLIMITED HERO BANNERS MANAGEMENT */}
+                <div className="bg-white dark:bg-[#151c2a] rounded-2xl p-6 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 dark:border-zinc-800 pb-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-amber-500" />
+                        <h3 className="text-sm font-black uppercase text-gray-800 dark:text-gray-200">
+                          Unlimited Hero Banners & Slider ({((configForm.banners || siteConfig.banners || []) as any[]).length} Banners)
+                        </h3>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+                        Add as many promotional banners as you want! They automatically loop on the homepage top hero banner slider.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentBanners = (configForm.banners || siteConfig.banners || []) as any[];
+                          const newBanner = {
+                            id: `b-${Date.now()}`,
+                            title: 'BIGGER, BETTER, BOLDER DRAW TODAY!',
+                            subtitle: 'Win the guaranteed grand cash jackpot prize this week',
+                            imageUrl: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&q=80&w=1200',
+                            linkUrl: '/dashboard',
+                            buttonText: 'PLAY NOW',
+                            isActive: true,
+                            bgType: 'image',
+                            bgColor: '#0f0f14',
+                            bgGradient: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+                            textColor: '#ffffff',
+                            buttonColor: '#FFD700',
+                            buttonTextColor: '#09090b',
+                            hideShadow: false
+                          };
+                          setConfigForm(prev => ({
+                            ...prev,
+                            banners: [newBanner, ...currentBanners]
+                          }));
+                          showAdminAlert('New Banner added to list! Click "Save All Settings" to publish.', 'success');
+                        }}
+                        className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                      >
+                        <Plus className="w-4 h-4" />
+                        + Add Unlimited Banner
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentBanners = (configForm.banners || siteConfig.banners || []) as any[];
+                          const goldenBanner = {
+                            id: `b-golden-${Date.now()}`,
+                            title: 'DAILY SURE RAFFLE EXTRAVAGANZA',
+                            subtitle: 'Get 100% bonus raffle entries with verified instant payouts',
+                            imageUrl: '/images/lottery_poster.jpg',
+                            linkUrl: '/promotions',
+                            buttonText: 'CLAIM OFFER NOW',
+                            isActive: true,
+                            bgType: 'image',
+                            bgColor: '#0f0f14',
+                            bgGradient: 'linear-gradient(135deg, #f59e0b 0%, #78350f 100%)',
+                            textColor: '#ffffff',
+                            buttonColor: '#10b981',
+                            buttonTextColor: '#ffffff',
+                            hideShadow: false
+                          };
+                          setConfigForm(prev => ({
+                            ...prev,
+                            banners: [...currentBanners, goldenBanner]
+                          }));
+                          showAdminAlert('Golden Sample Banner added!', 'success');
+                        }}
+                        className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-amber-400 font-bold text-xs rounded-xl border border-amber-500/30 transition-all flex items-center gap-1"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        + Sample 3D Banner
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* BANNERS LIST */}
+                  <div className="space-y-6">
+                    {(((configForm.banners || siteConfig.banners || []) as any[])).length === 0 ? (
+                      <div className="p-8 text-center border-2 border-dashed border-gray-200 dark:border-zinc-800 rounded-2xl">
+                        <ImageIcon className="w-10 h-10 text-gray-400 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm font-bold text-gray-500 dark:text-zinc-400">No Hero Banners Added Yet</p>
+                        <p className="text-xs text-gray-400 mt-1">Click "+ Add Unlimited Banner" above to create your first promotional banner slider!</p>
+                      </div>
+                    ) : (
+                      (((configForm.banners || siteConfig.banners || []) as any[])).map((b: any, index: number) => {
+                        const allBanners = (configForm.banners || siteConfig.banners || []) as any[];
+                        return (
+                          <div 
+                            key={b.id || index} 
+                            className={`p-5 rounded-2xl border transition-all space-y-4 ${
+                              b.isActive 
+                                ? 'bg-gray-50/80 dark:bg-zinc-900/40 border-amber-500/40 shadow-sm' 
+                                : 'bg-gray-100/50 dark:bg-zinc-950/40 border-gray-200 dark:border-zinc-800 opacity-75'
+                            }`}
+                          >
+                            {/* Card Header Bar */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200/80 dark:border-zinc-800 pb-3">
+                              <div className="flex items-center gap-2">
+                                <span className="bg-amber-500 text-black font-black text-xs px-2.5 py-0.5 rounded-md">
+                                  BANNER #{index + 1}
+                                </span>
+                                <span className="text-xs font-black uppercase text-gray-800 dark:text-white truncate max-w-[200px] sm:max-w-[300px]">
+                                  {b.title || 'Untitled Banner'}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                {/* Toggle Active */}
+                                <label className="flex items-center cursor-pointer bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 px-3 py-1 rounded-lg">
+                                  <span className="text-[11px] font-bold text-gray-600 dark:text-zinc-300 mr-2 flex items-center gap-1">
+                                    {b.isActive ? <Eye className="w-3.5 h-3.5 text-emerald-500" /> : <EyeOff className="w-3.5 h-3.5 text-gray-400" />}
+                                    {b.isActive ? 'Active' : 'Disabled'}
+                                  </span>
+                                  <input
+                                    type="checkbox"
+                                    checked={b.isActive}
+                                    onChange={(e) => {
+                                      const updatedList = [...allBanners];
+                                      updatedList[index] = { ...updatedList[index], isActive: e.target.checked };
+                                      setConfigForm(prev => ({ ...prev, banners: updatedList }));
+                                    }}
+                                    className="accent-amber-500 w-4 h-4 cursor-pointer"
+                                  />
+                                </label>
+
+                                {/* Move Up */}
+                                <button
+                                  type="button"
+                                  disabled={index === 0}
+                                  onClick={() => {
+                                    if (index === 0) return;
+                                    const list = [...allBanners];
+                                    const temp = list[index];
+                                    list[index] = list[index - 1];
+                                    list[index - 1] = temp;
+                                    setConfigForm(prev => ({ ...prev, banners: list }));
+                                  }}
+                                  className="p-1.5 bg-gray-200 dark:bg-zinc-800 hover:bg-amber-500 hover:text-black text-gray-700 dark:text-zinc-300 rounded-lg transition-colors disabled:opacity-30 disabled:hover:bg-gray-200"
+                                  title="Move Up"
+                                >
+                                  <ArrowUp className="w-3.5 h-3.5" />
+                                </button>
+
+                                {/* Move Down */}
+                                <button
+                                  type="button"
+                                  disabled={index === allBanners.length - 1}
+                                  onClick={() => {
+                                    if (index === allBanners.length - 1) return;
+                                    const list = [...allBanners];
+                                    const temp = list[index];
+                                    list[index] = list[index + 1];
+                                    list[index + 1] = temp;
+                                    setConfigForm(prev => ({ ...prev, banners: list }));
+                                  }}
+                                  className="p-1.5 bg-gray-200 dark:bg-zinc-800 hover:bg-amber-500 hover:text-black text-gray-700 dark:text-zinc-300 rounded-lg transition-colors disabled:opacity-30 disabled:hover:bg-gray-200"
+                                  title="Move Down"
+                                >
+                                  <ArrowDown className="w-3.5 h-3.5" />
+                                </button>
+
+                                {/* Delete */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const list = [...allBanners];
+                                    list.splice(index, 1);
+                                    setConfigForm(prev => ({ ...prev, banners: list }));
+                                    showAdminAlert('Banner removed!', 'success');
+                                  }}
+                                  className="p-1.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all border border-red-500/20"
+                                  title="Delete Banner"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Card Body Fields */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* Title */}
+                              <div>
+                                <label className="block text-[10px] font-black uppercase text-gray-500 dark:text-zinc-400 mb-1">
+                                  Banner Main Headline
+                                </label>
+                                <input
+                                  type="text"
+                                  value={b.title || ''}
+                                  onChange={(e) => {
+                                    const list = [...allBanners];
+                                    list[index] = { ...list[index], title: e.target.value };
+                                    setConfigForm(prev => ({ ...prev, banners: list }));
+                                  }}
+                                  placeholder="e.g. MEGA 7 JACKPOT DRAW TONIGHT"
+                                  className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 dark:text-white outline-none focus:border-amber-500"
+                                />
+                              </div>
+
+                              {/* Subtitle */}
+                              <div>
+                                <label className="block text-[10px] font-black uppercase text-gray-500 dark:text-zinc-400 mb-1">
+                                  Subtitle / Description
+                                </label>
+                                <input
+                                  type="text"
+                                  value={b.subtitle || ''}
+                                  onChange={(e) => {
+                                    const list = [...allBanners];
+                                    list[index] = { ...list[index], subtitle: e.target.value };
+                                    setConfigForm(prev => ({ ...prev, banners: list }));
+                                  }}
+                                  placeholder="e.g. Guaranteed grand prize draw at 9:00 PM GST"
+                                  className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-medium text-gray-900 dark:text-white outline-none focus:border-amber-500"
+                                />
+                              </div>
+
+                              {/* Image URL */}
+                              <div className="md:col-span-2">
+                                <label className="block text-[10px] font-black uppercase text-gray-500 dark:text-zinc-400 mb-1">
+                                  Banner Image URL (ImgBB, Direct URL, or local path)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={b.imageUrl || ''}
+                                  onChange={(e) => {
+                                    const list = [...allBanners];
+                                    list[index] = { ...list[index], imageUrl: e.target.value };
+                                    setConfigForm(prev => ({ ...prev, banners: list }));
+                                  }}
+                                  placeholder="https://i.ibb.co/... or /images/lottery_poster.jpg"
+                                  className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-gray-900 dark:text-white outline-none focus:border-amber-500"
+                                />
+                                {b.imageUrl && (
+                                  <div className="mt-2 p-2 bg-zinc-950 rounded-xl border border-zinc-800 flex items-center gap-3">
+                                    <img 
+                                      src={b.imageUrl} 
+                                      alt="Banner Preview" 
+                                      className="h-16 w-32 object-cover rounded-lg border border-zinc-700" 
+                                      onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                                    />
+                                    <div className="text-[10px] text-zinc-400">
+                                      <p className="font-bold text-white">Live Image Preview</p>
+                                      <p className="text-zinc-500">Displays on top slider on homepage</p>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Link URL */}
+                              <div>
+                                <label className="block text-[10px] font-black uppercase text-gray-500 dark:text-zinc-400 mb-1">
+                                  Click Link Target URL / Route
+                                </label>
+                                <input
+                                  type="text"
+                                  value={b.linkUrl || ''}
+                                  onChange={(e) => {
+                                    const list = [...allBanners];
+                                    list[index] = { ...list[index], linkUrl: e.target.value };
+                                    setConfigForm(prev => ({ ...prev, banners: list }));
+                                  }}
+                                  placeholder="e.g. /dashboard, /games/mega7, or https://..."
+                                  className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-gray-900 dark:text-white outline-none focus:border-amber-500"
+                                />
+                              </div>
+
+                              {/* Button Text */}
+                              <div>
+                                <label className="block text-[10px] font-black uppercase text-gray-500 dark:text-zinc-400 mb-1">
+                                  Button Label
+                                </label>
+                                <input
+                                  type="text"
+                                  value={b.buttonText || ''}
+                                  onChange={(e) => {
+                                    const list = [...allBanners];
+                                    list[index] = { ...list[index], buttonText: e.target.value };
+                                    setConfigForm(prev => ({ ...prev, banners: list }));
+                                  }}
+                                  placeholder="e.g. PLAY NOW"
+                                  className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-extrabold text-gray-900 dark:text-white outline-none focus:border-amber-500"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. TOP NAVIGATION MENU SHORTCUT */}
+                <div className="bg-gradient-to-r from-zinc-900 to-zinc-950 rounded-2xl p-6 border border-zinc-800 shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+                      <Layers className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black uppercase text-white">Top Navigation & Menu Pages</h4>
+                      <p className="text-xs text-zinc-400 mt-0.5">
+                        Manage all top header menu links, custom page rules, terms, and footer links.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('Pages')}
+                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 shrink-0 shadow-lg"
+                  >
+                    Open Menu & Pages Manager
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             )}
