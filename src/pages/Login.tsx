@@ -30,7 +30,7 @@ export function Login() {
       password: "Password",
       forgotPassword: "Forgot Password?",
       signInToDashboard: "Sign In to Dashboard",
-      newToLottery: "New to Golobal Lottery?",
+      newToLottery: "New to GLOBAL Lottery?",
       registerAccount: "Register account",
       secureResetPortal: "Secure Password Reset Portal",
       gatewayLuxury: "Gateway to your luxury dream payouts",
@@ -93,7 +93,7 @@ export function Login() {
     setLoading(true);
 
     const formattedEmail = email.trim().toLowerCase();
-    const isAdminEmail = ['payalyt6279@gmail.com', 'admin@goloballottery.com', 'payal@gmail.com', 'admin.payal@gmail.com'].includes(formattedEmail);
+    const isAdminEmail = ['payalyt6279@gmail.com', 'admin@globallottery.com', 'payal@gmail.com', 'admin.payal@gmail.com'].includes(formattedEmail);
     
     if (isAdminEmail && !(password === '1111' || password === '111111')) {
       setErrorMsg(
@@ -129,7 +129,7 @@ export function Login() {
         
         // Auto-recovery for admin if account doesn't exist in Firebase Auth
         let authRecovered = false;
-        if (formattedEmail === 'payalyt6279@gmail.com' || formattedEmail === 'admin@goloballottery.com') {
+        if (formattedEmail === 'payalyt6279@gmail.com' || formattedEmail === 'admin@globallottery.com') {
           try {
              await createUserWithEmailAndPassword(auth, formattedEmail, password);
              authRecovered = true;
@@ -179,7 +179,7 @@ export function Login() {
       // Fallback 3: Special Admin Override
       if (!loggedInProfile && isAdminOverride) {
         loggedInProfile = {
-          name: formattedEmail === 'admin@goloballottery.com' ? 'Admin Controller' : 'Meshkat Sorif Payal (Admin)',
+          name: formattedEmail === 'admin@globallottery.com' ? 'Admin Controller' : 'Meshkat Sorif Payal (Admin)',
           email: formattedEmail,
           balance: 10000.00,
           role: 'admin',
@@ -238,7 +238,7 @@ export function Login() {
       }
 
       if (loggedInProfile) {
-        const isAdminEmail = ['payalyt6279@gmail.com', 'admin@goloballottery.com', 'payal@gmail.com', 'admin.payal@gmail.com'].includes(formattedEmail);
+        const isAdminEmail = ['payalyt6279@gmail.com', 'admin@globallottery.com', 'payal@gmail.com', 'admin.payal@gmail.com'].includes(formattedEmail);
         if (isAdminEmail) {
           loggedInProfile.role = 'admin';
         }

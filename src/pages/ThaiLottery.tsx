@@ -26,7 +26,7 @@ interface GameOption {
 }
 
 export default function ThaiLottery() {
-  const { user, isLoggedIn, updateUserBalance, siteConfig } = useAuth();
+  const { user, isLoggedIn, updateUserBalance, siteConfig, language } = useAuth();
   const navigate = useNavigate();
 
   const thaiDrawResults = (siteConfig?.drawResults || []).filter(
@@ -214,7 +214,10 @@ export default function ThaiLottery() {
     setErrorMessage('');
 
     if (!isLoggedIn || !user) {
-      setErrorMessage('Please log in first to purchase tickets.');
+      alert(language === 'en'
+        ? 'Login or Sign Up is required to buy tickets! You can view games and pick numbers, but please log in or register to complete your purchase.'
+        : 'টিকিট কিনতে লগইন বা রেজিস্টার করা আবশ্যক! আপনি গেম দেখতে ও নম্বর পছন্দ করতে পারবেন, তবে টিকিট কিনতে অনুগ্রহ করে লগইন বা সাইন আপ করুন।');
+      navigate('/login');
       return;
     }
 

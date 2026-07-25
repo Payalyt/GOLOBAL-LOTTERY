@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { Sparkles, Gift, Tv } from 'lucide-react';
 
 export function PromoBanner() {
+  const { siteConfig } = useAuth();
+  
   return (
     <div 
       id="premium-promo-showcase" 
@@ -70,6 +72,7 @@ export function PromoBanner() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* CARD 1: 1. Alert/Notice Text Box */}
+        {siteConfig?.promoBannerLiveNoticeEnabled !== false && (
         <div 
           className="flex flex-col justify-between p-5 rounded-2xl border border-red-500/20 bg-black/30 backdrop-blur-md relative overflow-hidden group hover:border-red-500/30 transition-all duration-300"
           style={{
@@ -109,7 +112,7 @@ export function PromoBanner() {
                 <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-600"></span>
               </span>
               <span className="leading-tight">
-                Today's Draw is Live at 9:00 PM!
+                {siteConfig?.promoBannerLiveNotice || "Today's Draw is Live at 9:00 PM!"}
               </span>
             </div>
           </div>
@@ -118,8 +121,10 @@ export function PromoBanner() {
             * Real-time auditable drawings are broadcasted on our YouTube channel and official portal.
           </p>
         </div>
+        )}
 
         {/* CARD 2: 2. Rules/Instructions Box */}
+        {siteConfig?.promoBannerOfferEnabled !== false && (
         <div 
           className="flex flex-col justify-between p-5 rounded-2xl border border-orange-500/20 bg-black/20 backdrop-blur-md relative overflow-hidden group hover:border-orange-500/30 transition-all duration-300"
           style={{
@@ -149,22 +154,23 @@ export function PromoBanner() {
                   textShadow: '0 1px 2px rgba(0,0,0,0.5)'
                 }}
               >
-                Buy 1 Ticket and Get 1 Free
+                {siteConfig?.promoBannerOfferTitle || "Buy 1 Ticket and Get 1 Free"}
               </p>
               
               <div className="flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 px-3 py-1.5 rounded-lg w-max">
                 <Sparkles className="w-3.5 h-3.5 text-orange-400 animate-spin-slow" />
                 <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest">
-                  BUY 1 GET 1 FREE
+                  {siteConfig?.promoBannerOfferSubtitle || "BUY 1 GET 1 FREE"}
                 </span>
               </div>
             </div>
           </div>
 
           <p className="text-zinc-500 text-[11px] mt-4 tracking-wide font-sans leading-relaxed">
-            * Exclusive promotional ticket deal valid for the next 24 hours only.
+            {siteConfig?.promoBannerOfferDisclaimer || "* Exclusive promotional ticket deal valid for the next 24 hours only."}
           </p>
         </div>
+        )}
 
       </div>
     </div>

@@ -47,12 +47,12 @@ export function Footer() {
                   </svg>
                 </div>
               )}
-              <div className="flex flex-col text-left">
-                <span className="text-[10px] font-black tracking-[0.25em] text-[#E1BC4A] uppercase leading-none">
-                  {language === 'en' ? (siteConfig.primaryLogoText || 'GLOBAL') : (siteConfig.primaryLogoText === 'GLOBAL' ? 'গ্লোবাল' : siteConfig.primaryLogoText)}
-                </span>
-                <span className="text-xl font-black tracking-[0.08em] text-white leading-none mt-1 uppercase font-bold-font">
-                  {language === 'en' ? 'LOTTERY' : 'লটারি'}
+              <div className="flex flex-col text-left mt-0.5">
+                <span className="text-[18px] sm:text-[24px] font-bodoni font-black tracking-wide text-white leading-none truncate flex items-center">
+                  {language === 'en' ? 'GLOBAL' : 'গ্লোবাল'}
+                  <span className="ml-1.5 sm:ml-2 font-bold" style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>
+                    {language === 'en' ? 'Lottery' : 'লটারি'}
+                  </span>
                 </span>
               </div>
             </div>
@@ -349,7 +349,7 @@ export function Footer() {
                         </div>
                       </div>
                       <p className="leading-relaxed">
-                        Golobal Lottery is fully regulated and licensed to operate simulated commercial sweeps and lotteries globally. Here are our certification coordinates:
+                        GLOBAL Lottery is fully regulated and licensed to operate simulated commercial sweeps and lotteries globally. Here are our certification coordinates:
                       </p>
                       <div className="space-y-3 font-mono text-[11px] bg-zinc-900/80 p-4 rounded-xl border border-zinc-800">
                         <div>
@@ -447,7 +447,7 @@ export function Footer() {
           <div className="space-y-1 text-center md:text-left font-semibold">
             <p>
               {language === 'en'
-                ? (siteConfig.footerCopyrightEn || '© 2026 Golobal Lottery Registered Platform. All corporate marks, logos & licenses are properties of their respective governing entities.')
+                ? (siteConfig.footerCopyrightEn || '© 2026 GLOBAL Lottery Registered Platform. All corporate marks, logos & licenses are properties of their respective governing entities.')
                 : (siteConfig.footerCopyrightBn || '© ২০২৬ গ্লোবাল লটারি রেজিস্টার্ড প্ল্যাটফর্ম। সমস্ত কর্পোরেট চিহ্ন, লোগো এবং লাইসেন্স তাদের নিজ নিজ গভর্নিং সত্তার সম্পত্তি।')}
             </p>
             <p className="opacity-75">

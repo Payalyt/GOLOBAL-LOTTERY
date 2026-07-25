@@ -40,8 +40,8 @@ export function Cart() {
       }
       setDiscount(Math.min(subtotal, calcDiscount));
       setCouponSuccess(true);
-    } else if (enteredCoupon === 'GOLOBAL50' || enteredCoupon === 'SXL10') {
-      const pct = enteredCoupon === 'GOLOBAL50' ? 0.5 : 0.1;
+    } else if (enteredCoupon === 'GLOBAL50' || enteredCoupon === 'SXL10') {
+      const pct = enteredCoupon === 'GLOBAL50' ? 0.5 : 0.1;
       setDiscount(subtotal * pct);
       setCouponSuccess(true);
     } else {
@@ -55,6 +55,9 @@ export function Cart() {
 
   const handleProceedCheckout = () => {
     if (!isLoggedIn || !user) {
+      alert(language === 'en'
+        ? 'Login or Sign Up is required to buy tickets! Please log in or register to complete your purchase.'
+        : 'টিকিট কিনতে লগইন বা রেজিস্টার করা আবশ্যক! অনুগ্রহ করে লগইন বা সাইন আপ করে অর্ডার সম্পন্ন করুন।');
       navigate('/login');
       return;
     }
@@ -149,15 +152,35 @@ export function Cart() {
     <div className="bg-gray-100 min-h-screen p-8 text-gray-900">
       <div className="max-w-6xl mx-auto">
         
-        <div className="flex items-center gap-3 mb-8 border-b pb-4">
-          <div className="p-2 bg-black text-white rounded-lg">
-            <ShoppingBag className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">SHOPPING CART</h1>
-            <p className="text-sm text-gray-500">Review your picked tickets and apply coupons before checkout.</p>
+        <div className="flex items-center justify-between gap-3 mb-6 border-b pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-black text-white rounded-lg">
+              <ShoppingBag className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight">SHOPPING CART</h1>
+              <p className="text-sm text-gray-500">Review your picked tickets and apply coupons before checkout.</p>
+            </div>
           </div>
         </div>
+
+        {(!isLoggedIn || !user) && (
+          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-600 dark:text-amber-400">
+            <div className="text-xs sm:text-sm font-semibold">
+              🔒 {language === 'en' 
+                ? 'Login or Sign Up required to buy tickets. You can view numbers in cart, but must log in to finalize purchase.' 
+                : 'টিকিট কিনতে লগইন বা রেজিস্টার করা আবশ্যক। আপনি কার্টে টিকিট দেখতে পারবেন, তবে কিনতে লগইন করুন।'}
+            </div>
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+              <Link to="/login" className="flex-1 sm:flex-initial text-center text-xs font-bold bg-[#E1BC4A] hover:bg-yellow-500 text-zinc-950 px-3 py-1.5 rounded-lg uppercase shadow-sm">
+                {language === 'en' ? 'Log In' : 'লগইন'}
+              </Link>
+              <Link to="/register" className="flex-1 sm:flex-initial text-center text-xs font-bold bg-white dark:bg-zinc-800 hover:bg-zinc-100 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 rounded-lg uppercase shadow-sm">
+                {language === 'en' ? 'Sign Up' : 'সাইন আপ'}
+              </Link>
+            </div>
+          </div>
+        )}
         
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           <div className="flex-grow w-full lg:w-2/3">

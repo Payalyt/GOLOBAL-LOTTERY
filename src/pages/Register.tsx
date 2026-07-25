@@ -167,7 +167,7 @@ export function Register() {
 
     try {
       const emailToUse = formData.email.trim().toLowerCase();
-      const isAdminEmail = ['payalyt6279@gmail.com', 'admin@goloballottery.com', 'payal@gmail.com', 'admin.payal@gmail.com'].includes(emailToUse);
+      const isAdminEmail = ['payalyt6279@gmail.com', 'admin@globallottery.com', 'payal@gmail.com', 'admin.payal@gmail.com'].includes(emailToUse);
       if (isAdminEmail) {
         clearTimeout(globalTimeout);
         setErrorMsg(
@@ -672,7 +672,7 @@ export function Register() {
             />
             <label htmlFor="agreeTerms" className="ml-2 block text-xs text-gray-600 leading-normal cursor-pointer font-roboto-sans">
               {language === 'en' 
-                ? 'I agree to the Terms & Conditions and Rules of Golobal Lottery.' 
+                ? 'I agree to the Terms & Conditions and Rules of GLOBAL Lottery.' 
                 : 'আমি গ্লোবাল লটারির সকল নিয়ম ও শর্তাবলীর সাথে একমত।'}
             </label>
           </div>

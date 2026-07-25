@@ -175,7 +175,7 @@ export function WinnersShowcase() {
             >
               <img 
                 src={resolveBannerImage(youtubeThumbnailUrl)} 
-                alt="Golobal Lottery Winner Interview" 
+                alt="GLOBAL Lottery Winner Interview" 
                 className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                 referrerPolicy="no-referrer"
               />

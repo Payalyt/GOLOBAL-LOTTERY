@@ -47,6 +47,10 @@ body {
   font-family: 'The Bold Font', sans-serif;
 }
 
+.font-bodoni {
+  font-family: 'Bodoni Moda', 'Libre Bodoni', serif;
+}
+
 .font-alfa, .alfa-slab-one-regular {
   font-family: "Alfa Slab One", serif;
   font-weight: 400;
@@ -61,10 +65,14 @@ body {
   font-family: 'Courier New', Courier, monospace;
 }
 
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+
 .menu-item {
-  font-family: 'Montserrat', 'Poppins', sans-serif;
-  font-size: 15px;
-  font-weight: 600; /* Semi-bold */
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
   letter-spacing: 1px;
 }
 

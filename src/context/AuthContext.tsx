@@ -407,6 +407,12 @@ export interface SiteThemeConfig {
   promoCodes?: { code: string; discountType: 'fixed' | 'percentage'; value: number; minCartAmount?: number; isActive: boolean; }[];
   referralBonusAmount?: number;
   referralCommissionPct?: number;
+  promoBannerLiveNotice?: string;
+  promoBannerOfferTitle?: string;
+  promoBannerOfferSubtitle?: string;
+  promoBannerOfferDisclaimer?: string;
+  promoBannerLiveNoticeEnabled?: boolean;
+  promoBannerOfferEnabled?: boolean;
 }
 
 interface AuthContextType {
@@ -507,7 +513,7 @@ const DEFAULT_USERS: UserProfile[] = [
   },
   {
     name: 'Admin Controller',
-    email: 'admin@goloballottery.com',
+    email: 'admin@globallottery.com',
     balance: 10000,
     role: 'admin',
     dob: '01/01/1990',
@@ -580,7 +586,7 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
   unlockPerksBn: 'বিস্তারিত হট ও কোল্ড হিটম্যাপ, ব্যক্তিগত লাকি নম্বর জেনারেটর, পরবর্তী ড্র সম্ভাবনা ক্যালকুলেটর, স্বয়ংক্রিয় বিজয়ী ম্যাচ-অ্যালার্ট',
   footerDescEn: 'The premier lottery and sweepstakes draw in the UAE and internationally. Raising hopes and changing lives, one dream ticket at a time.',
   footerDescBn: 'সংযুক্ত আরব আমিরাত এবং আন্তর্জাতিকভাবে প্রধান লটারি ও সুইপস্টেক ড্র। একবারে একটি স্বপ্ন টিকিট কিনে মানুষের জীবন পরিবর্তন করা।',
-  footerCopyrightEn: '© 2026 Golobal Lottery Registered Platform. All corporate marks, logos & licenses are properties of their respective governing entities.',
+  footerCopyrightEn: '© 2026 GLOBAL Lottery Registered Platform. All corporate marks, logos & licenses are properties of their respective governing entities.',
   footerCopyrightBn: '© ২০২৬ গ্লোবাল লটারি রেজিস্টার্ড প্ল্যাটফর্ম। সমস্ত কর্পোরেট চিহ্ন, লোগো এবং লাইসেন্স তাদের নিজ নিজ গভর্নিং সত্তার সম্পত্তি।',
   footerSubDescEn: 'This platform stimulates raffle draws, lottery statistics tracking, and lucky pick purchases with verified secure payments.',
   footerSubDescBn: 'এই প্ল্যাটফর্মটি যাচাইকৃত নিরাপদ পেমেন্টের মাধ্যমে র‌্যাফেল ড্র, লটারির পরিসংখ্যান ট্র্যাকিং এবং লাকি পিক ক্রয় সিমুলেট করে।',
@@ -809,7 +815,13 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
     { code: 'WELCOME5', discountType: 'fixed', value: 5, minCartAmount: 10, isActive: true }
   ],
   referralBonusAmount: 5.00,
-  referralCommissionPct: 10
+  referralCommissionPct: 10,
+  promoBannerLiveNotice: "Today's Draw is Live at 9:00 PM!",
+  promoBannerOfferTitle: "Buy 1 Ticket and Get 1 Free",
+  promoBannerOfferSubtitle: "BUY 1 GET 1 FREE",
+  promoBannerOfferDisclaimer: "* Exclusive promotional ticket deal valid for the next 24 hours only.",
+  promoBannerLiveNoticeEnabled: true,
+  promoBannerOfferEnabled: true
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -1202,7 +1214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               },
               {
                 id: 'n-2',
-                title: 'One Number Away From $4 Million: Three Indian Expats Celebrate Golobal Lottery Wins',
+                title: 'One Number Away From $4 Million: Three Indian Expats Celebrate GLOBAL Lottery Wins',
                 excerpt: 'Now, $50 Million MEGA7 Opportunity Awaits This Sunday. All three matched 6 of the 7 numbers to unlock the secondary prizes.',
                 date: '4 June 2026',
                 imageUrl: 'https://images.unsplash.com/photo-1556157382-97dea7d240ff?auto=format&fit=crop&q=80&w=400',
@@ -1213,7 +1225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               },
               {
                 id: 'n-3',
-                title: 'Golobal Lottery: You Spend This Much Every Week. Make It Count!',
+                title: 'GLOBAL Lottery: You Spend This Much Every Week. Make It Count!',
                 excerpt: 'A limited-time offer and the belief that one ticket can change everything. Check out our Eid special multipliers to learn more.',
                 date: '29 May 2026',
                 imageUrl: 'https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&q=80&w=400',
@@ -1224,7 +1236,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               },
               {
                 id: 'n-4',
-                title: 'Golobal Lottery Highlights Why Thousands of Players Return Every Week',
+                title: 'GLOBAL Lottery Highlights Why Thousands of Players Return Every Week',
                 excerpt: 'Limited-time promotions and life-changing prize opportunities continue to drive engagement globally. Explore our ongoing ticket referral systems.',
                 date: '21 May 2026',
                 imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
@@ -1235,7 +1247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               },
               {
                 id: 'n-5',
-                title: '$25,000 Golobal Lottery EASY6 Brings Life-Changing Moment for One Indian Family',
+                title: '$25,000 GLOBAL Lottery EASY6 Brings Life-Changing Moment for One Indian Family',
                 excerpt: 'The lucky winner almost hit $4 million. With his winnings, he plans to secure his daughters university education fees and travel home.',
                 date: '14 May 2026',
                 imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=400',
@@ -1247,7 +1259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               {
                 id: 'n-6',
                 title: 'One Number Away: Expat in Qatar Wins Big & the $50 Million Dream Isn\'t Over Yet',
-                excerpt: 'Golobal Lottery Turns Everyday Hope Into Reality for Latest MEGA7 Winner. He has played consecutively for several draws and finally hit gold.',
+                excerpt: 'GLOBAL Lottery Turns Everyday Hope Into Reality for Latest MEGA7 Winner. He has played consecutively for several draws and finally hit gold.',
                 date: '7 May 2026',
                 imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400',
                 bannerTitle: 'One number away!',
@@ -1298,7 +1310,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 id: 'WD-8491',
                 email: 'md.meshkat200@gmail.com',
                 amount: 80,
-                bankName: 'Golobal Bank',
+                bankName: 'GLOBAL Bank',
                 iban: 'AE4502401000987654321',
                 date: new Date(Date.now() - 36 * 60 * 60 * 1000).toLocaleDateString('en-GB'),
                 status: 'Pending'
@@ -1465,7 +1477,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Listen to the user document in real-time
         unsubUserDoc = onSnapshot(doc(db, 'users', emailLower), async (snap) => {
-          const isAdminEmail = ['payalyt6279@gmail.com', 'admin@goloballottery.com', 'payal@gmail.com', 'admin.payal@gmail.com'].includes(emailLower);
+          const isAdminEmail = ['payalyt6279@gmail.com', 'admin@globallottery.com', 'payal@gmail.com', 'admin.payal@gmail.com'].includes(emailLower);
           if (snap.exists()) {
             const data = snap.data() as UserProfile;
             if (isAdminEmail && data.role !== 'admin') {
@@ -1475,7 +1487,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(data);
           } else {
             const defaultProfile: UserProfile = {
-              name: firebaseUser.displayName || (isAdminEmail ? 'Admin Controller' : 'Golobal Lottery Player'),
+              name: firebaseUser.displayName || (isAdminEmail ? 'Admin Controller' : 'GLOBAL Lottery Player'),
               email: emailLower,
               balance: isAdminEmail ? 10000.0 : 0.0,
               role: isAdminEmail ? 'admin' : 'user',

@@ -208,7 +208,7 @@ export function Hero() {
     );
   }
 
-  // FALLBACK: Default Golobal Lottery static hero banner (original style perfectly preserved, compact on mobile!)
+  // FALLBACK: Default GLOBAL Lottery static hero banner (original style perfectly preserved, compact on mobile!)
   return (
     <div 
       className="relative w-full overflow-hidden rounded-[14px] sm:rounded-[32px] min-h-[170px] xs:min-h-[200px] sm:min-h-[420px] flex flex-row items-center justify-between p-3 xs:p-4 sm:p-12 shadow-xl sm:shadow-2xl border"
@@ -244,7 +244,7 @@ export function Hero() {
         <div className="relative w-full max-w-[110px] xs:max-w-[140px] sm:max-w-[340px] md:max-w-md rounded-[12px] sm:rounded-[24px] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-2 sm:border-4 border-white/10 group bg-black">
           <img 
             src={resolveBannerImage(siteConfig.bannerMascotUrl)} 
-            alt="Golobal Lottery Winner" 
+            alt="GLOBAL Lottery Winner" 
             className="w-full object-cover scale-[1.02] group-hover:scale-105 transition-transform duration-[1200ms] h-[100px] xs:h-[130px] sm:h-[280px] md:h-[320px]"
             referrerPolicy="no-referrer"
             onError={(e) => {

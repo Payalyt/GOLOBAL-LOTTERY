@@ -2314,7 +2314,7 @@ export function Dashboard() {
                               <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-sm space-y-4">
                                 <div className="text-center">
                                   <h4 className="text-xs font-black text-zinc-900 uppercase tracking-wider flex items-center justify-center gap-1.5">
-                                    🎁 {language === 'en' ? 'Support Golobal Lottery' : 'গ্লোবাল লটারি প্রজেক্ট সাপোর্ট করুন'}
+                                    🎁 {language === 'en' ? 'Support GLOBAL Lottery' : 'গ্লোবাল লটারি প্রজেক্ট সাপোর্ট করুন'}
                                   </h4>
                                   <p className="text-[9px] text-zinc-500 font-semibold mt-1">
                                     {language === 'en' ? 'Choose your preferred instant secure checkout below:' : 'নিচের যেকোনো একটি নিরাপদ পেমেন্ট মেথড বেছে নিন:'}
@@ -3752,7 +3752,7 @@ export function Dashboard() {
                         className="w-4 h-4 text-red-650 mt-0.5 rounded accent-[#E1BC4A]"
                       />
                       <div>
-                        <span className="text-xs font-extrabold text-white block uppercase">Golobal Lottery VIP newsletter</span>
+                        <span className="text-xs font-extrabold text-white block uppercase">GLOBAL Lottery VIP newsletter</span>
                         <p className="text-zinc-400 text-[10.5px] mt-0.5 font-medium">Be the first to know about grand prize resets, promotional voucher rules, and charity reports.</p>
                       </div>
                     </label>
@@ -3822,7 +3822,7 @@ export function Dashboard() {
                   </div>
 
                   <p className="text-zinc-500 text-xs font-medium leading-relaxed mb-6">
-                    Golobal Lottery promotes fun and fair sweepstakes limits. Use our custom scheduler constraints to maintain control over your gameplay.
+                    GLOBAL Lottery promotes fun and fair sweepstakes limits. Use our custom scheduler constraints to maintain control over your gameplay.
                   </p>
 
                   <div className="space-y-4">

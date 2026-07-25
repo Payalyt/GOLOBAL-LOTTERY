@@ -227,18 +227,18 @@ export function Header() {
                   <div className="absolute inset-0 bg-white/10 opacity-50 mix-blend-overlay" />
                 </div>
               )}
-              <div className="flex flex-col text-left overflow-hidden">
-                <span className="text-[12px] sm:text-[18px] font-black tracking-[0.15em] sm:tracking-[0.25em] text-zinc-800 dark:text-zinc-100 uppercase leading-none truncate">
-                  {language === 'en' ? (siteConfig.primaryLogoText === 'GLOBAL' ? 'GLOBAL' : siteConfig.primaryLogoText || 'GLOBAL') : (siteConfig.primaryLogoText === 'GLOBAL' || siteConfig.primaryLogoText === 'GLOBAL' ? 'গ্লোবাল' : siteConfig.primaryLogoText)}
-                </span>
-                <span className="text-[14px] sm:text-[24px] font-black tracking-[0.08em] sm:tracking-[0.15em] text-zinc-900 dark:text-white flex items-center justify-start mt-0.5 uppercase font-bold-font leading-none truncate">
-                  L<span style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>O</span>TTERY
+              <div className="flex flex-col text-left overflow-hidden mt-0.5">
+                <span className="text-[18px] sm:text-[26px] font-bodoni font-black tracking-wide text-zinc-900 dark:text-zinc-50 leading-none truncate flex items-center">
+                  {language === 'en' ? 'GLOBAL' : 'গ্লোবাল'}
+                  <span className="ml-1.5 sm:ml-2 font-bold" style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>
+                    {language === 'en' ? 'Lottery' : 'লটারি'}
+                  </span>
                 </span>
               </div>
             </Link>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-x-3.5 xl:gap-x-6 text-[11px] xl:text-xs font-bold tracking-wider text-zinc-700 dark:text-zinc-200 shrink">
+          <nav className="hidden lg:flex items-center gap-x-3.5 xl:gap-x-6 text-[11px] xl:text-[13px] font-montserrat font-bold tracking-wider text-zinc-700 dark:text-zinc-200 shrink">
             {Object.keys(finalMenuData).map((menu) => {
               const data = finalMenuData[menu as keyof typeof menuData] as any;
               return (
@@ -258,9 +258,9 @@ export function Header() {
                       {'groups' in data ? (
                         data.groups.map((group: any) => (
                           <div key={group.title} className="p-1.5">
-                             <h4 className="text-gray-400 dark:text-zinc-500 text-[10px] mb-2.5 font-bold uppercase tracking-wider">{group.title}</h4>
+                             <h4 className="text-gray-400 dark:text-zinc-500 text-[10px] mb-2.5 font-montserrat font-bold uppercase tracking-wider">{group.title}</h4>
                              {group.items.map((item: any) => (
-                              <Link to={item.link} key={item.name} className={`flex items-center justify-between ${item.color} text-white px-2.5 py-2 mb-1.5 rounded-lg font-bold hover:opacity-95 text-xs whitespace-nowrap overflow-hidden relative`} onClick={() => setActiveMenu(null)}>
+                              <Link to={item.link} key={item.name} className={`flex items-center justify-between ${item.color} text-white px-2.5 py-2 mb-1.5 rounded-lg font-montserrat font-semibold hover:opacity-95 text-xs whitespace-nowrap overflow-hidden relative`} onClick={() => setActiveMenu(null)}>
                                   <div className="flex items-center gap-2 truncate">
                                     {item.logo && (
                                       <img src={item.logo} alt={item.name} className="w-5 h-5 rounded-full object-cover shrink-0 bg-white" />
@@ -276,9 +276,9 @@ export function Header() {
                         ))
                       ) : (
                         <>
-                          <h4 className="text-gray-400 dark:text-zinc-500 text-[10px] mb-2.5 font-bold uppercase tracking-wider">{data.title}</h4>
+                          <h4 className="text-gray-400 dark:text-zinc-500 text-[10px] mb-2.5 font-montserrat font-bold uppercase tracking-wider">{data.title}</h4>
                           {data.items.map((item: any) => (
-                            <Link to={item.link} key={item.name} className={`flex items-center justify-between ${item.color} text-white px-2.5 py-2 mb-1.5 rounded-lg font-bold hover:opacity-95 text-xs whitespace-nowrap overflow-hidden relative`} onClick={() => setActiveMenu(null)}>
+                            <Link to={item.link} key={item.name} className={`flex items-center justify-between ${item.color} text-white px-2.5 py-2 mb-1.5 rounded-lg font-montserrat font-semibold hover:opacity-95 text-xs whitespace-nowrap overflow-hidden relative`} onClick={() => setActiveMenu(null)}>
                               <div className="flex items-center gap-2 truncate">
                                 {item.logo && (
                                   <img src={item.logo} alt={item.name} className="w-5 h-5 rounded-full object-cover shrink-0 bg-white shadow-sm" />
@@ -432,12 +432,12 @@ export function Header() {
                         </svg>
                       </div>
                     )}
-                    <div className="flex flex-col text-left">
-                      <span className="text-[8px] font-black tracking-[0.25em] text-amber-500 dark:text-amber-400 uppercase leading-none">
-                        {language === 'en' ? (siteConfig.primaryLogoText || 'GLOBAL') : (siteConfig.primaryLogoText === 'GLOBAL' ? 'গ্লোবাল' : siteConfig.primaryLogoText)}
-                      </span>
-                      <span className="text-base font-black tracking-[0.08em] text-zinc-950 dark:text-white leading-none mt-1 uppercase font-bold-font">
-                        {language === 'en' ? 'LOTTERY' : 'লটারি'}
+                    <div className="flex flex-col text-left mt-0.5">
+                      <span className="text-[16px] font-bodoni font-black tracking-wide text-zinc-900 dark:text-zinc-50 leading-none truncate flex items-center">
+                        {language === 'en' ? 'GLOBAL' : 'গ্লোবাল'}
+                        <span className="ml-1.5 font-bold" style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>
+                          {language === 'en' ? 'Lottery' : 'লটারি'}
+                        </span>
                       </span>
                     </div>
                   </Link>
@@ -466,7 +466,7 @@ export function Header() {
 
                       return (
                         <div key={menuKey}>
-                          <span className="text-[9px] font-black tracking-widest text-zinc-400 dark:text-zinc-500 uppercase block mb-2 flex items-center gap-1.5 font-sans">
+                          <span className="text-[10px] font-montserrat font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase block mb-2 flex items-center gap-1.5">
                             <SectionIcon className="w-3.5 h-3.5 text-amber-500" /> {getMenuLabel(menuKey, language)}
                           </span>
                           <div className="space-y-1">
@@ -477,7 +477,7 @@ export function Header() {
                                 onClick={() => setIsMobileMenuOpen(false)}
                                 className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 hover:bg-zinc-100/80 dark:hover:bg-zinc-800 transition-colors"
                               >
-                                <span className="text-xs font-black text-zinc-800 dark:text-zinc-200">{item.name}</span>
+                                <span className="text-[13px] font-montserrat font-semibold text-zinc-800 dark:text-zinc-200">{item.name}</span>
                                 <span className="text-[9px] font-black px-1.5 py-0.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded">
                                   {language === 'en' ? `PLAY $${item.price || '5'}` : `$${item.price || '5'}-এ`}
                                 </span>

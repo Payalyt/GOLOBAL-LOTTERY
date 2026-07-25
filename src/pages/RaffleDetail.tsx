@@ -127,7 +127,7 @@ export function RaffleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addTickets } = useCart();
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, language } = useAuth();
   
   // Normalize params to match SURE 1, SURE 2, or SURE 3
   const normalizedId = id ? id.replace(/-/g, '').replace(/\s+/g, '').toUpperCase() : '';
@@ -149,7 +149,7 @@ export function RaffleDetail() {
 
   // Set window title dynamically
   useEffect(() => {
-    document.title = `${config.name} | Golobal Lottery`;
+    document.title = `${config.name} | GLOBAL Lottery`;
     setTicketCount(1);
     setSelectionMode('quick');
     setCurrentPage(1);
@@ -184,6 +184,14 @@ export function RaffleDetail() {
   };
 
   const handleAddToCart = () => {
+    if (!isLoggedIn || !user) {
+      alert(language === 'en'
+        ? 'Login or Sign Up is required to buy tickets! You can view games and pick numbers, but please log in or register to complete your purchase.'
+        : 'টিকিট কিনতে লগইন বা রেজিস্টার করা আবশ্যক! আপনি গেম দেখতে ও নম্বর পছন্দ করতে পারবেন, তবে টিকিট কিনতে অনুগ্রহ করে লগইন বা সাইন আপ করুন।');
+      navigate('/login');
+      return;
+    }
+
     const codes = generateTicketCodes();
     const length = 4;
     
@@ -608,7 +616,7 @@ export function RaffleDetail() {
               <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 text-center">
                 <label className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-bold block mb-0.5">Prize Amount</label>
                 <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-sans leading-none">{selectedResult.prize}</p>
-                <span className="text-[9px] text-emerald-700 dark:text-emerald-400 font-semibold block mt-1.5 uppercase tracking-wide">Verified by Golobal Lottery System</span>
+                <span className="text-[9px] text-emerald-700 dark:text-emerald-400 font-semibold block mt-1.5 uppercase tracking-wide">Verified by GLOBAL Lottery System</span>
               </div>
             </div>
 

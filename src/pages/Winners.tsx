@@ -539,7 +539,7 @@ export function Winners() {
                         <span className="font-semibold text-zinc-300 hover:text-white transition-colors flex items-center gap-1">
                           <ExternalLink className="w-3.5 h-3.5" /> Watch on YouTube
                         </span>
-                        <span className="font-mono text-zinc-400">Golobal Lottery</span>
+                        <span className="font-mono text-zinc-400">GLOBAL Lottery</span>
                       </div>
                     </div>
 

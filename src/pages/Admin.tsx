@@ -437,6 +437,28 @@ export function Admin() {
                 </div>
 
                 <div className="bg-white dark:bg-[#151c2a] rounded-2xl p-6 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-5">
+                  <h3 className="text-sm font-black uppercase text-amber-500 mb-4 border-b border-gray-100 dark:border-zinc-800 pb-3">Promo Banner Notice & Rules</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5 flex items-center gap-2">
+                        <input type="checkbox" name="promoBannerLiveNoticeEnabled" checked={configForm.promoBannerLiveNoticeEnabled !== false} onChange={(e) => setConfigForm({ ...configForm, promoBannerLiveNoticeEnabled: e.target.checked })} className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500 bg-gray-50 border-gray-300" />
+                        Live Broadcast Notice Enable
+                      </label>
+                      <input type="text" name="promoBannerLiveNotice" placeholder="Today's Draw is Live at 9:00 PM!" value={configForm.promoBannerLiveNotice || ''} onChange={handleChange} className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5 flex items-center gap-2">
+                        <input type="checkbox" name="promoBannerOfferEnabled" checked={configForm.promoBannerOfferEnabled !== false} onChange={(e) => setConfigForm({ ...configForm, promoBannerOfferEnabled: e.target.checked })} className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500 bg-gray-50 border-gray-300" />
+                        Promotional Offer Enable
+                      </label>
+                      <input type="text" name="promoBannerOfferTitle" placeholder="Buy 1 Ticket and Get 1 Free" value={configForm.promoBannerOfferTitle || ''} onChange={handleChange} className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium outline-none mb-2" />
+                      <input type="text" name="promoBannerOfferSubtitle" placeholder="BUY 1 GET 1 FREE" value={configForm.promoBannerOfferSubtitle || ''} onChange={handleChange} className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium outline-none mb-2" />
+                      <input type="text" name="promoBannerOfferDisclaimer" placeholder="* Exclusive promotional ticket deal valid for the next 24 hours only." value={configForm.promoBannerOfferDisclaimer || ''} onChange={handleChange} className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium outline-none" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-[#151c2a] rounded-2xl p-6 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-5">
                   <h3 className="text-sm font-black uppercase text-amber-500 mb-4 border-b border-gray-100 dark:border-zinc-800 pb-3">Footer Custom Texts</h3>
                   <div className="grid grid-cols-1 gap-5">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -198,14 +198,14 @@ export function News() {
             {/* Core details inside Modal */}
             <div className="p-6 sm:p-8 space-y-4">
               <div className="flex items-center justify-between text-[11px] font-black tracking-wide text-zinc-400 dark:text-zinc-500 font-sans uppercase">
-                <span>Golobal Lottery Official</span>
+                <span>GLOBAL Lottery Official</span>
                 <span>{activeArticle.date}</span>
               </div>
               <h3 className="font-extrabold text-lg sm:text-xl text-zinc-950 dark:text-zinc-100 uppercase tracking-tight leading-snug">
                 {activeArticle.title}
               </h3>
               <p className="text-zinc-600 dark:text-zinc-300 text-xs sm:text-sm leading-relaxed font-semibold">
-                {activeArticle.excerpt} This lottery winning announcement represents an official verify action inside the Golobal Lottery verified directory. All entries are structured securely on our backend cloud structures.
+                {activeArticle.excerpt} This lottery winning announcement represents an official verify action inside the GLOBAL Lottery verified directory. All entries are structured securely on our backend cloud structures.
               </p>
               
               <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-2xl border border-yellow-100 dark:border-yellow-900/30 text-center text-[11px] text-zinc-700 dark:text-yellow-250 font-bold">

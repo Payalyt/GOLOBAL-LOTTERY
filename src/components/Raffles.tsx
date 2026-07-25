@@ -126,7 +126,7 @@ export function Raffles() {
       <div className="absolute top-0 right-0 w-[450px] h-[450px] bg-[#8F3EA5] rounded-full blur-[140px] opacity-[0.14] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-[#12A098] rounded-full blur-[120px] opacity-[0.08] pointer-events-none" />
 
-      {/* Title block to match the Golobal Lottery interface */}
+      {/* Title block to match the GLOBAL Lottery interface */}
       <div className="flex justify-between items-center mb-10">
         <div className="flex-grow flex items-center gap-4">
           <div className="flex flex-col text-left">

@@ -235,7 +235,7 @@ export function GameDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addTickets } = useCart();
-  const { isLoggedIn, user, dynamicGames, siteConfig } = useAuth();
+  const { isLoggedIn, user, dynamicGames, siteConfig, language } = useAuth();
   
   const gameNormalized = id?.replace(/-/g, '').replace(/\s+/g, '').toUpperCase() || 'EASY6';
   
@@ -339,6 +339,14 @@ export function GameDetail() {
     const validTickets = tickets.filter(t => t.numbers.length === maxSelections);
     if (validTickets.length === 0) {
       alert(`Please select exactly ${maxSelections} choices for at least one ticket first.`);
+      return;
+    }
+
+    if (!isLoggedIn || !user) {
+      alert(language === 'en'
+        ? 'Login or Sign Up is required to buy tickets! You can view games and pick numbers, but please log in or register to complete your purchase.'
+        : 'টিকিট কিনতে লগইন বা রেজিস্টার করা আবশ্যক! আপনি গেম দেখতে ও নম্বর পছন্দ করতে পারবেন, তবে টিকিট কিনতে অনুগ্রহ করে লগইন বা সাইন আপ করুন।');
+      navigate('/login');
       return;
     }
     
@@ -859,7 +867,7 @@ export function GameDetail() {
                     YOUR TICKET UNLOCKED
                   </h4>
                   <p className="text-zinc-400 text-[10.5px] leading-relaxed font-semibold">
-                    EXCLUSIVE OFFERS & SO MUCH MORE. Create a Golobal Account history log to reveal potential high frequency draw stats.
+                    EXCLUSIVE OFFERS & SO MUCH MORE. Create a GLOBAL Account history log to reveal potential high frequency draw stats.
                   </p>
                 </div>
 
