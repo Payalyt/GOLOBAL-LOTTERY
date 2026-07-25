@@ -222,7 +222,7 @@ export function Header() {
               ) : (
                 <div className="relative w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center shrink-0">
                   <img 
-                    src="/src/assets/images/3d_lottery_logo_1784951997317.jpg" 
+                    src="/assets/3d_lottery_logo.jpg" 
                     alt="GLOBAL 3D Logo" 
                     className="w-full h-full object-contain rounded-xl drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform"
                     referrerPolicy="no-referrer"

@@ -360,7 +360,7 @@ export function Register() {
       {/* Full Screen Lottery Poster Background */}
       <div className="fixed inset-0 z-0">
         <img 
-          src="/src/assets/images/lottery_login_poster_1784951984139.jpg" 
+          src="/assets/lottery_poster.jpg" 
           alt="Lottery Poster Background" 
           className="w-full h-full object-cover scale-105 filter brightness-[0.55] contrast-125"
           referrerPolicy="no-referrer"
@@ -383,7 +383,7 @@ export function Register() {
         <div className="text-center mb-4">
           <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center mb-2 relative">
             <img 
-              src="/src/assets/images/3d_lottery_logo_1784951997317.jpg" 
+              src="/assets/3d_lottery_logo.jpg" 
               alt="3D Lottery Logo" 
               className="w-full h-full object-contain rounded-2xl drop-shadow-[0_8px_20px_rgba(0,0,0,0.7)]"
               referrerPolicy="no-referrer"
@@ -734,7 +734,7 @@ export function Register() {
             
             <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mb-4 relative drop-shadow-[0_12px_25px_rgba(0,0,0,0.8)]">
               <img 
-                src="/src/assets/images/3d_lottery_logo_1784951997317.jpg" 
+                src="/assets/3d_lottery_logo.jpg" 
                 alt="3D Lottery Logo" 
                 className="w-full h-full object-contain rounded-2xl transform hover:scale-105 transition-transform"
                 referrerPolicy="no-referrer"
