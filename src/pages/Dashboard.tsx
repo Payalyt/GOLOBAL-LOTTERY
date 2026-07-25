@@ -150,7 +150,7 @@ export function Dashboard() {
             } else {
               isVerified = false;
               console.warn("Dokan Pay verification failed:", data);
-              alert(`⚠️ Dokan Pay verification failed for TxID ${transactionId}: ${data.message || 'Invalid transaction'}`);
+              toast.error(`⚠️ Dokan Pay verification failed for TxID ${transactionId}: ${data.message || 'Invalid transaction'}`);
             }
           } catch (err) {
             console.error("Failed to verify transaction securely:", err);
@@ -469,7 +469,7 @@ export function Dashboard() {
     if (!user) return;
     const amt = parseFloat(depositAmount);
     if (isNaN(amt) || amt <= 0) {
-      alert("Please specify a valid deposit amount.");
+      toast.error("Please specify a valid deposit amount.");
       return;
     }
     if (addDepositRequest) {
@@ -481,7 +481,7 @@ export function Dashboard() {
         details: `Card ending in ${cardNumber.slice(-4) || '4312'}`
       });
     }
-    alert(`🎉 Deposit request for $${amt.toFixed(2)} submitted successfully! It will be credited once approved by an Admin.`);
+    toast.success(`🎉 Deposit request for $${amt.toFixed(2)} submitted successfully! It will be credited once approved by an Admin.`);
     setCardNumber('');
     setCvv('');
     setExpiry('');
@@ -493,7 +493,7 @@ export function Dashboard() {
     if (!user) return;
     const amt = parseFloat(commissionDepositAmount);
     if (isNaN(amt) || amt <= 0) {
-      alert("Please specify a valid commission deposit amount.");
+      toast.error("Please specify a valid commission deposit amount.");
       return;
     }
     if (addDepositRequest) {
@@ -505,7 +505,7 @@ export function Dashboard() {
         details: `Commission paid via Card ending in ${cardNumber.slice(-4) || '4312'}`
       });
     }
-    alert(`🎉 Commission Deposit request for $${amt.toFixed(2)} submitted successfully! It will be added to your Commission Balance once approved by an Admin.`);
+    toast.success(`🎉 Commission Deposit request for $${amt.toFixed(2)} submitted successfully! It will be added to your Commission Balance once approved by an Admin.`);
     setCardNumber('');
     setCvv('');
     setExpiry('');
@@ -517,17 +517,17 @@ export function Dashboard() {
     if (!user) return;
     const amt = parseFloat(depositAmount);
     if (isNaN(amt) || amt <= 0) {
-      alert("Please specify a valid deposit amount.");
+      toast.error("Please specify a valid deposit amount.");
       return;
     }
     if (!declareDeposit) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "⚠️ Please confirm the declaration checkbox stating you have contacted the local agent and completed the payment."
         : "⚠️ অনুগ্রহ করে ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি এজেন্টের সাথে কথা বলে টাকা পাঠিয়েছেন।");
       return;
     }
     if (!agentDepositReference || agentDepositReference.trim().length < 4) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "❌ Please enter a valid Sender Phone / IMO ID / Username. This is required so our agents can match your payment."
         : "❌ অনুগ্রহ করে আপনার ইমো আইডি, টেলিগ্রাম ইউজারনেম বা সঠিক মোবাইল নাম্বারটি লিখুন যেন এজেন্ট মিলিয়ে দেখতে পারেন।");
       return;
@@ -541,7 +541,7 @@ export function Dashboard() {
         transactionId: agentDepositReference.trim()
       });
     }
-    alert(`🎉 Success! Agent Deposit request for $${amt.toFixed(2)} via ${agentDepositChannel} has been submitted to Admin.`);
+    toast.success(`🎉 Success! Agent Deposit request for $${amt.toFixed(2)} via ${agentDepositChannel} has been submitted to Admin.`);
     setAgentDepositReference('');
     setDeclareDeposit(false);
     setActiveTab('Transactions');
@@ -552,12 +552,12 @@ export function Dashboard() {
     if (!user) return;
     const amt = parseFloat(depositAmount);
     if (isNaN(amt) || amt <= 0) {
-      alert("Please specify a valid deposit amount.");
+      toast.error("Please specify a valid deposit amount.");
       return;
     }
 
     if (amt < 2) {
-      alert("Minimum deposit amount for crypto payments is $2.00");
+      toast.error("Minimum deposit amount for crypto payments is $2.00");
       return;
     }
 
@@ -580,16 +580,16 @@ export function Dashboard() {
       }
 
       if (data.invoice_url) {
-        alert(language === 'en' 
+        toast.error(language === 'en' 
           ? "Redirecting you to NOWPayments secure crypto payment portal..." 
           : "আপনাকে NOWPayments-এর নিরাপদ ক্রিপ্টো পেমেন্ট পেজে নিয়ে যাওয়া হচ্ছে...");
         window.location.href = data.invoice_url;
       } else {
-        alert("Unexpected response from server: Payment invoice URL missing.");
+        toast.error("Unexpected response from server: Payment invoice URL missing.");
       }
     } catch (err: any) {
       console.error("Error creating payment link:", err);
-      alert(`❌ Error: ${err.message || "Failed to generate crypto payment link. Please try again."}`);
+      toast.error(`❌ Error: ${err.message || "Failed to generate crypto payment link. Please try again."}`);
     } finally {
       setIsCreatingInvoice(false);
     }
@@ -600,12 +600,12 @@ export function Dashboard() {
     if (!user) return;
     const amt = parseFloat(depositAmount);
     if (isNaN(amt) || amt <= 0) {
-      alert("Please specify a valid deposit amount.");
+      toast.error("Please specify a valid deposit amount.");
       return;
     }
 
     if (!declareDeposit) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "⚠️ Please confirm the declaration checkbox at the bottom stating you have completed this transaction."
         : "⚠️ অনুগ্রহ করে নিচে দেওয়া পেমেন্ট কনফার্মেশন ডিক্লেয়ারেশন বক্সে টিক মার্ক দিন।");
       return;
@@ -618,22 +618,22 @@ export function Dashboard() {
 
     const minAmt = matched ? matched.minAmount : 10;
     if (amt < minAmt) {
-      alert(`Minimum deposit amount for ${gatewayName} is $${minAmt.toFixed(2)}`);
+      toast.error(`Minimum deposit amount for ${gatewayName} is $${minAmt.toFixed(2)}`);
       return;
     }
 
     if (!depositPhoneOrAccount) {
-      alert("Please enter your Phone or Account Number.");
+      toast.error("Please enter your Phone or Account Number.");
       return;
     }
     if (!depositTrxId) {
-      alert("Please enter your Transaction ID (TrxID).");
+      toast.error("Please enter your Transaction ID (TrxID).");
       return;
     }
 
     // Bangladesh MFS validation
     if (isMFSGateway(gatewayName) && !isValidBDPhone(depositPhoneOrAccount)) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "❌ Invalid Mobile Number! For bKash/Nagad/Rocket/Upay, please enter a valid 11-digit Bangladeshi mobile number starting with 01."
         : "❌ ভুল মোবাইল নাম্বার! বিকাশ/নগদ/রকেট/উপায় এর জন্য দয়া করে সঠিক ১১-ডিজিটের বাংলাদেশি মোবাইল নাম্বার (যেমন 017XXXXXXXX) প্রদান করুন।");
       return;
@@ -641,7 +641,7 @@ export function Dashboard() {
 
     // Alphanumeric/Fake TrxID pattern check
     if (isFakeTrxId(depositTrxId)) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "❌ Invalid or Fake Transaction ID format! Please enter the correct Transaction ID (TrxID) from your receipt. Continuous numbers or repeated characters are blocked."
         : "❌ ট্রানজেকশন আইডি সঠিক নয়! দয়া করে আপনার পেমেন্ট রিসিট থেকে সঠিক Transaction ID (TrxID) প্রদান করুন। শুধু একই অক্ষর বা ক্রমানুসারে সংখ্যা দিলে রিকোয়েস্ট সাবমিট হবে না।");
       return;
@@ -655,7 +655,7 @@ export function Dashboard() {
         transactionId: depositTrxId.trim(),
         details: `Sender Number: ${depositPhoneOrAccount}`
       });
-      alert(`🎉 Manual Deposit request of $${amt.toFixed(2)} via ${gatewayName} submitted successfully! It will be verified by our Admin team and added to your balance shortly.`);
+      toast.success(`🎉 Manual Deposit request of $${amt.toFixed(2)} via ${gatewayName} submitted successfully! It will be verified by our Admin team and added to your balance shortly.`);
       setDepositAmount('100');
       setDepositPhoneOrAccount('');
       setDepositTrxId('');
@@ -669,12 +669,12 @@ export function Dashboard() {
     if (!user) return;
     const amt = parseFloat(commissionDepositAmount);
     if (isNaN(amt) || amt <= 0) {
-      alert("Please specify a valid commission deposit amount.");
+      toast.error("Please specify a valid commission deposit amount.");
       return;
     }
 
     if (!declareCommission) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "⚠️ Please confirm the declaration checkbox at the bottom stating you have completed this transaction."
         : "⚠️ অনুগ্রহ করে নিচে দেওয়া পেমেন্ট কনফার্মেশন ডিক্লেয়ারেশন বক্সে টিক মার্ক দিন।");
       return;
@@ -687,22 +687,22 @@ export function Dashboard() {
 
     const minAmt = matched ? matched.minAmount : 10;
     if (amt < minAmt) {
-      alert(`Minimum commission deposit amount for ${gatewayName} is $${minAmt.toFixed(2)}`);
+      toast.error(`Minimum commission deposit amount for ${gatewayName} is $${minAmt.toFixed(2)}`);
       return;
     }
 
     if (!commissionPhoneOrAccount) {
-      alert("Please enter your Phone or Account Number.");
+      toast.error("Please enter your Phone or Account Number.");
       return;
     }
     if (!commissionTrxId) {
-      alert("Please enter your Transaction ID (TrxID).");
+      toast.error("Please enter your Transaction ID (TrxID).");
       return;
     }
 
     // Bangladesh MFS validation
     if (isMFSGateway(gatewayName) && !isValidBDPhone(commissionPhoneOrAccount)) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "❌ Invalid Mobile Number! For bKash/Nagad/Rocket/Upay, please enter a valid 11-digit Bangladeshi mobile number starting with 01."
         : "❌ ভুল মোবাইল নাম্বার! বিকাশ/নগদ/রকেট/উপায় এর জন্য দয়া করে সঠিক ১১-ডিজিটের বাংলাদেশি মোবাইল নাম্বার (যেমন 017XXXXXXXX) প্রদান করুন।");
       return;
@@ -710,7 +710,7 @@ export function Dashboard() {
 
     // Alphanumeric/Fake TrxID pattern check
     if (isFakeTrxId(commissionTrxId)) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "❌ Invalid or Fake Transaction ID format! Please enter the correct Transaction ID (TrxID) from your receipt. Continuous numbers or repeated characters are blocked."
         : "❌ ট্রানজেকশন আইডি সঠিক নয়! দয়া করে আপনার পেমেন্ট রিসিট থেকে সঠিক Transaction ID (TrxID) প্রদান করুন। শুধু একই অক্ষর বা ক্রমানুসারে সংখ্যা দিলে রিকোয়েস্ট সাবমিট হবে না।");
       return;
@@ -724,7 +724,7 @@ export function Dashboard() {
         transactionId: commissionTrxId.trim(),
         details: `Sender Number: ${commissionPhoneOrAccount}. Commission Deposit.`
       });
-      alert(`🎉 Commission Deposit request of $${amt.toFixed(2)} via ${gatewayName} submitted successfully! It will be verified by our Admin team and credited to your Commission Balance once approved.`);
+      toast.success(`🎉 Commission Deposit request of $${amt.toFixed(2)} via ${gatewayName} submitted successfully! It will be verified by our Admin team and credited to your Commission Balance once approved.`);
       setCommissionDepositAmount('100');
       setCommissionPhoneOrAccount('');
       setCommissionTrxId('');
@@ -738,12 +738,12 @@ export function Dashboard() {
     if (!user) return;
     const amt = parseFloat(withdrawAmountInput);
     if (isNaN(amt) || amt <= 0) {
-      alert("Please specify a valid withdrawal amount.");
+      toast.error("Please specify a valid withdrawal amount.");
       return;
     }
 
     if (!declareWithdraw) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal and understand fake requests lead to account suspension."
         : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
       return;
@@ -756,13 +756,13 @@ export function Dashboard() {
 
     const minWd = matched ? matched.minAmount : (siteConfig.minWithdrawalAmount ?? 10);
     if (amt < minWd) {
-      alert(`Minimum withdrawal amount for ${gatewayName} is $${minWd.toFixed(2)}`);
+      toast.error(`Minimum withdrawal amount for ${gatewayName} is $${minWd.toFixed(2)}`);
       return;
     }
 
     const currentBal = user.balance || 0;
     if (currentBal < amt) {
-      alert("Insufficient wallet balance for this withdrawal.");
+      toast.error("Insufficient wallet balance for this withdrawal.");
       return;
     }
 
@@ -770,18 +770,18 @@ export function Dashboard() {
     const commissionNeeded = amt * (govFeePct / 100);
     const currentComm = user.commissionBalance || 0;
     if (currentComm < commissionNeeded) {
-      alert(`⚠️ Insufficient Commission Balance! You need $${commissionNeeded.toFixed(2)} (${govFeePct}% of $${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have $${currentComm.toFixed(2)}.`);
+      toast.error(`⚠️ Insufficient Commission Balance! You need $${commissionNeeded.toFixed(2)} (${govFeePct}% of $${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have $${currentComm.toFixed(2)}.`);
       return;
     }
 
     if (!withdrawPhoneOrAccount) {
-      alert("Please enter your Recipient Phone or Account Number.");
+      toast.error("Please enter your Recipient Phone or Account Number.");
       return;
     }
 
     // Bangladesh MFS Recipient validation
     if (isMFSGateway(gatewayName) && !isValidBDPhone(withdrawPhoneOrAccount)) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "❌ Invalid Recipient Number! For bKash/Nagad/Rocket/Upay, please enter a valid 11-digit Bangladeshi mobile number starting with 01."
         : "❌ ভুল নাম্বার! বিকাশ/নগদ/রকেট/উপায় উইথড্র এর জন্য দয়া করে সঠিক ১১-ডিজিটের বাংলাদেশি মোবাইল নাম্বার প্রদান করুন।");
       return;
@@ -802,7 +802,7 @@ export function Dashboard() {
       });
     }
 
-    alert(`🎉 Manual Withdrawal request of $${amt.toFixed(2)} via ${gatewayName} submitted successfully! ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+    toast.success(`🎉 Manual Withdrawal request of $${amt.toFixed(2)} via ${gatewayName} submitted successfully! ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
     setWithdrawAmountInput('');
     setWithdrawPhoneOrAccount('');
     setWithdrawAccountName('');
@@ -817,7 +817,7 @@ export function Dashboard() {
     if (!user) return;
     const amt = parseFloat(commissionDepositAmount);
     if (isNaN(amt) || amt <= 0) {
-      alert("Please specify a valid commission amount.");
+      toast.error("Please specify a valid commission amount.");
       return;
     }
     if (addDepositRequest) {
@@ -829,7 +829,7 @@ export function Dashboard() {
         details: 'Commission paid via Authorized Local Agent'
       });
     }
-    alert(`🎉 Success! Agent Commission Payment request for $${amt.toFixed(2)} submitted. It will be added to your Commission Balance once approved by an Admin.`);
+    toast.success(`🎉 Success! Agent Commission Payment request for $${amt.toFixed(2)} submitted. It will be added to your Commission Balance once approved by an Admin.`);
     setAgentCommissionReference('');
     setActiveTab('Transactions');
   };
@@ -844,19 +844,19 @@ export function Dashboard() {
     const maxWd = siteConfig.maxWithdrawalAmount ?? 100000000;
 
     if (isNaN(amt) || amt <= 0) {
-      alert("Please specify a valid withdrawal amount.");
+      toast.error("Please specify a valid withdrawal amount.");
       return;
     }
 
     if (!declareWithdraw) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal."
         : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
       return;
     }
 
     if (!agentWithdrawReference || agentWithdrawReference.trim().length < 4) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "❌ Please enter a valid Agent Contact ID or Recipient Mobile Number."
         : "❌ অনুগ্রহ করে এজেন্টের কন্টাক্ট আইডি বা রিসিভার মোবাইল নাম্বার লিখুন।");
       return;
@@ -864,22 +864,22 @@ export function Dashboard() {
 
     // Bangladesh MFS validation
     if (isMFSGateway(agentWithdrawChannel) && !isValidBDPhone(agentWithdrawReference)) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "❌ Invalid Recipient Number! For bKash/Nagad/Rocket/Upay, please enter a valid 11-digit Bangladeshi mobile number starting with 01."
         : "❌ ভুল নাম্বার! বিকাশ/নগদ/রকেট/উপায় উইথড্র এর জন্য দয়া করে সঠিক ১১-ডিজিটের বাংলাদেশি মোবাইল নাম্বার প্রদান করুন।");
       return;
     }
 
     if (amt < minWd) {
-      alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
+      toast.error(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
       return;
     }
     if (amt > maxWd) {
-      alert(`Maximum withdrawal amount is $${maxWd.toFixed(2)}`);
+      toast.error(`Maximum withdrawal amount is $${maxWd.toFixed(2)}`);
       return;
     }
     if (user.balance < amt) {
-      alert("Insufficient wallet balance for this withdrawal.");
+      toast.error("Insufficient wallet balance for this withdrawal.");
       return;
     }
     
@@ -887,7 +887,7 @@ export function Dashboard() {
     const currentComm = user.commissionBalance || 0;
     
     if (currentComm < commissionNeeded) {
-      alert(`⚠️ Insufficient Commission Balance! You need $${commissionNeeded.toFixed(2)} (${govFeePct}% of $${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have $${currentComm.toFixed(2)}.`);
+      toast.error(`⚠️ Insufficient Commission Balance! You need $${commissionNeeded.toFixed(2)} (${govFeePct}% of $${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have $${currentComm.toFixed(2)}.`);
       return;
     }
 
@@ -906,7 +906,7 @@ export function Dashboard() {
       });
     }
 
-    alert(`🎉 Agent Withdrawal request for $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+    toast.success(`🎉 Agent Withdrawal request for $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
     setBankWithdrawAmount('');
     setAgentWithdrawReference('');
     setDeclareWithdraw(false);
@@ -922,19 +922,19 @@ export function Dashboard() {
     const maxWd = siteConfig.maxWithdrawalAmount ?? 100000000;
 
     if (isNaN(amt) || amt <= 0) {
-      alert("Please specify a valid withdrawal amount.");
+      toast.error("Please specify a valid withdrawal amount.");
       return;
     }
 
     if (!declareWithdraw) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal."
         : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
       return;
     }
 
     if (!bankWithdrawIban || bankWithdrawIban.trim().length < 4) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "❌ Please enter a valid Bank Account Number / Wallet Number."
         : "❌ অনুগ্রহ করে সঠিক ব্যাংক অ্যাকাউন্ট বা মোবাইল ওয়ালেট নম্বর দিন।");
       return;
@@ -942,24 +942,24 @@ export function Dashboard() {
 
     // Bangladesh MFS validation if MFS selected as Bank
     if (isMFSGateway(bankWithdrawName) && !isValidBDPhone(bankWithdrawIban)) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? "❌ Invalid Recipient Number! For bKash/Nagad/Rocket/Upay, please enter a valid 11-digit Bangladeshi mobile number starting with 01."
         : "❌ ভুল নাম্বার! বিকাশ/নগদ/রকেট/উপায় উইথড্র এর জন্য দয়া করে সঠিক ১১-ডিজিটের বাংলাদেশি মোবাইল নাম্বার প্রদান করুন।");
       return;
     }
     
     if (amt < minWd) {
-      alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
+      toast.error(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
       return;
     }
     
     if (amt > maxWd) {
-      alert(`Maximum withdrawal amount is $${maxWd.toFixed(2)}`);
+      toast.error(`Maximum withdrawal amount is $${maxWd.toFixed(2)}`);
       return;
     }
 
     if (user.balance < amt) {
-      alert("Insufficient wallet balance for this withdrawal.");
+      toast.error("Insufficient wallet balance for this withdrawal.");
       return;
     }
 
@@ -967,7 +967,7 @@ export function Dashboard() {
     const currentCommission = user.commissionBalance || 0;
 
     if (currentCommission < commissionNeeded) {
-      alert(`Insufficient Commission Balance.\n\nGovernment regulations require a ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) to be paid beforehand. Please deposit the required commission amount to proceed.`);
+      toast.error(`Insufficient Commission Balance.\n\nGovernment regulations require a ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) to be paid beforehand. Please deposit the required commission amount to proceed.`);
       return;
     }
 
@@ -987,7 +987,7 @@ export function Dashboard() {
       });
     }
 
-    alert(`🎉 Withdrawal request for $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+    toast.success(`🎉 Withdrawal request for $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission ($${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
     setBankWithdrawAmount('');
     setBankWithdrawName('');
     setBankWithdrawIban('');
@@ -1108,7 +1108,7 @@ export function Dashboard() {
                   <button 
                     type="button" 
                     onClick={() => {
-                      alert(language === 'en' ? "Wallet balance refreshed successfully!" : "ওয়ালেট ব্যালেন্স সফলভাবে রিফ্রেশ করা হয়েছে!");
+                      toast.success(language === 'en' ? "Wallet balance refreshed successfully!" : "ওয়ালেট ব্যালেন্স সফলভাবে রিফ্রেশ করা হয়েছে!");
                     }}
                     className="hover:scale-110 active:scale-95 transition-all text-zinc-900/60 hover:text-zinc-900"
                     title="Refresh Balance"
@@ -1332,7 +1332,7 @@ export function Dashboard() {
                           type="button"
                           onClick={() => {
                             navigator.clipboard.writeText(user.referralCode || '');
-                            alert(language === 'en' ? 'Referral code copied!' : 'রেফারেল কোড কপি করা হয়েছে!');
+                            toast.success(language === 'en' ? 'Referral code copied!' : 'রেফারেল কোড কপি করা হয়েছে!');
                           }}
                           className="px-4 py-3.5 bg-[#2C3B69] hover:bg-[#E1BC4A] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors"
                         >
@@ -1352,7 +1352,7 @@ export function Dashboard() {
                           type="button"
                           onClick={() => {
                             navigator.clipboard.writeText(`${window.location.origin}/register?ref=${user.referralCode || ''}`);
-                            alert(language === 'en' ? 'Referral link copied!' : 'রেফারেল লিংক কপি করা হয়েছে!');
+                            toast.success(language === 'en' ? 'Referral link copied!' : 'রেফারেল লিংক কপি করা হয়েছে!');
                           }}
                           className="px-4 py-3.5 bg-[#2C3B69] hover:bg-[#E1BC4A] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors"
                         >
@@ -2019,7 +2019,7 @@ export function Dashboard() {
                                 type="button"
                                 onClick={() => {
                                   navigator.clipboard.writeText(matched.numberOrAddress);
-                                  alert("Copied to clipboard!");
+                                  toast.success("Copied to clipboard!");
                                 }}
                                 className="text-[9px] font-black tracking-widest uppercase bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-lg"
                               >
@@ -2365,11 +2365,11 @@ export function Dashboard() {
                             if (!user) return;
                             const amt = parseFloat(depositAmount);
                             if (isNaN(amt) || amt <= 0) {
-                              alert("Please specify a valid deposit amount.");
+                              toast.error("Please specify a valid deposit amount.");
                               return;
                             }
                             if (!depositTrxId) {
-                              alert("Please enter USDT Transaction Hash (TxHash).");
+                              toast.error("Please enter USDT Transaction Hash (TxHash).");
                               return;
                             }
                             if (addDepositRequest) {
@@ -2380,7 +2380,7 @@ export function Dashboard() {
                                 transactionId: depositTrxId,
                                 details: `Sender Address: ${depositPhoneOrAccount || 'Not Specified'}`
                               });
-                              alert(`🎉 Crypto Deposit request of $${amt.toFixed(2)} submitted successfully! It will be verified by our Admin team shortly.`);
+                              toast.success(`🎉 Crypto Deposit request of $${amt.toFixed(2)} submitted successfully! It will be verified by our Admin team shortly.`);
                               setDepositAmount('100');
                               setDepositPhoneOrAccount('');
                               setDepositTrxId('');
@@ -2417,7 +2417,7 @@ export function Dashboard() {
                                 type="button"
                                 onClick={() => {
                                   navigator.clipboard.writeText('0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
-                                  alert("USDT Address Copied!");
+                                  toast.success("USDT Address Copied!");
                                 }}
                                 className="text-[9px] font-black tracking-widest uppercase bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-lg"
                               >
@@ -2662,21 +2662,21 @@ export function Dashboard() {
                         if (!user) return;
                         const amt = parseFloat(withdrawAmountInput);
                         if (isNaN(amt) || amt <= 0) {
-                          alert("Please specify a valid withdrawal amount.");
+                          toast.error("Please specify a valid withdrawal amount.");
                           return;
                         }
                         const minWd = siteConfig.minWithdrawalAmount ?? 10;
                         if (amt < minWd) {
-                          alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
+                          toast.error(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
                           return;
                         }
                         if (user.balance < amt) {
-                          alert("Insufficient wallet balance for this withdrawal.");
+                          toast.error("Insufficient wallet balance for this withdrawal.");
                           return;
                         }
                         
                         if (!declareWithdraw) {
-                          alert(language === 'en'
+                          toast.error(language === 'en'
                             ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal and understand fake requests lead to account suspension."
                             : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
                           return;
@@ -2687,12 +2687,12 @@ export function Dashboard() {
                         const currentComm = user.commissionBalance || 0;
                         
                         if (currentComm < commissionNeeded) {
-                          alert(`⚠️ Insufficient Commission Balance! You need USDT ${commissionNeeded.toFixed(2)} (${govFeePct}% of USDT ${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have USDT ${currentComm.toFixed(2)}.`);
+                          toast.error(`⚠️ Insufficient Commission Balance! You need USDT ${commissionNeeded.toFixed(2)} (${govFeePct}% of USDT ${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have USDT ${currentComm.toFixed(2)}.`);
                           return;
                         }
 
                         if (!withdrawPhoneOrAccount) {
-                          alert("Please enter your Recipient USDT (TRC20) Wallet Address.");
+                          toast.error("Please enter your Recipient USDT (TRC20) Wallet Address.");
                           return;
                         }
 
@@ -2711,7 +2711,7 @@ export function Dashboard() {
                           });
                         }
 
-                        alert(`🎉 USDT Withdrawal request for USDT ${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission (USDT ${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+                        toast.success(`🎉 USDT Withdrawal request for USDT ${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission (USDT ${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
                         setWithdrawAmountInput('');
                         setWithdrawPhoneOrAccount('');
                         setDeclareWithdraw(false);
@@ -2817,21 +2817,21 @@ export function Dashboard() {
                         if (!user) return;
                         const amt = parseFloat(withdrawAmountInput);
                         if (isNaN(amt) || amt <= 0) {
-                          alert("Please specify a valid withdrawal amount.");
+                          toast.error("Please specify a valid withdrawal amount.");
                           return;
                         }
                         const minWd = siteConfig.minWithdrawalAmount ?? 10;
                         if (amt < minWd) {
-                          alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
+                          toast.error(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
                           return;
                         }
                         if (user.balance < amt) {
-                          alert("Insufficient wallet balance for this withdrawal.");
+                          toast.error("Insufficient wallet balance for this withdrawal.");
                           return;
                         }
 
                         if (!declareWithdraw) {
-                          alert(language === 'en'
+                          toast.error(language === 'en'
                             ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal and understand fake requests lead to account suspension."
                             : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
                           return;
@@ -2842,12 +2842,12 @@ export function Dashboard() {
                         const currentComm = user.commissionBalance || 0;
                         
                         if (currentComm < commissionNeeded) {
-                          alert(`⚠️ Insufficient Commission Balance! You need USDT ${commissionNeeded.toFixed(2)} (${govFeePct}% of USDT ${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have USDT ${currentComm.toFixed(2)}.`);
+                          toast.error(`⚠️ Insufficient Commission Balance! You need USDT ${commissionNeeded.toFixed(2)} (${govFeePct}% of USDT ${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have USDT ${currentComm.toFixed(2)}.`);
                           return;
                         }
 
                         if (!withdrawPhoneOrAccount) {
-                          alert("Please enter your Recipient Litecoin (LTC) Wallet Address.");
+                          toast.error("Please enter your Recipient Litecoin (LTC) Wallet Address.");
                           return;
                         }
 
@@ -2866,7 +2866,7 @@ export function Dashboard() {
                           });
                         }
 
-                        alert(`🎉 LTC Withdrawal request for LTC equivalent of $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission (USDT ${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+                        toast.success(`🎉 LTC Withdrawal request for LTC equivalent of $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission (USDT ${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
                         setWithdrawAmountInput('');
                         setWithdrawPhoneOrAccount('');
                         setDeclareWithdraw(false);
@@ -2972,21 +2972,21 @@ export function Dashboard() {
                         if (!user) return;
                         const amt = parseFloat(withdrawAmountInput);
                         if (isNaN(amt) || amt <= 0) {
-                          alert("Please specify a valid withdrawal amount.");
+                          toast.error("Please specify a valid withdrawal amount.");
                           return;
                         }
                         const minWd = siteConfig.minWithdrawalAmount ?? 10;
                         if (amt < minWd) {
-                          alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
+                          toast.error(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
                           return;
                         }
                         if (user.balance < amt) {
-                          alert("Insufficient wallet balance for this withdrawal.");
+                          toast.error("Insufficient wallet balance for this withdrawal.");
                           return;
                         }
 
                         if (!declareWithdraw) {
-                          alert(language === 'en'
+                          toast.error(language === 'en'
                             ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal and understand fake requests lead to account suspension."
                             : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
                           return;
@@ -2997,12 +2997,12 @@ export function Dashboard() {
                         const currentComm = user.commissionBalance || 0;
                         
                         if (currentComm < commissionNeeded) {
-                          alert(`⚠️ Insufficient Commission Balance! You need USDT ${commissionNeeded.toFixed(2)} (${govFeePct}% of USDT ${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have USDT ${currentComm.toFixed(2)}.`);
+                          toast.error(`⚠️ Insufficient Commission Balance! You need USDT ${commissionNeeded.toFixed(2)} (${govFeePct}% of USDT ${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have USDT ${currentComm.toFixed(2)}.`);
                           return;
                         }
 
                         if (!withdrawPhoneOrAccount) {
-                          alert("Please enter your Recipient USD Account ID.");
+                          toast.error("Please enter your Recipient USD Account ID.");
                           return;
                         }
 
@@ -3021,7 +3021,7 @@ export function Dashboard() {
                           });
                         }
 
-                        alert(`🎉 USD Withdrawal request for $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission (USDT ${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+                        toast.success(`🎉 USD Withdrawal request for $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission (USDT ${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
                         setWithdrawAmountInput('');
                         setWithdrawPhoneOrAccount('');
                         setDeclareWithdraw(false);
@@ -3127,21 +3127,21 @@ export function Dashboard() {
                         if (!user) return;
                         const amt = parseFloat(withdrawAmountInput);
                         if (isNaN(amt) || amt <= 0) {
-                          alert("Please specify a valid withdrawal amount.");
+                          toast.error("Please specify a valid withdrawal amount.");
                           return;
                         }
                         const minWd = siteConfig.minWithdrawalAmount ?? 10;
                         if (amt < minWd) {
-                          alert(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
+                          toast.error(`Minimum withdrawal amount is $${minWd.toFixed(2)}`);
                           return;
                         }
                         if (user.balance < amt) {
-                          alert("Insufficient wallet balance for this withdrawal.");
+                          toast.error("Insufficient wallet balance for this withdrawal.");
                           return;
                         }
 
                         if (!declareWithdraw) {
-                          alert(language === 'en'
+                          toast.error(language === 'en'
                             ? "⚠️ Please confirm the declaration checkbox at the bottom stating you authorize this withdrawal and understand fake requests lead to account suspension."
                             : "⚠️ অনুগ্রহ করে নিচে দেওয়া ডিক্লেয়ারেশন বক্সে টিক মার্ক দিয়ে নিশ্চিত করুন যে আপনি উইথড্র রিকোয়েস্ট পাঠাতে চান।");
                           return;
@@ -3152,12 +3152,12 @@ export function Dashboard() {
                         const currentComm = user.commissionBalance || 0;
                         
                         if (currentComm < commissionNeeded) {
-                          alert(`⚠️ Insufficient Commission Balance! You need USDT ${commissionNeeded.toFixed(2)} (${govFeePct}% of USDT ${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have USDT ${currentComm.toFixed(2)}.`);
+                          toast.error(`⚠️ Insufficient Commission Balance! You need USDT ${commissionNeeded.toFixed(2)} (${govFeePct}% of USDT ${amt.toFixed(2)}) in your Commission Balance to authorize this withdrawal. Currently you have USDT ${currentComm.toFixed(2)}.`);
                           return;
                         }
 
                         if (!withdrawBankName || !withdrawBranch || !withdrawPhoneOrAccount || !withdrawAccountName) {
-                          alert("Please fill in all required bank fields.");
+                          toast.error("Please fill in all required bank fields.");
                           return;
                         }
 
@@ -3176,7 +3176,7 @@ export function Dashboard() {
                           });
                         }
 
-                        alert(`🎉 Bank Withdrawal request of $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission (USDT ${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
+                        toast.success(`🎉 Bank Withdrawal request of $${amt.toFixed(2)} submitted successfully! ${govFeePct}% commission (USDT ${commissionNeeded.toFixed(2)}) was deducted from your Commission Balance.`);
                         setWithdrawAmountInput('');
                         setWithdrawBankName('');
                         setWithdrawBranch('');
@@ -3767,7 +3767,7 @@ export function Dashboard() {
                 <div className="bg-[#F8F9FA] border border-zinc-200/50 rounded-2xl p-6 sm:p-8">
                   <h3 className="text-sm font-black text-zinc-900 uppercase tracking-widest mb-6">Change Security Credentials</h3>
                   
-                  <form onSubmit={(e) => { e.preventDefault(); alert("🔐 Security Password updated successfully!"); setOldPassword(''); setNewPassword(''); }} className="space-y-4">
+                  <form onSubmit={(e) => { e.preventDefault(); toast.success("🔐 Security Password updated successfully!"); setOldPassword(''); setNewPassword(''); }} className="space-y-4">
                     <div>
                       <label className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400 block mb-1">Current Password</label>
                       <div className="relative">

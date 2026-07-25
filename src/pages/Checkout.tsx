@@ -1,3 +1,4 @@
+import toast from "react-hot-toast";
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -32,13 +33,13 @@ export function Checkout() {
   const handlePay = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLoggedIn || !user) {
-      alert("Please log in to finalize your purchase.");
+      toast.error("Please log in to finalize your purchase.");
       navigate('/login');
       return;
     }
 
     if (tickets.length === 0) {
-      alert("Your cart is empty! Pick numbers from active games first.");
+      toast.error("Your cart is empty! Pick numbers from active games first.");
       navigate('/');
       return;
     }
@@ -46,7 +47,7 @@ export function Checkout() {
     // Validation validation for MFS options
     if (paymentMethod === 'bkash' || paymentMethod === 'nagad') {
       if (!mfsSenderNumber || !mfsTxId) {
-        alert(`Please insert your ${paymentMethod === 'bkash' ? 'bKash' : 'Nagad'} Account Number and Transaction ID (TrxID) for validation.`);
+        toast.error(`Please insert your ${paymentMethod === 'bkash' ? 'bKash' : 'Nagad'} Account Number and Transaction ID (TrxID) for validation.`);
         return;
       }
     }
@@ -74,7 +75,7 @@ export function Checkout() {
         clearCart();
         setCompleted(true);
       } else {
-        alert("Transaction failed! Please check your payment details.");
+        toast.error("Transaction failed! Please check your payment details.");
       }
       setIsProcessing(false);
     }, 1500);

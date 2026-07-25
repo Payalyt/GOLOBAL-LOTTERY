@@ -156,7 +156,7 @@ export function Login() {
                 loggedInProfile = dbUser;
                 // Notify admin that they are in fallback mode and cannot save to Firestore
                 if (formattedEmail === 'payalyt6279@gmail.com') {
-                   alert("WARNING: Admin Firebase Auth failed. Your changes in the admin panel will NOT be saved to the database. Please ensure your Firebase Auth password is correct or reset it.");
+                   toast.error("WARNING: Admin Firebase Auth failed. Your changes in the admin panel will NOT be saved to the database. Please ensure your Firebase Auth password is correct or reset it.");
                 }
               }
             }

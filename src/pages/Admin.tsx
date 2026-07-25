@@ -60,7 +60,7 @@ export function Admin() {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Custom inline alerts and confirmations to bypass blocked confirm()/alert() in sandbox iframe
+  // Custom inline alerts and confirmations to bypass blocked confirm()/toast.error() in sandbox iframe
   const [adminAlert, setAdminAlert] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const showAdminAlert = (message: string, type: 'success' | 'error' = 'success') => {
     setAdminAlert({ message, type });
@@ -2700,7 +2700,7 @@ export function Admin() {
                         type="button"
                         onClick={async () => {
                           if (!newPromoForm.code.trim()) {
-                            alert('Please enter a coupon code!');
+                            toast.error('Please enter a coupon code!');
                             return;
                           }
                           const currentPromos = configForm.promoCodes && configForm.promoCodes.length > 0 ? [...configForm.promoCodes] : [

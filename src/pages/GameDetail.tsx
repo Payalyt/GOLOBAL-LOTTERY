@@ -1,3 +1,4 @@
+import toast from "react-hot-toast";
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Shuffle, Heart, Trash2, Plus, ChevronDown, Check, HelpCircle } from 'lucide-react';
@@ -338,12 +339,12 @@ export function GameDetail() {
   const handleAddToCart = () => {
     const validTickets = tickets.filter(t => t.numbers.length === maxSelections);
     if (validTickets.length === 0) {
-      alert(`Please select exactly ${maxSelections} choices for at least one ticket first.`);
+      toast.error(`Please select exactly ${maxSelections} choices for at least one ticket first.`);
       return;
     }
 
     if (!isLoggedIn || !user) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? 'Login or Sign Up is required to buy tickets! You can view games and pick numbers, but please log in or register to complete your purchase.'
         : 'টিকিট কিনতে লগইন বা রেজিস্টার করা আবশ্যক! আপনি গেম দেখতে ও নম্বর পছন্দ করতে পারবেন, তবে টিকিট কিনতে অনুগ্রহ করে লগইন বা সাইন আপ করুন।');
       navigate('/login');
@@ -365,7 +366,7 @@ export function GameDetail() {
     if (!currentTicket) return;
 
     if (currentNumbers.length < maxSelections) {
-      alert(`Please select ${maxSelections} options before marking as favorite.`);
+      toast.error(`Please select ${maxSelections} options before marking as favorite.`);
       return;
     }
 

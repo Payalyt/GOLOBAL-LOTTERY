@@ -1,6 +1,7 @@
 import React from 'react';
 import { Layout } from './components/Layout';
 import { Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -20,7 +21,9 @@ import ThaiLottery from './pages/ThaiLottery';
 
 export default function App() {
   return (
-    <Layout>
+    <>
+      <Toaster position="top-center" />
+      <Layout>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -44,5 +47,6 @@ export default function App() {
 
       </Routes>
     </Layout>
+    </>
   );
 }

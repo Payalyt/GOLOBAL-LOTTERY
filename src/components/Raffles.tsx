@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 export function Raffles() {
   const { addTickets } = useCart();
-  const { language, dynamicGames } = useAuth();
+  const { language, dynamicGames, user, isLoggedIn, buyTickets } = useAuth();
   const navigate = useNavigate();
 
   // Dynamic ticket amounts chosen by keys
@@ -24,7 +25,24 @@ export function Raffles() {
   };
 
   const handleAddRaffleToCart = (raffleName: string, pricePerTicket: number) => {
+    if (!isLoggedIn || !user) {
+      toast.error(language === 'en' ? 'Please log in to purchase tickets.' : 'টিকিট কিনতে অনুগ্রহ করে লগইন করুন।');
+      navigate('/login');
+      return;
+    }
+
     const qty = ticketCounts[raffleName] || 1;
+    const totalCost = qty * pricePerTicket;
+
+    if (user.balance < totalCost) {
+      toast.error(
+        language === 'en'
+          ? `Insufficient balance! You need $${totalCost.toFixed(2)} but have $${user.balance.toFixed(2)}.`
+          : `আপনার ব্যালেন্স পর্যাপ্ত নয়! আপনার প্রয়োজন $${totalCost.toFixed(2)} কিন্তু আপনার আছে $${user.balance.toFixed(2)}.`
+      );
+      return;
+    }
+
     const newRaffleTickets = [];
 
     // Each SURE raffle ticket represents 5 numbers from 1 to 49
@@ -45,12 +63,16 @@ export function Raffles() {
       });
     }
 
-    addTickets(newRaffleTickets);
-    alert(
-      language === 'en' 
-        ? `🎉 Successfully added ${qty} ticket(s) for ${raffleName} to your cart!`
-        : `🎉 সফলভাবে আপনার কার্টে ${raffleName}-এর জন্য ${qty}টি টিকিট যোগ করা হয়েছে!`
-    );
+    const success = buyTickets(newRaffleTickets);
+    if (success) {
+      toast.success(
+        language === 'en' 
+          ? `Successfully purchased ${qty} ticket(s) for ${raffleName} from your wallet!`
+          : `সফলভাবে আপনার ওয়ালেট থেকে ${raffleName}-এর জন্য ${qty}টি টিকিট কেনা হয়েছে!`
+      );
+    } else {
+      toast.error('Purchase failed. Please try again.');
+    }
 
     // Reset qty to 1
     setTicketCounts(prev => ({ ...prev, [raffleName]: 1 }));
@@ -260,7 +282,7 @@ export function Raffles() {
                   >
                     {raffle.customUrl 
                       ? (language === 'en' ? 'GO TO DRAW' : 'ড্র-তে যান') 
-                      : (language === 'en' ? 'ADD TO CART' : 'কার্টে যোগ করুন')}
+                      : (language === 'en' ? 'BUY NOW' : 'এখনই কিনুন')}
                   </button>
                 </div>
 

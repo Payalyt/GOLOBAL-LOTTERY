@@ -227,7 +227,7 @@ export function Header() {
                   <div className="absolute inset-0 bg-white/10 opacity-50 mix-blend-overlay" />
                 </div>
               )}
-              <div className="flex flex-col text-left overflow-hidden mt-0.5">
+              <div className={`flex flex-col text-left overflow-hidden mt-0.5 ${isLoggedIn ? 'hidden sm:flex' : ''}`}>
                 <span className="text-[18px] sm:text-[26px] font-bodoni font-black tracking-wide text-zinc-900 dark:text-zinc-50 leading-none truncate flex items-center">
                   {language === 'en' ? 'GLOBAL' : 'গ্লোবাল'}
                   <span className="ml-1.5 sm:ml-2 font-bold" style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>
@@ -370,7 +370,7 @@ export function Header() {
 
                 <button 
                   onClick={logout} 
-                  className="hidden lg:block text-[9px] font-extrabold text-amber-500 hover:underline cursor-pointer uppercase font-sans border border-amber-500/20 px-2 py-1.5 rounded hover:bg-amber-500/10"
+                  className="text-[9px] font-extrabold text-amber-500 hover:underline cursor-pointer uppercase font-sans border border-amber-500/20 px-1.5 sm:px-2 py-1 sm:py-1.5 rounded hover:bg-amber-500/10 whitespace-nowrap"
                 >
                   {t('logout', language)}
                 </button>

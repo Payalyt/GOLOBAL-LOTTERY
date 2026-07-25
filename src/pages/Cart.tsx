@@ -1,3 +1,4 @@
+import toast from "react-hot-toast";
 import React, { useState } from 'react';
 import { Trash2, Heart, Sparkles, CreditCard, ShoppingBag, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -26,7 +27,7 @@ export function Cart() {
 
     if (foundPromo) {
       if (foundPromo.minCartAmount && subtotal < foundPromo.minCartAmount) {
-        alert(language === 'en'
+        toast.error(language === 'en'
           ? `This promo code requires a minimum purchase amount of $${foundPromo.minCartAmount.toFixed(2)}.`
           : `এই প্রোমো কোডটির জন্য নূন্যতম $${foundPromo.minCartAmount.toFixed(2)} মূল্যের টিকিট কিনতে হবে।`);
         return;
@@ -45,7 +46,7 @@ export function Cart() {
       setDiscount(subtotal * pct);
       setCouponSuccess(true);
     } else {
-      alert(language === 'en' ? "Invalid or inactive promo code!" : "অকার্যকর বা নিষ্ক্রিয় প্রোমো কোড!");
+      toast.error(language === 'en' ? "Invalid or inactive promo code!" : "অকার্যকর বা নিষ্ক্রিয় প্রোমো কোড!");
       setCouponSuccess(false);
       setDiscount(0);
     }
@@ -55,7 +56,7 @@ export function Cart() {
 
   const handleProceedCheckout = () => {
     if (!isLoggedIn || !user) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? 'Login or Sign Up is required to buy tickets! Please log in or register to complete your purchase.'
         : 'টিকিট কিনতে লগইন বা রেজিস্টার করা আবশ্যক! অনুগ্রহ করে লগইন বা সাইন আপ করে অর্ডার সম্পন্ন করুন।');
       navigate('/login');
@@ -63,13 +64,13 @@ export function Cart() {
     }
 
     if (tickets.length === 0) {
-      alert("Your cart is empty! Pick numbers from active games first.");
+      toast.error("Your cart is empty! Pick numbers from active games first.");
       return;
     }
 
     // Check if user has sufficient balance before executing direct checkout
     if (user.balance < finalTotal) {
-      alert(language === 'en'
+      toast.error(language === 'en'
         ? `Insufficient balance! Your current wallet balance is $${user.balance.toFixed(2)}, but this checkout requires $${finalTotal.toFixed(2)}. Please add funds to your wallet from your Dashboard.`
         : `আপনার ব্যালেন্স পর্যাপ্ত নয়! আপনার বর্তমান ব্যালেন্স $${user.balance.toFixed(2)}, কিন্তু এই ক্রয়ের জন্য $${finalTotal.toFixed(2)} প্রয়োজন। অনুগ্রহ করে ড্যাশবোর্ড থেকে ওয়ালেটে ফান্ড যুক্ত করুন।`
       );
@@ -89,7 +90,7 @@ export function Cart() {
       clearCart();
       setCompleted(true);
     } else {
-      alert("Direct purchase failed! Please try again.");
+      toast.error("Direct purchase failed! Please try again.");
     }
   };
 
