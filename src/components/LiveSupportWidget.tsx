@@ -141,7 +141,9 @@ export function LiveSupportWidget() {
                     </div>
                     <div>
                       <div className="text-xs font-extrabold uppercase tracking-wide">WhatsApp Support</div>
-                      <div className="text-[11px] opacity-80 font-mono">{whatsappLabel}</div>
+                      <div className="text-[11px] opacity-80 font-medium">
+                        {language === 'bn' ? 'সরাসরি হোয়াটসঅ্যাপে চ্যাট করুন' : 'Tap to open WhatsApp'}
+                      </div>
                     </div>
                   </div>
                   <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
@@ -159,8 +161,10 @@ export function LiveSupportWidget() {
                       <Send className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="text-xs font-extrabold uppercase tracking-wide">Telegram Support</div>
-                      <div className="text-[11px] opacity-80 font-mono">{telegramLabel}</div>
+                      <div className="text-xs font-extrabold uppercase tracking-wide">Telegram Channel</div>
+                      <div className="text-[11px] opacity-80 font-medium">
+                        {language === 'bn' ? 'অফিসিয়াল টেলিগ্রাম চ্যানেলে যোগ দিন' : 'Tap to open Telegram'}
+                      </div>
                     </div>
                   </div>
                   <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
@@ -179,7 +183,9 @@ export function LiveSupportWidget() {
                     </div>
                     <div>
                       <div className="text-xs font-extrabold uppercase tracking-wide">IMO Live Chat</div>
-                      <div className="text-[11px] opacity-80 font-mono">{imoLabel}</div>
+                      <div className="text-[11px] opacity-80 font-medium">
+                        {language === 'bn' ? 'ইমোতে সরাসরি চ্যাট করুন' : 'Tap to open IMO app'}
+                      </div>
                     </div>
                   </div>
                   <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
@@ -196,7 +202,9 @@ export function LiveSupportWidget() {
                     </div>
                     <div>
                       <div className="text-xs font-extrabold uppercase tracking-wide">Email Support</div>
-                      <div className="text-[11px] opacity-80 font-mono">{emailLabel}</div>
+                      <div className="text-[11px] opacity-80 font-medium">
+                        {language === 'bn' ? 'অফিসিয়াল কাস্টমার ইমেইল' : 'Official Customer Service Email'}
+                      </div>
                     </div>
                   </div>
                   <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
@@ -215,8 +223,10 @@ export function LiveSupportWidget() {
                         <Sparkles className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="text-xs font-extrabold uppercase tracking-wide">External Live Desk</div>
-                        <div className="text-[11px] opacity-80">Tawk.to / Direct Portal</div>
+                        <div className="text-xs font-extrabold uppercase tracking-wide">Live Support Desk</div>
+                        <div className="text-[11px] opacity-80 font-medium">
+                          {language === 'bn' ? '২৪/৭ সরাসরি সাপোর্ট পোর্টাল' : '24/7 Agent Live Chat Desk'}
+                        </div>
                       </div>
                     </div>
                     <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />

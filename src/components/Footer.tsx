@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Globe, X, FileText, Landmark, Award, BookOpen, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Globe, X, FileText, Landmark, Award, BookOpen, AlertCircle, Mail, MessageSquare, Send, PhoneCall, Headphones, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { resolveBannerImage } from './Hero';
-import { formatSupportLink, getDisplaySupportLabel } from '../utils/support';
+import { formatSupportLink } from '../utils/support';
 
 interface DocumentModal {
   title: string;
@@ -409,35 +409,107 @@ export function Footer() {
               {language === 'en' ? 'CONTACT SUPPORT' : 'গ্রাহক সেবা'}
             </h4>
             <div className="flex flex-col gap-2.5">
-              <a href={formatSupportLink('email', siteConfig.footerEmail)} className="bg-zinc-900 border border-zinc-800 hover:border-[#E1BC4A] p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
-                <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
-                  {language === 'en' ? 'Email Support' : 'ইমেইল সাপোর্ট'}
+              {/* Email */}
+              <a 
+                href={formatSupportLink('email', siteConfig.footerEmail)} 
+                className="bg-zinc-900 border border-zinc-800 hover:border-[#E1BC4A] p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-all hover:bg-zinc-800/80 group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-zinc-200 group-hover:text-amber-400">
+                    {language === 'en' ? 'Email Support' : 'ইমেইল সাপোর্ট'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-zinc-400 font-bold bg-zinc-800/90 px-2.5 py-1 rounded-md flex items-center gap-1 group-hover:text-amber-300 group-hover:bg-zinc-700 transition-colors">
+                  {language === 'en' ? 'Mail' : 'মেইল'}
+                  <ExternalLink className="w-3 h-3" />
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">{getDisplaySupportLabel('email', siteConfig.footerEmail)}</span>
               </a>
-              <a href={formatSupportLink('whatsapp', siteConfig.footerWhatsapp || siteConfig.agentWhatsappLink)} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-green-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
-                <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
-                  {language === 'en' ? 'WhatsApp' : 'হোয়াটসঅ্যাপ'}
+
+              {/* WhatsApp */}
+              <a 
+                href={formatSupportLink('whatsapp', siteConfig.footerWhatsapp || siteConfig.agentWhatsappLink)} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="bg-zinc-900 border border-zinc-800 hover:border-emerald-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-all hover:bg-zinc-800/80 group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                    <MessageSquare className="w-4 h-4 fill-current" />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-zinc-200 group-hover:text-emerald-400">
+                    {language === 'en' ? 'WhatsApp' : 'হোয়াটসঅ্যাপ'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md flex items-center gap-1 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                  {language === 'en' ? 'WhatsApp App' : 'অ্যাপ খুলুন'}
+                  <ExternalLink className="w-3 h-3" />
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">{getDisplaySupportLabel('whatsapp', siteConfig.footerWhatsapp || siteConfig.agentWhatsappLink)}</span>
               </a>
-              <a href={formatSupportLink('telegram', siteConfig.footerTelegram || siteConfig.agentTelegramLink)} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-blue-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
-                <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
-                  {language === 'en' ? 'Telegram' : 'টেলিগ্রাম'}
+
+              {/* Telegram */}
+              <a 
+                href={formatSupportLink('telegram', siteConfig.footerTelegram || siteConfig.agentTelegramLink)} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="bg-zinc-900 border border-zinc-800 hover:border-sky-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-all hover:bg-zinc-800/80 group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center shrink-0">
+                    <Send className="w-4 h-4" />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-zinc-200 group-hover:text-sky-400">
+                    {language === 'en' ? 'Telegram' : 'টেলিগ্রাম'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-sky-400 font-bold bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-md flex items-center gap-1 group-hover:bg-sky-500 group-hover:text-white transition-all">
+                  {language === 'en' ? 'Telegram App' : 'অ্যাপ খুলুন'}
+                  <ExternalLink className="w-3 h-3" />
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">{getDisplaySupportLabel('telegram', siteConfig.footerTelegram || siteConfig.agentTelegramLink)}</span>
               </a>
-              <a href={formatSupportLink('imo', siteConfig.footerImo || siteConfig.agentImoLink)} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-teal-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
-                <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
-                  {language === 'en' ? 'IMO Chat' : 'ইমো চ্যাট'}
+
+              {/* IMO */}
+              <a 
+                href={formatSupportLink('imo', siteConfig.footerImo || siteConfig.agentImoLink)} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="bg-zinc-900 border border-zinc-800 hover:border-teal-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-all hover:bg-zinc-800/80 group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center shrink-0">
+                    <PhoneCall className="w-4 h-4" />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-zinc-200 group-hover:text-teal-400">
+                    {language === 'en' ? 'IMO Chat' : 'ইমো চ্যাট'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-teal-400 font-bold bg-teal-500/10 border border-teal-500/20 px-2.5 py-1 rounded-md flex items-center gap-1 group-hover:bg-teal-500 group-hover:text-white transition-all">
+                  {language === 'en' ? 'IMO App' : 'ইমো খুলুন'}
+                  <ExternalLink className="w-3 h-3" />
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">{getDisplaySupportLabel('imo', siteConfig.footerImo || siteConfig.agentImoLink)}</span>
               </a>
-              <a href={formatSupportLink('livechat', siteConfig.liveChatUrl || siteConfig.footerLiveChat)} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-purple-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
-                <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
-                  {language === 'en' ? 'Live Chat' : 'লাইভ চ্যাট'}
+
+              {/* Live Chat */}
+              <a 
+                href={formatSupportLink('livechat', siteConfig.liveChatUrl || siteConfig.footerLiveChat)} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="bg-zinc-900 border border-zinc-800 hover:border-purple-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-all hover:bg-zinc-800/80 group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
+                    <Headphones className="w-4 h-4" />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-zinc-200 group-hover:text-purple-400">
+                    {language === 'en' ? 'Live Chat' : 'লাইভ চ্যাট'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-purple-400 font-bold bg-purple-500/10 border border-purple-500/20 px-2.5 py-1 rounded-md flex items-center gap-1 group-hover:bg-purple-500 group-hover:text-white transition-all">
+                  {language === 'en' ? '24/7 Live' : '২৪/৭ লাইভ'}
+                  <ExternalLink className="w-3 h-3" />
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">{getDisplaySupportLabel('livechat', siteConfig.liveChatUrl || siteConfig.footerLiveChat)}</span>
               </a>
             </div>
           </div>

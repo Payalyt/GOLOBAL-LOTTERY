@@ -13,13 +13,13 @@ export function formatSupportLink(
       case 'imo':
         return 'https://imo.im/8801986259552';
       case 'livechat':
-        return '#livechat';
+        return 'https://tawk.to';
     }
   }
 
   const trimmed = val.trim();
 
-  // If already a full http/https URL, use directly!
+  // If already a full http/https URL, return directly
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return trimmed;
   }
@@ -57,32 +57,44 @@ export function getDisplaySupportLabel(
 ): string {
   if (!val || val.trim() === '') {
     switch (type) {
-      case 'email': return 'support@globallottery.com';
-      case 'whatsapp': return '+8801986259552';
-      case 'telegram': return '@md_meshkat_payal';
-      case 'imo': return 'IMO Support';
+      case 'email': return 'Email Support';
+      case 'whatsapp': return 'Open WhatsApp';
+      case 'telegram': return 'Open Telegram';
+      case 'imo': return 'Open IMO App';
       case 'livechat': return '24/7 Agent';
     }
   }
 
   const trimmed = val.trim();
-  if (type === 'email') {
-    return trimmed.replace('mailto:', '');
-  }
-  if (type === 'telegram' && !trimmed.startsWith('http')) {
-    return trimmed.startsWith('@') ? trimmed : `@${trimmed}`;
-  }
+
+  // If it's a raw URL like https://t.me/... or https://wa.me/... NEVER show the raw URL!
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    // If it's a URL like https://wa.me/8801986259552 or https://t.me/handle, extract readable handle
-    try {
-      const url = new URL(trimmed);
-      if (url.pathname.length > 1) {
-        return url.pathname.replace(/^\//, '');
-      }
-      return url.hostname;
-    } catch (e) {
-      return trimmed;
+    switch (type) {
+      case 'email': return 'Email Support';
+      case 'whatsapp': return 'Open WhatsApp';
+      case 'telegram': return 'Open Telegram';
+      case 'imo': return 'Open IMO App';
+      case 'livechat': return '24/7 Agent';
     }
   }
-  return trimmed;
+
+  if (type === 'email') {
+    const emailClean = trimmed.replace('mailto:', '');
+    return emailClean.length > 25 ? `${emailClean.substring(0, 22)}...` : emailClean;
+  }
+
+  if (type === 'telegram') {
+    return trimmed.startsWith('@') ? trimmed : `@${trimmed.replace(/[^a-zA-Z0-9_]/g, '')}`;
+  }
+
+  if (type === 'whatsapp') {
+    return 'Open WhatsApp';
+  }
+
+  if (type === 'imo') {
+    return 'Open IMO App';
+  }
+
+  return '24/7 Agent';
 }
+
