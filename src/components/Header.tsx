@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../utils/translations';
 
 import { resolveBannerImage } from './Hero';
+import logo3dImg from '../assets/images/3d_lottery_logo_1784951997317.jpg';
 
 const menuData = {
   'THAI LOTTERY': {
@@ -222,9 +223,12 @@ export function Header() {
               ) : (
                 <div className="relative w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center shrink-0">
                   <img 
-                    src="/assets/3d_lottery_logo.jpg" 
+                    src={logo3dImg} 
                     alt="GLOBAL 3D Logo" 
                     className="w-full h-full object-contain rounded-xl drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = "/images/3d_lottery_logo.jpg";
+                    }}
                     referrerPolicy="no-referrer"
                   />
                 </div>

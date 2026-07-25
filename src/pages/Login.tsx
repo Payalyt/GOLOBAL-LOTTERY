@@ -7,6 +7,8 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswor
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { resolveBannerImage } from '../components/Hero';
+import lotteryPosterImg from '../assets/images/lottery_login_poster_1784951984139.jpg';
+import logo3dImg from '../assets/images/3d_lottery_logo_1784951997317.jpg';
 
 export function Login() {
   const navigate = useNavigate();
@@ -321,9 +323,12 @@ export function Login() {
       {/* Full Screen Lottery Poster Background */}
       <div className="fixed inset-0 z-0">
         <img 
-          src="/assets/lottery_poster.jpg" 
+          src={lotteryPosterImg} 
           alt="Lottery Poster Background" 
           className="w-full h-full object-cover scale-105 filter brightness-[0.55] contrast-125"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = "/images/lottery_poster.jpg";
+          }}
           referrerPolicy="no-referrer"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-zinc-950/20 backdrop-blur-[1px]" />
@@ -359,9 +364,12 @@ export function Login() {
               />
             ) : (
               <img 
-                src="/assets/3d_lottery_logo.jpg" 
+                src={logo3dImg} 
                 alt="3D Lottery Logo" 
                 className="w-full h-full object-contain rounded-2xl drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)] transform hover:scale-105 transition-transform"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "/images/3d_lottery_logo.jpg";
+                }}
                 referrerPolicy="no-referrer"
               />
             )}
@@ -526,9 +534,12 @@ export function Login() {
             
             <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mb-4 relative drop-shadow-[0_12px_25px_rgba(0,0,0,0.8)]">
               <img 
-                src="/assets/3d_lottery_logo.jpg" 
+                src={logo3dImg} 
                 alt="3D Lottery Logo" 
                 className="w-full h-full object-contain rounded-2xl transform hover:scale-105 transition-transform"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "/images/3d_lottery_logo.jpg";
+                }}
                 referrerPolicy="no-referrer"
               />
             </div>
