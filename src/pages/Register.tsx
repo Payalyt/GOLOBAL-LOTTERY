@@ -5,8 +5,8 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, increment } from 'firebase/firestore';
 import { Eye, EyeOff, X } from 'lucide-react';
-import lotteryPosterImg from '../assets/images/lottery_login_poster_1784951984139.jpg';
-import logo3dImg from '../assets/images/3d_lottery_logo_1784951997317.jpg';
+import { resolveBannerImage } from '../components/Hero';
+import { Smart3DLogo, SmartPosterBackground } from '../components/SmartImage';
 
 const COUNTRIES_LIST = [
   "Bangladesh", "United Arab Emirates", "Saudi Arabia", "India", "Kuwait", "Oman",
@@ -360,18 +360,7 @@ export function Register() {
   return (
     <div className="relative min-h-screen py-8 px-4 text-gray-900 dark:text-zinc-100 flex flex-col justify-center items-center font-roboto-sans transition-colors duration-300 overflow-hidden">
       {/* Full Screen Lottery Poster Background */}
-      <div className="fixed inset-0 z-0">
-        <img 
-          src={lotteryPosterImg} 
-          alt="Lottery Poster Background" 
-          className="w-full h-full object-cover scale-105 filter brightness-[0.55] contrast-125"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = "/images/lottery_poster.jpg";
-          }}
-          referrerPolicy="no-referrer"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-zinc-950/20 backdrop-blur-[1px]" />
-      </div>
+      <SmartPosterBackground />
 
       {isFormVisible ? (
         <div className="max-w-md w-full mx-auto bg-white/95 dark:bg-[#101622]/95 backdrop-blur-xl p-6 sm:p-8 border border-white/20 dark:border-zinc-700/50 rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.85)] text-gray-950 dark:text-zinc-100 relative font-roboto-sans z-10 my-4 animate-in fade-in zoom-in-95 duration-300">
@@ -387,14 +376,9 @@ export function Register() {
         {/* 3D Logo Header */}
         <div className="text-center mb-4">
           <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center mb-2 relative">
-            <img 
-              src={logo3dImg} 
-              alt="3D Lottery Logo" 
+            <Smart3DLogo 
+              customUrl={siteConfig.logoImageUrl ? resolveBannerImage(siteConfig.logoImageUrl) : undefined}
               className="w-full h-full object-contain rounded-2xl drop-shadow-[0_8px_20px_rgba(0,0,0,0.7)]"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = "/images/3d_lottery_logo.jpg";
-              }}
-              referrerPolicy="no-referrer"
             />
           </div>
           <h2 className="text-2xl font-black tracking-tight uppercase text-gray-900 dark:text-zinc-100">
@@ -741,14 +725,9 @@ export function Register() {
             <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-24 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
             
             <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mb-4 relative drop-shadow-[0_12px_25px_rgba(0,0,0,0.8)]">
-              <img 
-                src={logo3dImg} 
-                alt="3D Lottery Logo" 
-                className="w-full h-full object-contain rounded-2xl transform hover:scale-105 transition-transform"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = "/images/3d_lottery_logo.jpg";
-                }}
-                referrerPolicy="no-referrer"
+              <Smart3DLogo 
+                customUrl={siteConfig.logoImageUrl ? resolveBannerImage(siteConfig.logoImageUrl) : undefined}
+                className="w-full h-full object-contain transform hover:scale-105 transition-transform"
               />
             </div>
 

@@ -7,7 +7,7 @@ import { AdminWinnersTab } from '../components/admin/AdminWinnersTab';
 import { AdminNewsTab } from '../components/admin/AdminNewsTab';
 import { AdminPagesTab } from '../components/admin/AdminPagesTab';
 
-import { Menu, X, Settings, Image as ImageIcon, Type, CreditCard, Paintbrush, Users, FileText, Trophy, Award, Gamepad2, Newspaper, Megaphone } from 'lucide-react';
+import { Menu, X, Settings, Image as ImageIcon, Type, CreditCard, Paintbrush, Users, FileText, Trophy, Award, Gamepad2, Newspaper, Megaphone, Headphones } from 'lucide-react';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -707,25 +707,204 @@ export function Admin() {
             )}
 
             {activeTab === 'Contact' && (
-              <div className="bg-white dark:bg-[#151c2a] rounded-2xl p-6 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-5">
-                <h3 className="text-sm font-black uppercase text-gray-800 dark:text-gray-200 mb-4 border-b border-gray-100 dark:border-zinc-800 pb-3">Contact & Social Links</h3>
-                <div className="grid gap-5">
+              <div className="bg-white dark:bg-[#151c2a] rounded-2xl p-6 border border-gray-200 dark:border-zinc-800 shadow-sm space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-zinc-800 pb-4">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5">Agent WhatsApp Link</label>
-                    <input type="text" name="agentWhatsappLink" value={configForm.agentWhatsappLink || ""} onChange={handleChange} className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none" />
+                    <h3 className="text-base font-black uppercase tracking-wide text-gray-900 dark:text-white flex items-center gap-2">
+                      <Headphones className="w-5 h-5 text-amber-500" />
+                      Contact & Live Support Settings
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1 font-medium">
+                      Configure Telegram, Email, IMO, WhatsApp, and Live Chat links. Changes sync live across the app.
+                    </p>
                   </div>
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shadow-amber-500/20 shrink-0"
+                  >
+                    {isSaving ? 'Saving...' : 'Save Support Links'}
+                  </button>
+                </div>
+
+                {/* Live Chat Floating Toggle */}
+                <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5">Agent Telegram Link</label>
-                    <input type="text" name="agentTelegramLink" value={configForm.agentTelegramLink || ""} onChange={handleChange} className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none" />
+                    <label className="text-xs font-black uppercase tracking-wider text-amber-950 dark:text-amber-200 block">
+                      Enable Floating Live Support Widget
+                    </label>
+                    <span className="text-[11px] text-amber-800/80 dark:text-amber-300/80 font-medium">
+                      Show floating 24/7 support & live chat button at bottom right corner for all users
+                    </span>
                   </div>
+                  <input
+                    type="checkbox"
+                    name="liveChatEnabled"
+                    checked={configForm.liveChatEnabled !== false}
+                    onChange={(e) => setConfigForm(prev => ({ ...prev, liveChatEnabled: e.target.checked }))}
+                    className="w-5 h-5 text-amber-500 rounded focus:ring-amber-500 bg-gray-50 border-gray-300 cursor-pointer"
+                  />
+                </div>
+
+                {/* Section 1: Official Customer Support Links */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-amber-500 border-b border-gray-100 dark:border-zinc-800/80 pb-2">
+                    Official Customer Support Links
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Support Email */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-zinc-300 mb-1.5">
+                        📧 Support Email Address
+                      </label>
+                      <input
+                        type="text"
+                        name="footerEmail"
+                        placeholder="e.g. support@globallottery.com"
+                        value={configForm.footerEmail || ""}
+                        onChange={handleChange}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none text-gray-900 dark:text-white"
+                      />
+                    </div>
+
+                    {/* WhatsApp Support */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-zinc-300 mb-1.5">
+                        💬 WhatsApp Support Link / Number
+                      </label>
+                      <input
+                        type="text"
+                        name="footerWhatsapp"
+                        placeholder="e.g. https://wa.me/8801986259552 or +8801986259552"
+                        value={configForm.footerWhatsapp || ""}
+                        onChange={handleChange}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none text-gray-900 dark:text-white"
+                      />
+                    </div>
+
+                    {/* Telegram Support */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-zinc-300 mb-1.5">
+                        ✈️ Telegram Channel / Support Handle
+                      </label>
+                      <input
+                        type="text"
+                        name="footerTelegram"
+                        placeholder="e.g. https://t.me/md_meshkat_payal or @md_meshkat_payal"
+                        value={configForm.footerTelegram || ""}
+                        onChange={handleChange}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none text-gray-900 dark:text-white"
+                      />
+                    </div>
+
+                    {/* IMO Support */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-zinc-300 mb-1.5">
+                        📞 IMO Support Link / Number
+                      </label>
+                      <input
+                        type="text"
+                        name="footerImo"
+                        placeholder="e.g. https://imo.im/8801986259552 or +8801986259552"
+                        value={configForm.footerImo || ""}
+                        onChange={handleChange}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none text-gray-900 dark:text-white"
+                      />
+                    </div>
+
+                    {/* Live Chat Desk Link */}
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-zinc-300 mb-1.5">
+                        🔴 Live Chat Desk Link (Tawk.to / Crisp / External Chat URL)
+                      </label>
+                      <input
+                        type="text"
+                        name="liveChatUrl"
+                        placeholder="e.g. https://tawk.to/chat/... or https://chat.whatsapp.com/..."
+                        value={configForm.liveChatUrl || configForm.footerLiveChat || ""}
+                        onChange={(e) => {
+                          handleChange(e);
+                          setConfigForm(prev => ({ ...prev, footerLiveChat: e.target.value }));
+                        }}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none text-gray-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Local Agent Deposit & Withdraw Contact Links */}
+                <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-zinc-800/80">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-emerald-500 border-b border-gray-100 dark:border-zinc-800/80 pb-2">
+                    Deposit & Withdrawal Agent Contact Links
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-zinc-300 mb-1.5">
+                        🟢 Agent WhatsApp Link
+                      </label>
+                      <input
+                        type="text"
+                        name="agentWhatsappLink"
+                        placeholder="https://wa.me/8801986259552"
+                        value={configForm.agentWhatsappLink || ""}
+                        onChange={handleChange}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none text-gray-900 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-zinc-300 mb-1.5">
+                        🔵 Agent Telegram Link
+                      </label>
+                      <input
+                        type="text"
+                        name="agentTelegramLink"
+                        placeholder="https://t.me/md_meshkat_payal"
+                        value={configForm.agentTelegramLink || ""}
+                        onChange={handleChange}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none text-gray-900 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-zinc-300 mb-1.5">
+                        🟣 Agent IMO Link
+                      </label>
+                      <input
+                        type="text"
+                        name="agentImoLink"
+                        placeholder="https://imo.im/8801986259552"
+                        value={configForm.agentImoLink || ""}
+                        onChange={handleChange}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none text-gray-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5">Agent IMO Link</label>
-                    <input type="text" name="agentImoLink" value={configForm.agentImoLink || ""} onChange={handleChange} className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none" />
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-zinc-300 mb-1.5">
+                      Agent Instructions Text
+                    </label>
+                    <textarea
+                      name="agentInstructions"
+                      rows={3}
+                      value={configForm.agentInstructions || ""}
+                      onChange={handleChange}
+                      className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none text-gray-900 dark:text-white"
+                    />
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-1.5">Footer Phone / WhatsApp</label>
-                    <input type="text" name="footerWhatsapp" value={configForm.footerWhatsapp || ""} onChange={handleChange} className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none" />
-                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end">
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="px-8 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-amber-500/20"
+                  >
+                    {isSaving ? 'Saving All Settings...' : 'Save All Support & Contact Settings'}
+                  </button>
                 </div>
               </div>
             )}

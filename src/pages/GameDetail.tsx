@@ -236,7 +236,7 @@ export function GameDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addTickets } = useCart();
-  const { isLoggedIn, user, dynamicGames, siteConfig, language } = useAuth();
+  const { isLoggedIn, user, dynamicGames, siteConfig, language, buyTickets } = useAuth();
   
   const gameNormalized = id?.replace(/-/g, '').replace(/\s+/g, '').toUpperCase() || 'EASY6';
   

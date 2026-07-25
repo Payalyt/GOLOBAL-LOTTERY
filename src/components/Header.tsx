@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../utils/translations';
 
 import { resolveBannerImage } from './Hero';
-import logo3dImg from '../assets/images/3d_lottery_logo_1784951997317.jpg';
+import { Smart3DLogo } from './SmartImage';
 
 const menuData = {
   'THAI LOTTERY': {
@@ -211,28 +211,12 @@ export function Header() {
 
             <Link to="/" className="flex items-center gap-1.5 sm:gap-2.5 leading-none select-none shrink-0">
               {/* Premium 3D App Logo */}
-              {siteConfig.logoImageUrl ? (
-                <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 overflow-hidden shrink-0 flex items-center justify-center">
-                  <img 
-                    src={resolveBannerImage(siteConfig.logoImageUrl)} 
-                    alt={siteConfig.primaryLogoText || 'GLOBAL'} 
-                    className="w-full h-full object-contain"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-              ) : (
-                <div className="relative w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center shrink-0">
-                  <img 
-                    src={logo3dImg} 
-                    alt="GLOBAL 3D Logo" 
-                    className="w-full h-full object-contain rounded-xl drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = "/images/3d_lottery_logo.jpg";
-                    }}
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-              )}
+              <div className="relative w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center shrink-0">
+                <Smart3DLogo 
+                  customUrl={siteConfig.logoImageUrl ? resolveBannerImage(siteConfig.logoImageUrl) : undefined}
+                  className="w-full h-full object-contain transform hover:scale-105 transition-transform drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+                />
+              </div>
               <div className="hidden md:flex flex-col text-left overflow-hidden mt-0.5">
                 <span className="text-[18px] sm:text-[26px] font-bodoni font-black tracking-wide text-zinc-900 dark:text-zinc-50 leading-none truncate flex items-center">
                   {language === 'en' ? 'GLOBAL' : 'গ্লোবাল'}

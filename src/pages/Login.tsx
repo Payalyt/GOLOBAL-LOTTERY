@@ -7,8 +7,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswor
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { resolveBannerImage } from '../components/Hero';
-import lotteryPosterImg from '../assets/images/lottery_login_poster_1784951984139.jpg';
-import logo3dImg from '../assets/images/3d_lottery_logo_1784951997317.jpg';
+import { Smart3DLogo, SmartPosterBackground } from '../components/SmartImage';
 
 export function Login() {
   const navigate = useNavigate();
@@ -321,18 +320,7 @@ export function Login() {
   return (
     <div className="relative min-h-screen py-12 px-4 text-gray-900 dark:text-zinc-100 flex flex-col justify-center items-center font-roboto-sans transition-colors duration-300 overflow-hidden">
       {/* Full Screen Lottery Poster Background */}
-      <div className="fixed inset-0 z-0">
-        <img 
-          src={lotteryPosterImg} 
-          alt="Lottery Poster Background" 
-          className="w-full h-full object-cover scale-105 filter brightness-[0.55] contrast-125"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = "/images/lottery_poster.jpg";
-          }}
-          referrerPolicy="no-referrer"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-zinc-950/20 backdrop-blur-[1px]" />
-      </div>
+      <SmartPosterBackground />
 
       {isFormVisible ? (
         <div className="max-w-md w-full mx-auto bg-white/95 dark:bg-[#101622]/95 backdrop-blur-xl rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.85)] overflow-hidden border border-white/20 dark:border-zinc-700/50 font-roboto-sans relative z-10 transition-all duration-300 transform scale-100 animate-in fade-in zoom-in-95">
@@ -356,23 +344,10 @@ export function Login() {
           
           {/* Pure 3D Logo Graphic - No Yellow Background Tile */}
           <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center mb-3 relative mt-2">
-            {siteConfig.logoImageUrl ? (
-              <img 
-                src={resolveBannerImage(siteConfig.logoImageUrl)} 
-                alt="App Logo" 
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <img 
-                src={logo3dImg} 
-                alt="3D Lottery Logo" 
-                className="w-full h-full object-contain rounded-2xl drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)] transform hover:scale-105 transition-transform"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = "/images/3d_lottery_logo.jpg";
-                }}
-                referrerPolicy="no-referrer"
-              />
-            )}
+            <Smart3DLogo 
+              customUrl={siteConfig.logoImageUrl ? resolveBannerImage(siteConfig.logoImageUrl) : undefined}
+              className="w-full h-full object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)] transform hover:scale-105 transition-transform"
+            />
           </div>
 
           <h2 className="text-2xl font-black tracking-[0.18em] text-zinc-900 dark:text-white uppercase">
@@ -533,14 +508,9 @@ export function Login() {
             <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-24 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
             
             <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mb-4 relative drop-shadow-[0_12px_25px_rgba(0,0,0,0.8)]">
-              <img 
-                src={logo3dImg} 
-                alt="3D Lottery Logo" 
-                className="w-full h-full object-contain rounded-2xl transform hover:scale-105 transition-transform"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = "/images/3d_lottery_logo.jpg";
-                }}
-                referrerPolicy="no-referrer"
+              <Smart3DLogo 
+                customUrl={siteConfig.logoImageUrl ? resolveBannerImage(siteConfig.logoImageUrl) : undefined}
+                className="w-full h-full object-contain transform hover:scale-105 transition-transform"
               />
             </div>
 

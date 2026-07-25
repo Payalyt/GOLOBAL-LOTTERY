@@ -3,6 +3,7 @@ import { ShieldCheck, Globe, X, FileText, Landmark, Award, BookOpen, AlertCircle
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { resolveBannerImage } from './Hero';
+import { formatSupportLink, getDisplaySupportLabel } from '../utils/support';
 
 interface DocumentModal {
   title: string;
@@ -408,35 +409,35 @@ export function Footer() {
               {language === 'en' ? 'CONTACT SUPPORT' : 'গ্রাহক সেবা'}
             </h4>
             <div className="flex flex-col gap-2.5">
-              <a href={`mailto:${siteConfig.footerEmail || 'support@draw.com'}`} className="bg-zinc-900 border border-zinc-800 hover:border-[#E1BC4A] p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
+              <a href={formatSupportLink('email', siteConfig.footerEmail)} className="bg-zinc-900 border border-zinc-800 hover:border-[#E1BC4A] p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'Email Support' : 'ইমেইল সাপোর্ট'}
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">{siteConfig.footerEmail || 'support@draw.com'}</span>
+                <span className="text-[10px] text-zinc-500 font-mono">{getDisplaySupportLabel('email', siteConfig.footerEmail)}</span>
               </a>
-              <a href={`https://wa.me/${(siteConfig.footerWhatsapp || '+1 234 567 890').replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-green-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
+              <a href={formatSupportLink('whatsapp', siteConfig.footerWhatsapp || siteConfig.agentWhatsappLink)} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-green-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'WhatsApp' : 'হোয়াটসঅ্যাপ'}
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">{siteConfig.footerWhatsapp || '+1 234 567 890'}</span>
+                <span className="text-[10px] text-zinc-500 font-mono">{getDisplaySupportLabel('whatsapp', siteConfig.footerWhatsapp || siteConfig.agentWhatsappLink)}</span>
               </a>
-              <a href={`https://t.me/${(siteConfig.footerTelegram || '@drawsupport').replace('@', '')}`} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-blue-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
+              <a href={formatSupportLink('telegram', siteConfig.footerTelegram || siteConfig.agentTelegramLink)} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-blue-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'Telegram' : 'টেলিগ্রাম'}
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">{siteConfig.footerTelegram || '@drawsupport'}</span>
+                <span className="text-[10px] text-zinc-500 font-mono">{getDisplaySupportLabel('telegram', siteConfig.footerTelegram || siteConfig.agentTelegramLink)}</span>
               </a>
-              <a href={siteConfig.agentImoLink || "https://imo.im/"} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-teal-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
+              <a href={formatSupportLink('imo', siteConfig.footerImo || siteConfig.agentImoLink)} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-teal-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'IMO Chat' : 'ইমো চ্যাট'}
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">{siteConfig.footerImo || 'Live IMO'}</span>
+                <span className="text-[10px] text-zinc-500 font-mono">{getDisplaySupportLabel('imo', siteConfig.footerImo || siteConfig.agentImoLink)}</span>
               </a>
-              <a href={siteConfig.agentWhatsappLink || "https://wa.me/1234567890"} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-purple-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
+              <a href={formatSupportLink('livechat', siteConfig.liveChatUrl || siteConfig.footerLiveChat)} target="_blank" rel="noreferrer" className="bg-zinc-900 border border-zinc-800 hover:border-purple-500 p-3 rounded-xl flex items-center justify-between text-zinc-300 transition-colors group">
                 <span className="text-[11px] font-black uppercase tracking-wider group-hover:text-white">
                   {language === 'en' ? 'Live Chat' : 'লাইভ চ্যাট'}
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">{siteConfig.footerLiveChat || '24/7 Agent'}</span>
+                <span className="text-[10px] text-zinc-500 font-mono">{getDisplaySupportLabel('livechat', siteConfig.liveChatUrl || siteConfig.footerLiveChat)}</span>
               </a>
             </div>
           </div>

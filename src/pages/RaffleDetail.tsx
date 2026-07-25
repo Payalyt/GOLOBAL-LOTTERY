@@ -128,7 +128,7 @@ export function RaffleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addTickets } = useCart();
-  const { isLoggedIn, user, language } = useAuth();
+  const { isLoggedIn, user, language, buyTickets } = useAuth();
   
   // Normalize params to match SURE 1, SURE 2, or SURE 3
   const normalizedId = id ? id.replace(/-/g, '').replace(/\s+/g, '').toUpperCase() : '';
@@ -193,7 +193,7 @@ export function RaffleDetail() {
       return;
     }
 
-    const totalCost = quantity * config.pricePerTicket;
+    const totalCost = ticketCount * config.pricePerTicket;
     if (user.balance < totalCost) {
       toast.error(
         language === 'en'
@@ -225,10 +225,10 @@ export function RaffleDetail() {
     if (success) {
       toast.success(
         language === 'en' 
-          ? `Successfully purchased ${quantity} ticket(s) from your wallet!`
-          : `সফলভাবে আপনার ওয়ালেট থেকে ${quantity}টি টিকিট কেনা হয়েছে!`
+          ? `Successfully purchased ${ticketCount} ticket(s) from your wallet!`
+          : `সফলভাবে আপনার ওয়ালেট থেকে ${ticketCount}টি টিকিট কেনা হয়েছে!`
       );
-      setQuantity(1);
+      setTicketCount(1);
       setManualDigits({});
     } else {
       toast.error('Purchase failed. Please try again.');

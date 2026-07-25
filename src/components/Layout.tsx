@@ -1,5 +1,6 @@
 import React from 'react';
 import { Header } from './Header';
+import { LiveSupportWidget } from './LiveSupportWidget';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -36,6 +37,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </motion.div>
         </AnimatePresence>
       </main>
+      {!isAdminPath && <LiveSupportWidget />}
     </div>
   );
 }

@@ -383,6 +383,8 @@ export interface SiteThemeConfig {
   footerTelegram?: string;
   footerImo?: string;
   footerLiveChat?: string;
+  liveChatUrl?: string;
+  liveChatEnabled?: boolean;
   footerLicenseBoard?: string;
   footerLicenseSerial?: string;
   footerGccCompliance?: string;
@@ -570,11 +572,13 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
   agentEnabled: true,
   agentInstructions: 'You can deposit, withdraw or pay commission directly through our authorized local agents via WhatsApp, IMO or Telegram. Click any agent button below to initiate an instant chat. After transferring the money, please provide the details below.',
   // Footer customizer fields default values
-  footerEmail: 'support@draw.com',
-  footerWhatsapp: '+1 234 567 890',
-  footerTelegram: '@drawsupport',
-  footerImo: 'Live IMO',
-  footerLiveChat: '24/7 Agent',
+  footerEmail: 'support@globallottery.com',
+  footerWhatsapp: 'https://wa.me/8801986259552',
+  footerTelegram: 'https://t.me/md_meshkat_payal',
+  footerImo: 'https://imo.im/8801986259552',
+  footerLiveChat: 'https://tawk.to',
+  liveChatUrl: 'https://tawk.to',
+  liveChatEnabled: true,
   footerLicenseBoard: 'Curacao eGaming Regulatory Authority',
   footerLicenseSerial: '#1668/JAZ - 2026 AUDITED LOTTERY PROTOCOL',
   footerGccCompliance: 'GCC-L-984210',
