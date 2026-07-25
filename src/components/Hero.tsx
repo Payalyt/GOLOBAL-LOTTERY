@@ -80,7 +80,8 @@ export function Hero() {
         : 'linear-gradient(135deg, rgba(10, 10, 15, 0.95) 35%, rgba(15, 15, 25, 0.5) 65%, rgba(0, 0, 0, 0.95) 100%)';
         
       bgStyle = {
-        backgroundImage: `${shadowGradient}, url(${resolvedImageUrl})`,
+        backgroundImage: `url(${resolvedImageUrl})`,
+        backgroundColor: '#0a0a0f',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         borderColor: `${siteConfig.primaryHex}40`
@@ -95,17 +96,27 @@ export function Hero() {
       <div 
         className={`relative w-full overflow-hidden rounded-[12px] sm:rounded-[24px] md:rounded-[32px] ${
           hasText 
-            ? 'min-h-[160px] xs:min-h-[190px] sm:min-h-[340px] md:min-h-[420px] p-3 xs:p-4 sm:p-8 md:p-12' 
-            : 'aspect-[2.1/1] sm:aspect-[2.4/1] md:aspect-[2.6/1] p-0'
-        } flex flex-col md:flex-row items-center justify-between shadow-xl sm:shadow-2xl border transition-all duration-750 ease-in-out`}
+            ? 'min-h-[160px] xs:min-h-[190px] sm:min-h-[340px] md:min-h-[420px] p-3 xs:p-4 sm:p-8 md:p-12 flex flex-col md:flex-row items-center justify-between' 
+            : 'w-full aspect-[16/9] sm:aspect-[2.2/1] md:aspect-[2.5/1] min-h-[160px] xs:min-h-[200px] sm:min-h-[320px] md:min-h-[400px] p-0'
+        } shadow-xl sm:shadow-2xl border border-white/10 transition-all duration-750 ease-in-out cursor-pointer`}
         style={bgStyle}
+        onClick={() => !hasText && banner.linkUrl && navigate(banner.linkUrl)}
       >
+        {/* Full Image Banner Render when no overlay text is set */}
+        {!hasText && resolvedImageUrl && (
+          <img 
+            src={resolvedImageUrl} 
+            alt={banner.title || "Promotional Banner"} 
+            className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+          />
+        )}
+
         {/* Absolute ambient light overlays */}
-        {banner.bgType === 'image' && !banner.hideShadow && hasText && (
+        {hasText && banner.bgType === 'image' && !banner.hideShadow && (
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent pointer-events-none" />
         )}
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-white/10 via-transparent to-white/10 pointer-events-none" />
-        {!banner.hideShadow && hasText && (
+        {hasText && !banner.hideShadow && (
           <div className="absolute bottom-0 left-1/4 w-1/2 h-[120px] bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
         )}
         
@@ -114,13 +125,13 @@ export function Hero() {
           <>
             <button 
               onClick={handlePrevSlide}
-              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 text-white hover:scale-105 active:scale-95 transition-all z-20 cursor-pointer hidden sm:flex"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 text-white hover:scale-105 active:scale-95 transition-all z-20 cursor-pointer flex"
             >
               <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button 
               onClick={handleNextSlide}
-              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 text-white hover:scale-105 active:scale-95 transition-all z-20 cursor-pointer hidden sm:flex"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 text-white hover:scale-105 active:scale-95 transition-all z-20 cursor-pointer flex"
             >
               <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
@@ -245,7 +256,7 @@ export function Hero() {
           <img 
             src={resolveBannerImage(siteConfig.bannerMascotUrl)} 
             alt="GLOBAL Lottery Winner" 
-            className="w-full object-cover scale-[1.02] group-hover:scale-105 transition-transform duration-[1200ms] h-[100px] xs:h-[130px] sm:h-[280px] md:h-[320px]"
+            className="w-full object-contain group-hover:scale-105 transition-transform duration-[1200ms] h-[120px] xs:h-[150px] sm:h-[280px] md:h-[320px]"
             referrerPolicy="no-referrer"
             onError={(e) => {
               e.currentTarget.src = "/images/emirates_winner_mascot_1781774955947.jpg";

@@ -123,10 +123,11 @@ export function GameGrid() {
           else if (game.bgHex) themeColor = game.bgHex;
 
           let cardStyle: React.CSSProperties = {};
+          const hasCustomImage = game.cardBgType === 'image' && Boolean(game.cardBgImage);
           
-          if (game.cardBgType === 'image' && game.cardBgImage) {
+          if (hasCustomImage) {
             cardStyle = {
-              backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.8) 100%), url(${resolveBannerImage(game.cardBgImage)})`,
+              backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0) 65%, rgba(0, 0, 0, 0.8) 100%), url(${resolveBannerImage(game.cardBgImage!)})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             };
@@ -204,46 +205,76 @@ export function GameGrid() {
               }}
               className="cursor-pointer group rounded-2xl sm:rounded-3xl overflow-hidden select-none flex flex-col justify-between w-[220px] xs:w-[250px] sm:w-[290px] shrink-0 snap-start border border-transparent dark:border-white/5 bg-transparent"
             >
-              <div className="text-white p-3 sm:p-6 h-[270px] sm:h-[400px] flex flex-col justify-between relative" style={cardStyle}>
-                <div className="flex justify-between items-center w-full">
-                  <div className="flex items-center gap-1">
-                    <span className="font-extrabold text-[11px] sm:text-base tracking-tighter uppercase">{game.name.split(' ')[0]}</span>
+              <div className="text-white p-3 sm:p-5 h-[280px] sm:h-[410px] flex flex-col justify-between relative" style={cardStyle}>
+                {/* Top header bar */}
+                <div className="flex justify-between items-center w-full z-10">
+                  <div className="flex items-center gap-1 bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10">
+                    <span className="font-extrabold text-[10px] sm:text-xs tracking-tighter uppercase">{game.name.split(' ')[0]}</span>
                     {(game.name.trim().toUpperCase() === 'THAI GOVT LOTTERY' || game.name.trim().toUpperCase() === 'THAI GOVE KOTTERY' || game.name.trim().toUpperCase() === 'LOTTERY' || game.name.trim().toUpperCase().includes('THAI')) ? (
-                      <img src="https://i.postimg.cc/d0hfdLyv/THAI.webp" alt="THAI" className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-cover" />
+                      <img src="https://i.postimg.cc/d0hfdLyv/THAI.webp" alt="THAI" className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full object-cover" />
                     ) : (
-                      <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white font-black text-[9px] sm:text-[11px] flex items-center justify-center" style={{ color: themeColor }}>
+                      <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-white font-black text-[8px] sm:text-[10px] flex items-center justify-center" style={{ color: themeColor }}>
                         {circleContent}
                       </span>
                     )}
                   </div>
-                  <span className="text-[7.5px] sm:text-[10px] font-bold opacity-80 uppercase tracking-widest">{game.drawTime}</span>
+                  <span className="text-[7.5px] sm:text-[9.5px] font-extrabold bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10 uppercase tracking-wider text-amber-300">
+                    {game.drawTime}
+                  </span>
                 </div>
 
-                <div className="text-center my-auto flex flex-col justify-center items-center">
-                  <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.1em] text-white/70 block">{headerTextTranslated}</span>
-                  <p className="text-base xs:text-lg sm:text-3xl font-black tracking-tight text-white mt-0.5 sm:mt-1 leading-tight select-all">
-                    {prizeLabel}
-                  </p>
-                  {subtitleExtra && (
-                    <span className="text-[7.5px] sm:text-[10px] font-black uppercase text-yellow-300 tracking-wider mt-0.5 sm:mt-1 block">
-                      {subtitleExtra}
+                {hasCustomImage ? (
+                  <>
+                    {/* Empty spacer so the image artwork and pre-printed prize graphics in center remain 100% visible and unblocked */}
+                    <div className="flex-1" />
+
+                    {/* Compact timer box positioned neatly in the lower empty area above play button */}
+                    <div className="z-10 w-full mb-2 sm:mb-2.5 flex justify-center">
+                      <div className="bg-black/60 backdrop-blur-md border border-white/15 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-2xl inline-flex flex-col items-center shadow-xl">
+                        <span className="text-[7px] sm:text-[8px] font-black uppercase tracking-widest text-amber-300 block mb-0.5 sm:mb-1">
+                          {language === 'en' ? 'NEXT DRAW' : 'পরবর্তী ড্র'}
+                        </span>
+                        {game.name === 'SCRATCH CARDS' ? (
+                          <div className="bg-amber-500 text-black px-3 py-0.5 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest">
+                            {language === 'en' ? 'INSTANT PLAY' : 'তাৎক্ষণিক খেলুন'}
+                          </div>
+                        ) : (
+                          <CountdownTimer targetDate={drawDateObj} />
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* Center Content for standard cards without custom banner image */
+                  <div className="text-center my-auto flex flex-col justify-center items-center z-10 px-1 py-1">
+                    <span className="text-[7.5px] sm:text-[9.5px] font-black uppercase tracking-[0.12em] text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] block">
+                      {headerTextTranslated}
                     </span>
-                  )}
-                  <div className="mt-3 sm:mt-6 w-full text-center">
-                    <span className="text-[7.5px] sm:text-[9px] font-black uppercase tracking-widest text-white/50 block">
-                      {language === 'en' ? 'NEXT DRAW' : 'পরবর্তী ড্র'}
-                    </span>
-                    <div className="mt-1.5 sm:mt-2.5">
-                      {game.name === 'SCRATCH CARDS' ? (
-                        <div className="bg-white/20 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest inline-block">
-                          {language === 'en' ? 'INSTANT PLAY' : 'তাৎক্ষণিক খেলুন'}
-                        </div>
-                      ) : (
-                        <CountdownTimer targetDate={drawDateObj} />
-                      )}
+                    <p className="text-lg xs:text-xl sm:text-3xl font-black tracking-tight text-white drop-shadow-[0_3px_8px_rgba(0,0,0,0.95)] mt-0.5 sm:mt-1 leading-none select-all">
+                      {prizeLabel}
+                    </p>
+                    {subtitleExtra && (
+                      <span className="text-[7.5px] sm:text-[10px] font-black uppercase text-yellow-300 tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] mt-1 block">
+                        {subtitleExtra}
+                      </span>
+                    )}
+
+                    <div className="mt-2.5 sm:mt-4 w-full text-center flex justify-center">
+                      <div className="bg-black/50 backdrop-blur-md border border-white/15 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl sm:rounded-2xl inline-flex flex-col items-center shadow-xl">
+                        <span className="text-[7px] sm:text-[8.5px] font-black uppercase tracking-widest text-amber-300/90 block mb-1">
+                          {language === 'en' ? 'NEXT DRAW' : 'পরবর্তী ড্র'}
+                        </span>
+                        {game.name === 'SCRATCH CARDS' ? (
+                          <div className="bg-amber-500 text-black px-3 py-0.5 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest">
+                            {language === 'en' ? 'INSTANT PLAY' : 'তাৎক্ষণিক খেলুন'}
+                          </div>
+                        ) : (
+                          <CountdownTimer targetDate={drawDateObj} />
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 <div className="z-10 w-full flex justify-center mt-auto">
                   <motion.button 

@@ -530,9 +530,10 @@ const GameEditor: React.FC<{ game: DynamicGame, updateDynamicGame: any, deleteDy
 
   // Calculate live preview style
   let previewStyle: React.CSSProperties = {};
-  if (localGame.cardBgType === 'image' && localGame.cardBgImage) {
+  const hasCustomImagePreview = localGame.cardBgType === 'image' && Boolean(localGame.cardBgImage);
+  if (hasCustomImagePreview) {
     previewStyle = {
-      backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.85) 100%), url(${localGame.cardBgImage})`,
+      backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0) 65%, rgba(0, 0, 0, 0.8) 100%), url(${localGame.cardBgImage})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
     };
@@ -893,37 +894,71 @@ const GameEditor: React.FC<{ game: DynamicGame, updateDynamicGame: any, deleteDy
               Live Preview
             </span>
             <div 
-              className="rounded-2xl h-[220px] p-4 flex flex-col justify-between text-white relative shadow-lg overflow-hidden border border-white/10"
+              className="rounded-2xl h-[240px] p-4 flex flex-col justify-between text-white relative shadow-lg overflow-hidden border border-white/10"
               style={previewStyle}
             >
               {/* Header info */}
-              <div className="flex justify-between items-center w-full">
-                <span className="font-extrabold text-xs uppercase tracking-tighter">{localGame.name || 'GAME'}</span>
-                <span className="text-[8px] font-bold bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <div className="flex justify-between items-center w-full z-10">
+                <span className="font-extrabold text-xs uppercase tracking-tighter bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10">{localGame.name || 'GAME'}</span>
+                <span className="text-[8px] font-bold bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full uppercase tracking-wider text-amber-300 border border-white/10">
                   {localGame.drawTime || 'SUNDAY'}
                 </span>
               </div>
 
-              {/* Middle Prize & timer preview */}
-              <div className="text-center my-auto">
-                <span className="text-[7px] font-black tracking-widest text-white/70 block uppercase">GRAND PRIZE</span>
-                <p className="text-xl font-black tracking-tight leading-tight mt-0.5 text-white">
-                  {localGame.prize || '$10,000,000'}
-                </p>
-                
-                <div className="mt-3.5 flex gap-1 justify-center">
-                  {['01', '12', '45', '56'].map((num, i) => (
-                    <div key={i} className="flex flex-col items-center">
-                      <div className="bg-black/35 text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-bold">
-                        {num}
+              {hasCustomImagePreview ? (
+                <>
+                  {/* Empty center area for unblocked image graphic artwork */}
+                  <div className="flex-1" />
+
+                  {/* Compact timer box in lower empty area */}
+                  <div className="z-10 w-full mb-1.5 flex justify-center">
+                    <div className="bg-black/60 backdrop-blur-md border border-white/15 px-2 py-1 rounded-xl inline-flex flex-col items-center shadow-lg">
+                      <span className="text-[6.5px] font-black uppercase tracking-widest text-amber-300 block mb-0.5">
+                        NEXT DRAW
+                      </span>
+                      <div className="flex gap-1 justify-center">
+                        {['01', '12', '45', '56'].map((num, i) => (
+                          <div key={i} className="flex flex-col items-center">
+                            <div className="bg-black/40 text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-bold">
+                              {num}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
+                  </div>
+                </>
+              ) : (
+                /* Middle Prize & timer preview for standard card */
+                <div className="text-center my-auto z-10 px-1 py-1">
+                  <span className="text-[7.5px] font-black tracking-[0.12em] text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] block uppercase">
+                    GRAND PRIZE
+                  </span>
+                  <p className="text-xl font-black tracking-tight leading-tight mt-0.5 text-white drop-shadow-[0_3px_8px_rgba(0,0,0,0.95)]">
+                    {localGame.prize || '$10,000,000'}
+                  </p>
+                  
+                  <div className="mt-2 flex justify-center">
+                    <div className="bg-black/50 backdrop-blur-md border border-white/15 px-2.5 py-1 rounded-xl inline-flex flex-col items-center shadow-lg">
+                      <span className="text-[6.5px] font-black uppercase tracking-widest text-amber-300/90 block mb-0.5">
+                        NEXT DRAW
+                      </span>
+                      <div className="flex gap-1 justify-center">
+                        {['01', '12', '45', '56'].map((num, i) => (
+                          <div key={i} className="flex flex-col items-center">
+                            <div className="bg-black/40 text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-bold">
+                              {num}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Footer play button preview */}
-              <div className="w-full flex justify-center mt-auto">
+              <div className="w-full flex justify-center mt-auto z-10">
                 <div className="w-full text-center bg-white/20 border border-white/10 text-white font-extrabold text-[8px] tracking-wider uppercase py-1.5 rounded-full">
                   PLAY FOR ${localGame.price || 10}
                 </div>
