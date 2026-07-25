@@ -209,7 +209,7 @@ export function Header() {
             )}
 
             <Link to="/" className="flex items-center gap-1.5 sm:gap-2.5 leading-none select-none shrink-0">
-              {/* Premium App Logo */}
+              {/* Premium 3D App Logo */}
               {siteConfig.logoImageUrl ? (
                 <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 overflow-hidden shrink-0 flex items-center justify-center">
                   <img 
@@ -220,11 +220,13 @@ export function Header() {
                   />
                 </div>
               ) : (
-                <div className="relative w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-[#E1BC4A] to-yellow-600 flex items-center justify-center shadow-md shadow-amber-500/20 overflow-hidden shrink-0 flex">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-                  </svg>
-                  <div className="absolute inset-0 bg-white/10 opacity-50 mix-blend-overlay" />
+                <div className="relative w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center shrink-0">
+                  <img 
+                    src="/src/assets/images/3d_lottery_logo_1784951997317.jpg" 
+                    alt="GLOBAL 3D Logo" 
+                    className="w-full h-full object-contain rounded-xl drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform"
+                    referrerPolicy="no-referrer"
+                  />
                 </div>
               )}
               <div className="hidden md:flex flex-col text-left overflow-hidden mt-0.5">

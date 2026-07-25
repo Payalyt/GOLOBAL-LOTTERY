@@ -2,7 +2,7 @@ import { toast } from "sonner";
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, UserProfile } from '../context/AuthContext';
-import { ShieldAlert, User, Key, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { ShieldAlert, User, Key, ArrowRight, Eye, EyeOff, X } from 'lucide-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -19,6 +19,7 @@ export function Login() {
   const [loading, setLoading] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
+  const [isFormVisible, setIsFormVisible] = useState(true);
   // Forgot password states
   const [isForgotMode, setIsForgotMode] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
@@ -30,7 +31,7 @@ export function Login() {
       emailAddress: "Email Address",
       password: "Password",
       forgotPassword: "Forgot Password?",
-      signInToDashboard: "Sign In to Dashboard",
+      signInToDashboard: "Login",
       newToLottery: "New to GLOBAL Lottery?",
       registerAccount: "Register account",
       secureResetPortal: "Secure Password Reset Portal",
@@ -58,7 +59,7 @@ export function Login() {
       emailAddress: "ইমেইল ঠিকানা",
       password: "পাসওয়ার্ড",
       forgotPassword: "পাসওয়ার্ড ভুলে গেছেন?",
-      signInToDashboard: "ড্যাশবোর্ডে লগইন করুন",
+      signInToDashboard: "লগইন",
       newToLottery: "গ্লোবাল লটারিতে নতুন?",
       registerAccount: "নিবন্ধন করুন",
       secureResetPortal: "নিরাপদ পাসওয়ার্ড রিসেট পোর্টাল",
@@ -316,31 +317,54 @@ export function Login() {
   };
 
   return (
-    <div className="bg-[#F3F4F6] dark:bg-[#080c14] min-h-screen py-12 px-4 text-gray-900 dark:text-zinc-100 flex flex-col justify-center font-roboto-sans transition-colors duration-300">
-      <div className="max-w-md w-full mx-auto bg-white dark:bg-[#101622] rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.25)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden border border-gray-200/60 dark:border-zinc-800/60 font-roboto-sans relative">
+    <div className="relative min-h-screen py-12 px-4 text-gray-900 dark:text-zinc-100 flex flex-col justify-center items-center font-roboto-sans transition-colors duration-300 overflow-hidden">
+      {/* Full Screen Lottery Poster Background */}
+      <div className="fixed inset-0 z-0">
+        <img 
+          src="/src/assets/images/lottery_login_poster_1784951984139.jpg" 
+          alt="Lottery Poster Background" 
+          className="w-full h-full object-cover scale-105 filter brightness-[0.55] contrast-125"
+          referrerPolicy="no-referrer"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-zinc-950/20 backdrop-blur-[1px]" />
+      </div>
+
+      {isFormVisible ? (
+        <div className="max-w-md w-full mx-auto bg-white/95 dark:bg-[#101622]/95 backdrop-blur-xl rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.85)] overflow-hidden border border-white/20 dark:border-zinc-700/50 font-roboto-sans relative z-10 transition-all duration-300 transform scale-100 animate-in fade-in zoom-in-95">
+          
+          {/* Close (X) button to hide form & view full poster wallpaper */}
+          <button
+            type="button"
+            onClick={() => setIsFormVisible(false)}
+            className="absolute top-4 left-4 p-2 bg-gray-100/80 dark:bg-zinc-800/80 hover:bg-red-500 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-zinc-300 rounded-full transition-all cursor-pointer z-20 shadow-md active:scale-95"
+            title={language === 'en' ? "Close Form & View Poster" : "লগইন ফরম বন্ধ করুন"}
+          >
+            <X className="w-4.5 h-4.5" />
+          </button>
         
-        {/* Luxury Header Area with SSL Badge and Logo */}
+        {/* Luxury Header Area with SSL Badge and 3D Logo */}
         <div className="p-6 sm:p-8 pb-4 text-center relative overflow-hidden">
           {/* SSL Badge in top right */}
-          <div className="absolute top-4 right-4 bg-gray-100 dark:bg-[#181f2f] border border-gray-200/50 dark:border-zinc-800/80 px-3 py-1 rounded-full text-[8px] font-black tracking-widest text-amber-500 dark:text-amber-400 uppercase select-none">
+          <div className="absolute top-4 right-4 bg-zinc-100 dark:bg-[#181f2f] border border-zinc-200/50 dark:border-zinc-800/80 px-3 py-1 rounded-full text-[8px] font-black tracking-widest text-amber-500 dark:text-amber-400 uppercase select-none shadow-sm">
             {t('secureSsl')}
           </div>
           
-          {/* Custom Designed App Logo Graphic */}
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 via-[#E1BC4A] to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/30 mb-5 border border-white/20 relative mt-4">
+          {/* Pure 3D Logo Graphic - No Yellow Background Tile */}
+          <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center mb-3 relative mt-2">
             {siteConfig.logoImageUrl ? (
               <img 
                 src={resolveBannerImage(siteConfig.logoImageUrl)} 
                 alt="App Logo" 
-                className="w-12 h-12 object-contain rounded-xl"
+                className="w-full h-full object-contain"
               />
             ) : (
-              <svg className="w-9 h-9 text-white drop-shadow-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2.5" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m0 16v2M2 12h2m16 0h2m-3.172-6.828l-1.414 1.414M5.586 18.414l-1.414 1.414m0-12.728l1.414 1.414m11.314 11.314l1.414 1.414" />
-              </svg>
+              <img 
+                src="/src/assets/images/3d_lottery_logo_1784951997317.jpg" 
+                alt="3D Lottery Logo" 
+                className="w-full h-full object-contain rounded-2xl drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)] transform hover:scale-105 transition-transform"
+                referrerPolicy="no-referrer"
+              />
             )}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent rounded-2xl" />
           </div>
 
           <h2 className="text-2xl font-black tracking-[0.18em] text-zinc-900 dark:text-white uppercase">
@@ -492,8 +516,52 @@ export function Login() {
           )}
 
         </div>
-
       </div>
+      ) : (
+        /* Poster View Mode when Login form is closed */
+        <div className="relative z-10 flex flex-col items-center justify-center text-center max-w-md w-full mx-auto px-4 animate-in fade-in zoom-in-95 duration-300">
+          <div className="bg-zinc-950/85 backdrop-blur-2xl p-8 sm:p-10 rounded-[2.5rem] border border-white/20 shadow-[0_30px_70px_rgba(0,0,0,0.9)] flex flex-col items-center w-full relative overflow-hidden">
+            {/* Top Glow Accent */}
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-24 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mb-4 relative drop-shadow-[0_12px_25px_rgba(0,0,0,0.8)]">
+              <img 
+                src="/src/assets/images/3d_lottery_logo_1784951997317.jpg" 
+                alt="3D Lottery Logo" 
+                className="w-full h-full object-contain rounded-2xl transform hover:scale-105 transition-transform"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-[0.18em] text-white mb-2 drop-shadow-md">
+              {t('globalLottery')}
+            </h2>
+            <p className="text-xs text-amber-400 font-black uppercase tracking-widest mb-8">
+              {language === 'en' ? 'Full Poster View Mode Active' : 'পোস্টার ভিউ মোড সক্রিয়'}
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => setIsFormVisible(true)}
+                className="flex-1 py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-white text-xs shadow-xl hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-white/20"
+                style={{ backgroundColor: siteConfig.primaryHex || '#FF003C' }}
+              >
+                <User className="w-4 h-4 stroke-[2.5]" />
+                {t('signInToDashboard')}
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-zinc-300 text-xs bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700 transition-all cursor-pointer active:scale-95 shadow-lg"
+              >
+                {language === 'en' ? 'Back to Home' : 'হোমে ফিরে যান'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -51,6 +51,7 @@ export function Register() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isFormVisible, setIsFormVisible] = useState(true);
 
   // Real-time validation checks
   const usernameRegex = /^[a-zA-Z0-9_\s-]{3,30}$/;
@@ -355,23 +356,48 @@ export function Register() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-6 sm:mt-10 p-4 font-roboto-sans">
-      <div className="bg-white dark:bg-zinc-900 p-6 sm:p-8 border border-gray-200 dark:border-zinc-800 rounded-3xl shadow-xl text-gray-950 dark:text-zinc-100 relative font-roboto-sans">
-        <button
-          onClick={() => navigate('/')}
-          className="absolute right-4 top-4 p-2 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-full transition-colors cursor-pointer"
-          aria-label="Close"
-        >
-          <X className="w-5 h-5 text-gray-600 dark:text-zinc-400" />
-        </button>
-        <h2 className="text-2xl font-black tracking-tight mb-2 uppercase text-gray-900 dark:text-zinc-100">
-          {language === 'en' ? 'Sign Up' : 'নিবন্ধন করুন'}
-        </h2>
-        <p className="text-xs text-gray-500 dark:text-zinc-400 mb-6 uppercase tracking-wider font-bold">
-          {language === 'en' 
-            ? 'Create your player account with mixed-case support' 
-            : 'আপনার প্লেয়ার অ্যাকাউন্ট তৈরি করুন'}
-        </p>
+    <div className="relative min-h-screen py-8 px-4 text-gray-900 dark:text-zinc-100 flex flex-col justify-center items-center font-roboto-sans transition-colors duration-300 overflow-hidden">
+      {/* Full Screen Lottery Poster Background */}
+      <div className="fixed inset-0 z-0">
+        <img 
+          src="/src/assets/images/lottery_login_poster_1784951984139.jpg" 
+          alt="Lottery Poster Background" 
+          className="w-full h-full object-cover scale-105 filter brightness-[0.55] contrast-125"
+          referrerPolicy="no-referrer"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-zinc-950/20 backdrop-blur-[1px]" />
+      </div>
+
+      {isFormVisible ? (
+        <div className="max-w-md w-full mx-auto bg-white/95 dark:bg-[#101622]/95 backdrop-blur-xl p-6 sm:p-8 border border-white/20 dark:border-zinc-700/50 rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.85)] text-gray-950 dark:text-zinc-100 relative font-roboto-sans z-10 my-4 animate-in fade-in zoom-in-95 duration-300">
+          <button
+            onClick={() => setIsFormVisible(false)}
+            className="absolute left-4 top-4 p-2 bg-gray-100/80 dark:bg-zinc-800/80 hover:bg-red-500 hover:text-white dark:hover:bg-red-600 rounded-full transition-all cursor-pointer z-20 shadow-md active:scale-95"
+            aria-label="Close"
+            title={language === 'en' ? "Close Form & View Poster" : "নিবন্ধন ফরম বন্ধ করুন"}
+          >
+            <X className="w-4.5 h-4.5 text-gray-600 dark:text-zinc-300 hover:text-white" />
+          </button>
+
+        {/* 3D Logo Header */}
+        <div className="text-center mb-4">
+          <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center mb-2 relative">
+            <img 
+              src="/src/assets/images/3d_lottery_logo_1784951997317.jpg" 
+              alt="3D Lottery Logo" 
+              className="w-full h-full object-contain rounded-2xl drop-shadow-[0_8px_20px_rgba(0,0,0,0.7)]"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <h2 className="text-2xl font-black tracking-tight uppercase text-gray-900 dark:text-zinc-100">
+            {language === 'en' ? 'Sign Up' : 'নিবন্ধন করুন'}
+          </h2>
+          <p className="text-[10px] text-gray-500 dark:text-zinc-400 mt-1 uppercase tracking-wider font-bold">
+            {language === 'en' 
+              ? 'Create your player account to start winning' 
+              : 'আপনার প্লেয়ার অ্যাকাউন্ট তৈরি করুন'}
+          </p>
+        </div>
         
         {successMsg && (
           <div className="mb-4 p-3 bg-green-50 dark:bg-emerald-950/20 text-green-700 dark:text-emerald-450 rounded-lg text-sm font-semibold border border-green-100 dark:border-emerald-900/30 font-roboto-sans">
@@ -692,13 +718,57 @@ export function Register() {
             )}
           </button>
         </form>
-        <p className="mt-5 text-sm text-center text-gray-500 font-roboto-sans">
+        <p className="mt-5 text-sm text-center text-gray-500 dark:text-zinc-400 font-roboto-sans">
           {language === 'en' ? 'Already have an account? ' : 'ইতিমধ্যে অ্যাকাউন্ট আছে? '}
-          <Link to="/login" className="text-black font-extrabold hover:underline">
+          <Link to="/login" className="text-amber-500 font-extrabold hover:underline">
             {language === 'en' ? 'Log in' : 'লগইন করুন'}
           </Link>
         </p>
       </div>
+      ) : (
+        /* Poster View Mode when Register form is closed */
+        <div className="relative z-10 flex flex-col items-center justify-center text-center max-w-md w-full mx-auto px-4 animate-in fade-in zoom-in-95 duration-300">
+          <div className="bg-zinc-950/85 backdrop-blur-2xl p-8 sm:p-10 rounded-[2.5rem] border border-white/20 shadow-[0_30px_70px_rgba(0,0,0,0.9)] flex flex-col items-center w-full relative overflow-hidden">
+            {/* Top Glow Accent */}
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-24 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mb-4 relative drop-shadow-[0_12px_25px_rgba(0,0,0,0.8)]">
+              <img 
+                src="/src/assets/images/3d_lottery_logo_1784951997317.jpg" 
+                alt="3D Lottery Logo" 
+                className="w-full h-full object-contain rounded-2xl transform hover:scale-105 transition-transform"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-[0.18em] text-white mb-2 drop-shadow-md">
+              GLOBAL LOTTERY
+            </h2>
+            <p className="text-xs text-amber-400 font-black uppercase tracking-widest mb-8">
+              {language === 'en' ? 'Full Poster View Mode Active' : 'পোস্টার ভিউ মোড সক্রিয়'}
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => setIsFormVisible(true)}
+                className="flex-1 py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-white text-xs bg-gradient-to-r from-amber-500 to-yellow-600 shadow-xl hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-white/20"
+              >
+                {language === 'en' ? 'Open Sign Up' : 'নিবন্ধন ফরম খুলুন'}
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-white text-xs shadow-lg hover:brightness-105 transition-all cursor-pointer border border-white/20"
+                style={{ backgroundColor: siteConfig.primaryHex || '#FF003C' }}
+              >
+                {language === 'en' ? 'Log In' : 'লগইন'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
