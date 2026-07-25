@@ -220,14 +220,14 @@ export function Header() {
                   />
                 </div>
               ) : (
-                <div className="relative w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-[#E1BC4A] to-yellow-600 flex items-center justify-center shadow-md shadow-amber-500/20 overflow-hidden shrink-0 hidden sm:flex">
+                <div className="relative w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-[#E1BC4A] to-yellow-600 flex items-center justify-center shadow-md shadow-amber-500/20 overflow-hidden shrink-0 flex">
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                   </svg>
                   <div className="absolute inset-0 bg-white/10 opacity-50 mix-blend-overlay" />
                 </div>
               )}
-              <div className={`flex flex-col text-left overflow-hidden mt-0.5 ${isLoggedIn ? 'hidden sm:flex' : ''}`}>
+              <div className="hidden md:flex flex-col text-left overflow-hidden mt-0.5">
                 <span className="text-[18px] sm:text-[26px] font-bodoni font-black tracking-wide text-zinc-900 dark:text-zinc-50 leading-none truncate flex items-center">
                   {language === 'en' ? 'GLOBAL' : 'গ্লোবাল'}
                   <span className="ml-1.5 sm:ml-2 font-bold" style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>

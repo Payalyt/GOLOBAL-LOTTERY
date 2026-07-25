@@ -350,15 +350,37 @@ export function GameDetail() {
       navigate('/login');
       return;
     }
+
+    const totalCost = validTickets.length * game.price;
+    if (user.balance < totalCost) {
+      toast.error(
+        language === 'en'
+          ? `Insufficient balance! You need $${totalCost.toFixed(2)} but have $${user.balance.toFixed(2)}.`
+          : `আপনার ব্যালেন্স পর্যাপ্ত নয়! আপনার প্রয়োজন $${totalCost.toFixed(2)} কিন্তু আপনার আছে $${user.balance.toFixed(2)}.`
+      );
+      return;
+    }
     
-    addTickets(validTickets.map(t => ({
+    const formattedTickets = validTickets.map(t => ({
       id: t.id,
       numbers: t.numbers,
       price: game.price,
       gameName: game.name,
       isFavorite: t.isFavorite
-    })));
-    navigate('/cart');
+    }));
+
+    const success = buyTickets(formattedTickets);
+    if (success) {
+      toast.success(
+        language === 'en' 
+          ? `Successfully purchased ${validTickets.length} ticket(s) from your wallet!`
+          : `সফলভাবে আপনার ওয়ালেট থেকে ${validTickets.length}টি টিকিট কেনা হয়েছে!`
+      );
+      // Reset tickets
+      setTickets([{ id: Date.now(), numbers: [], isFavorite: false }]);
+    } else {
+      toast.error('Purchase failed. Please try again.');
+    }
   };
 
   const toggleFavorite = (ticketId: number, currentNumbers: number[]) => {
@@ -754,7 +776,7 @@ export function GameDetail() {
                   onClick={handleAddToCart}
                   className={`${brandBg} hover:opacity-95 text-white font-black text-xs tracking-widest uppercase p-4 px-8 rounded-xl leading-none scale-100 transition-transform active:scale-95 shadow-md`}
                 >
-                  ADD TO CART
+                  BUY NOW
                 </button>
               </div>
 

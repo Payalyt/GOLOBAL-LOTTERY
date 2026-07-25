@@ -193,6 +193,16 @@ export function RaffleDetail() {
       return;
     }
 
+    const totalCost = quantity * config.pricePerTicket;
+    if (user.balance < totalCost) {
+      toast.error(
+        language === 'en'
+          ? `Insufficient balance! You need $${totalCost.toFixed(2)} but have $${user.balance.toFixed(2)}.`
+          : `আপনার ব্যালেন্স পর্যাপ্ত নয়! আপনার প্রয়োজন $${totalCost.toFixed(2)} কিন্তু আপনার আছে $${user.balance.toFixed(2)}.`
+      );
+      return;
+    }
+
     const codes = generateTicketCodes();
     const length = 4;
     
@@ -211,8 +221,18 @@ export function RaffleDetail() {
       };
     });
     
-    addTickets(ticketsToAdd);
-    navigate('/cart');
+    const success = buyTickets(ticketsToAdd);
+    if (success) {
+      toast.success(
+        language === 'en' 
+          ? `Successfully purchased ${quantity} ticket(s) from your wallet!`
+          : `সফলভাবে আপনার ওয়ালেট থেকে ${quantity}টি টিকিট কেনা হয়েছে!`
+      );
+      setQuantity(1);
+      setManualDigits({});
+    } else {
+      toast.error('Purchase failed. Please try again.');
+    }
   };
 
   const percentageLeft = (config.ticketsLeft / config.ticketsTotal) * 100;
@@ -414,7 +434,7 @@ export function RaffleDetail() {
                   onClick={handleAddToCart}
                   className={`w-full bg-white text-zinc-950 font-black text-sm tracking-widest px-4 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all uppercase flex items-center justify-center gap-2 block ${config.btnHoverColor} active:scale-98`}
                 >
-                  <Trophy className="w-4 h-4 text-zinc-950" /> ADD TO CART
+                  <Trophy className="w-4 h-4 text-zinc-950" /> BUY NOW
                 </button>
 
               </div>
