@@ -1,4 +1,4 @@
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Shuffle, Heart, Trash2, Plus, ChevronDown, Check, HelpCircle } from 'lucide-react';

@@ -1,4 +1,4 @@
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import React, { useState } from 'react';
 import { Trash2, Heart, Sparkles, CreditCard, ShoppingBag, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
