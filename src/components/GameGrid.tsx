@@ -26,6 +26,35 @@ export function GameGrid() {
       return (a.name || '').localeCompare(b.name || '');
     });
 
+  const categories = [
+    { id: 'all', label: language === 'en' ? 'HOT GAMES' : 'হট গেমসমূহ', icon: '🔥' },
+    { id: 'lottery', label: language === 'en' ? 'LOTTERY' : 'লটারি', icon: '🎟️' },
+    { id: 'thai', label: language === 'en' ? 'THAI 6D' : 'থাই ৬ডি', icon: '🇹🇭' },
+    { id: 'raffle', label: language === 'en' ? 'RAFFLES' : 'র্যাফেল', icon: '🎁' },
+    { id: 'pick', label: language === 'en' ? 'FAST PICK' : 'ফাস্ট পিক', icon: '⚡' },
+    { id: 'scratch', label: language === 'en' ? 'SCRATCH' : 'স্ক্র্যাচ', icon: '🃏' },
+  ];
+
+  const filteredGames = listGames.filter(g => {
+    const nameUpper = (g.name || '').toUpperCase();
+    if (selectedCategory === 'lottery') {
+      return ['MEGA7', 'WILD5', 'EASY6', 'FAST5', 'LOTTERY'].some(n => nameUpper.includes(n));
+    }
+    if (selectedCategory === 'thai') {
+      return nameUpper.includes('THAI');
+    }
+    if (selectedCategory === 'raffle') {
+      return nameUpper.includes('SURE');
+    }
+    if (selectedCategory === 'pick') {
+      return nameUpper.includes('PICK');
+    }
+    if (selectedCategory === 'scratch') {
+      return nameUpper.includes('SCRATCH');
+    }
+    return true;
+  });
+
   const handleScroll = (dir: 'left' | 'right') => {
     if (scrollRef.current) {
       const offset = dir === 'left' ? -350 : 350;
@@ -34,10 +63,31 @@ export function GameGrid() {
   };
 
   return (
-    <div className="mt-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="mt-4 sm:mt-8">
+      {/* Category Bar like Betjili */}
+      <div className="flex overflow-x-auto gap-2 sm:gap-3 py-2 mb-4 scrollbar-hide snap-x select-none">
+        {categories.map((cat) => {
+          const isActive = selectedCategory === cat.id;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id as any)}
+              className={`flex items-center gap-1.5 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider whitespace-nowrap transition-all duration-200 cursor-pointer snap-start shrink-0 ${
+                isActive 
+                  ? 'bg-[#E1BC4A] text-zinc-950 shadow-md shadow-[#E1BC4A]/20 scale-[1.02]' 
+                  : 'bg-zinc-800/80 dark:bg-zinc-900/90 text-zinc-300 hover:bg-zinc-700/80 border border-zinc-700/50'
+              }`}
+            >
+              <span className="text-sm sm:text-base">{cat.icon}</span>
+              <span>{cat.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex justify-between items-center mb-4">
         <div className="flex-grow flex items-center gap-2 sm:gap-4">
-          <h3 className="text-lg sm:text-xl font-black tracking-wider text-zinc-900 dark:text-zinc-100 shrink-0 uppercase animate-fade-in">
+          <h3 className="text-base sm:text-xl font-black tracking-wider text-zinc-900 dark:text-zinc-100 shrink-0 uppercase animate-fade-in">
             {language === 'en' ? 'OUR GAMES' : 'আমাদের গেমসমূহ'}
           </h3>
           <div className="h-[2px] bg-zinc-200 dark:bg-zinc-800 flex-grow" />
@@ -58,8 +108,8 @@ export function GameGrid() {
         </div>
       </div>
 
-      <div className="flex overflow-x-auto gap-3 sm:gap-6 pb-6 pt-2 snap-x snap-mandatory scrollbar-hide" ref={scrollRef}>
-        {listGames.map((game) => {
+      <div className="flex overflow-x-auto gap-3 sm:gap-6 pb-6 pt-1 snap-x snap-mandatory scrollbar-hide" ref={scrollRef}>
+        {filteredGames.map((game) => {
           let themeColor = '#1e3c72';
           if (game.name === 'MEGA7') themeColor = '#E11D48';
           else if (game.name === 'WILD5') themeColor = '#A3E635';
@@ -152,7 +202,7 @@ export function GameGrid() {
                   navigate(`/games/${game.name}`);
                 }
               }}
-              className="cursor-pointer group rounded-2xl sm:rounded-3xl overflow-hidden select-none flex flex-col justify-between w-full sm:w-[290px] sm:flex-shrink-0 sm:snap-start border border-transparent dark:border-white/5 bg-transparent"
+              className="cursor-pointer group rounded-2xl sm:rounded-3xl overflow-hidden select-none flex flex-col justify-between w-[220px] xs:w-[250px] sm:w-[290px] shrink-0 snap-start border border-transparent dark:border-white/5 bg-transparent"
             >
               <div className="text-white p-3 sm:p-6 h-[270px] sm:h-[400px] flex flex-col justify-between relative" style={cardStyle}>
                 <div className="flex justify-between items-center w-full">

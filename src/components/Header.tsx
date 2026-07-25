@@ -191,12 +191,27 @@ export function Header() {
       </div>
 
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 sm:h-20 gap-x-4 lg:gap-x-6 xl:gap-x-8">
-          <div className="flex items-center shrink-0">
+        <div className="flex justify-between items-center h-14 sm:h-20 gap-x-2 sm:gap-x-6">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            {/* Hamburger Button on Left on Mobile */}
+            {siteConfig.slideMenuEnabled !== false && (
+              <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="lg:hidden flex flex-col justify-center items-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-400/10 hover:bg-amber-400/20 text-amber-500 border border-amber-500/20 transition-colors focus:outline-none cursor-pointer group"
+                aria-label="Toggle Menu"
+              >
+                <div className="w-4 h-3.5 sm:w-5 sm:h-4 flex flex-col justify-between relative">
+                  <span className={`w-full h-0.5 bg-amber-400 rounded-full transition-all duration-300 origin-left ${isMobileMenuOpen ? 'rotate-45 translate-x-[2px] -translate-y-[1px]' : ''}`} />
+                  <span className={`w-full h-0.5 bg-amber-400 rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0 translate-x-3' : ''}`} />
+                  <span className={`w-full h-0.5 bg-amber-400 rounded-full transition-all duration-300 origin-left ${isMobileMenuOpen ? '-rotate-45 translate-x-[2px] translate-y-[1px]' : ''}`} />
+                </div>
+              </button>
+            )}
+
             <Link to="/" className="flex items-center gap-1.5 sm:gap-2.5 leading-none select-none shrink-0">
               {/* Premium App Logo */}
               {siteConfig.logoImageUrl ? (
-                <div className="w-10 h-10 md:w-12 md:h-12 overflow-hidden shrink-0 flex items-center justify-center">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 overflow-hidden shrink-0 flex items-center justify-center">
                   <img 
                     src={resolveBannerImage(siteConfig.logoImageUrl)} 
                     alt={siteConfig.primaryLogoText || 'GLOBAL'} 
@@ -205,18 +220,18 @@ export function Header() {
                   />
                 </div>
               ) : (
-                <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-[#E1BC4A] to-yellow-600 flex items-center justify-center shadow-md shadow-amber-500/20 overflow-hidden shrink-0 hidden sm:flex">
-                  <svg className="w-5 h-5 md:w-6 md:h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <div className="relative w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-[#E1BC4A] to-yellow-600 flex items-center justify-center shadow-md shadow-amber-500/20 overflow-hidden shrink-0 hidden sm:flex">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                   </svg>
                   <div className="absolute inset-0 bg-white/10 opacity-50 mix-blend-overlay" />
                 </div>
               )}
               <div className="flex flex-col text-left overflow-hidden">
-                <span className="text-[14px] sm:text-[18px] font-black tracking-[0.2em] sm:tracking-[0.25em] text-zinc-800 dark:text-zinc-100 uppercase leading-none truncate">
+                <span className="text-[12px] sm:text-[18px] font-black tracking-[0.15em] sm:tracking-[0.25em] text-zinc-800 dark:text-zinc-100 uppercase leading-none truncate">
                   {language === 'en' ? (siteConfig.primaryLogoText === 'GLOBAL' ? 'GLOBAL' : siteConfig.primaryLogoText || 'GLOBAL') : (siteConfig.primaryLogoText === 'GLOBAL' || siteConfig.primaryLogoText === 'GLOBAL' ? 'গ্লোবাল' : siteConfig.primaryLogoText)}
                 </span>
-                <span className="text-[18px] sm:text-[24px] font-black tracking-[0.1em] sm:tracking-[0.15em] text-zinc-900 dark:text-white flex items-center justify-start mt-1 uppercase font-bold-font leading-none truncate">
+                <span className="text-[14px] sm:text-[24px] font-black tracking-[0.08em] sm:tracking-[0.15em] text-zinc-900 dark:text-white flex items-center justify-start mt-0.5 uppercase font-bold-font leading-none truncate">
                   L<span style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>O</span>TTERY
                 </span>
               </div>
@@ -297,11 +312,11 @@ export function Header() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-1.5 sm:gap-3 z-10">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 z-10">
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-1.5 sm:p-2 text-zinc-650 dark:text-zinc-400 hover:text-amber-500 dark:hover:text-yellow-400 rounded-full transition-all focus:outline-none cursor-pointer"
+              className="p-1 sm:p-2 text-zinc-600 dark:text-zinc-400 hover:text-amber-500 dark:hover:text-yellow-400 rounded-full transition-all focus:outline-none cursor-pointer"
               title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {theme === 'dark' ? (
@@ -314,7 +329,7 @@ export function Header() {
             {/* Language Toggle Button */}
             <button
               onClick={toggleLanguage}
-              className="p-1.5 sm:p-2 text-zinc-650 dark:text-zinc-400 hover:text-amber-500 dark:hover:text-yellow-400 rounded-full transition-all focus:outline-none cursor-pointer flex items-center gap-1"
+              className="p-1 sm:p-2 text-zinc-600 dark:text-zinc-400 hover:text-amber-500 dark:hover:text-yellow-400 rounded-full transition-all focus:outline-none cursor-pointer flex items-center gap-1"
               title={language === 'en' ? "বাংলায় দেখুন" : "View in English"}
             >
               <Globe className="w-4 h-4 sm:w-[19px] sm:h-[19px] text-zinc-800 dark:text-zinc-200 stroke-[2.5]" />
@@ -322,7 +337,7 @@ export function Header() {
             </button>
 
             {/* Shopping Cart Icon with Badge - Smaller on mobile */}
-            <Link to="/cart" className="relative p-1.5 sm:p-2 text-zinc-650 dark:text-zinc-400 hover:text-red-650 rounded-full transition-all" title={t('view_cart', language)}>
+            <Link to="/cart" className="relative p-1 sm:p-2 text-zinc-600 dark:text-zinc-400 hover:text-red-500 rounded-full transition-all" title={t('view_cart', language)}>
               <ShoppingCart className="w-4 h-4 sm:w-[19px] sm:h-[19px] text-zinc-800 dark:text-zinc-200 stroke-[2.5]" />
               <span style={{ backgroundColor: siteConfig.primaryHex }} className="absolute -top-0.5 -right-0.5 sm:-top-1.5 sm:-right-1.5 text-white text-[8px] sm:text-[10px] font-black w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-950">
                 {tickets.length}
@@ -330,24 +345,17 @@ export function Header() {
             </Link>
             
             {isLoggedIn && user ? (
-              <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-1.5 sm:gap-3">
                 {/* Compact wallet balance display at top for Mobile/Tablets */}
                 <div 
                   onClick={() => navigate('/my-account')}
-                  className="flex lg:hidden items-center gap-1 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 rounded-full px-2 py-1 text-emerald-600 dark:text-emerald-400 cursor-pointer select-none active:scale-95 transition-transform"
+                  className="flex items-center gap-1 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 rounded-full px-2.5 py-1 text-emerald-600 dark:text-emerald-400 cursor-pointer select-none active:scale-95 transition-transform"
                   title={t('wallet_balance', language)}
                 >
-                  <span className="text-[10px] font-black leading-none">${user.balance.toFixed(2)}</span>
+                  <span className="text-[11px] sm:text-xs font-black leading-none">${user.balance.toFixed(2)}</span>
                 </div>
 
-                {/* User Info Text - Hidden on mobile */}
-                <div 
-                  className="hidden lg:flex items-center gap-2 bg-black border border-zinc-800 rounded-xl px-3.5 py-2 shadow-md text-white"
-                >
-                  <span className="text-sm font-black text-emerald-400 leading-none">${user.balance.toFixed(2)}</span>
-                </div>
-                
-                {/* Purple initials avatar circle - Hidden on mobile, only in drawer */}
+                {/* Purple initials avatar circle - Hidden on mobile */}
                 <div 
                   onClick={() => navigate('/my-account')}
                   className="hidden lg:flex w-8 h-8 rounded-full bg-[#E9E4FA] text-[#6944BA] items-center justify-center font-black text-xs cursor-pointer select-none transition-transform active:scale-95 shadow-inner overflow-hidden"
@@ -360,8 +368,6 @@ export function Header() {
                   )}
                 </div>
 
-
-
                 <button 
                   onClick={logout} 
                   className="hidden lg:block text-[9px] font-extrabold text-amber-500 hover:underline cursor-pointer uppercase font-sans border border-amber-500/20 px-2 py-1.5 rounded hover:bg-amber-500/10"
@@ -371,27 +377,13 @@ export function Header() {
               </div>
             ) : (
               <div className="flex items-center space-x-1 sm:space-x-2">
-                <Link to="/login" className="text-[10px] sm:text-xs font-extrabold text-zinc-100 hover:text-white border border-[#2C3B69] hover:bg-[#2C3B69] rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 transition-colors uppercase bg-transparent">
+                <Link to="/register" className="text-[10px] sm:text-xs font-bold bg-white dark:bg-zinc-100 text-zinc-900 hover:bg-zinc-200 border border-zinc-300 rounded-md sm:rounded-lg px-2 sm:px-3.5 py-1.5 sm:py-2 transition-colors uppercase font-sans shadow-sm whitespace-nowrap">
+                  {language === 'en' ? 'Sign up' : 'সাইন আপ'}
+                </Link>
+                <Link to="/login" className="text-[10px] sm:text-xs font-black bg-[#E1BC4A] hover:bg-yellow-500 text-zinc-950 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors uppercase shadow-md shadow-[#E1BC4A]/20 whitespace-nowrap">
                   {t('login', language)}
                 </Link>
-                <Link to="/register" className="text-[10px] sm:text-xs font-black bg-[#E1BC4A] text-[#121D3D] hover:bg-yellow-500 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors uppercase shadow-md shadow-[#E1BC4A]/10">
-                  {t('register', language)}
-                </Link>
               </div>
-            )}
-
-            {/* Premium Custom Animated Hamburger Button (Morphic Lines) */}
-            {siteConfig.slideMenuEnabled !== false && (
-              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="lg:hidden flex flex-col justify-center items-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 transition-colors focus:outline-none cursor-pointer group"
-                aria-label="Toggle Menu"
-              >
-                <div className="w-4 h-3.5 sm:w-5 sm:h-4 flex flex-col justify-between relative">
-                  <span className={`w-full h-0.5 bg-zinc-800 dark:bg-zinc-200 rounded-full transition-all duration-300 origin-left ${isMobileMenuOpen ? 'rotate-45 translate-x-[2px] -translate-y-[1px]' : ''}`} />
-                  <span className={`w-full h-0.5 bg-zinc-800 dark:bg-zinc-200 rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0 translate-x-3' : ''}`} />
-                  <span className={`w-full h-0.5 bg-zinc-800 dark:bg-zinc-200 rounded-full transition-all duration-300 origin-left ${isMobileMenuOpen ? '-rotate-45 translate-x-[2px] translate-y-[1px]' : ''}`} />
-                </div>
-              </button>
             )}
           </div>
         </div>
