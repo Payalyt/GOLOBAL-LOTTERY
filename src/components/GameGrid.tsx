@@ -203,9 +203,9 @@ export function GameGrid() {
                   navigate(`/games/${game.name}`);
                 }
               }}
-              className="cursor-pointer group rounded-2xl sm:rounded-3xl overflow-hidden select-none flex flex-col justify-between w-[220px] xs:w-[250px] sm:w-[290px] shrink-0 snap-start border border-transparent dark:border-white/5 bg-transparent"
+              className="cursor-pointer group rounded-2xl sm:rounded-3xl overflow-hidden select-none flex flex-col justify-between w-[220px] xs:w-[250px] sm:w-[280px] h-[340px] sm:h-[400px] shrink-0 snap-start border border-transparent dark:border-white/5 bg-transparent"
             >
-              <div className="text-white p-3 sm:p-5 h-[280px] sm:h-[410px] flex flex-col justify-between relative" style={cardStyle}>
+              <div className="text-white p-3 sm:p-5 h-full flex flex-col justify-between relative" style={cardStyle}>
                 {/* Top header bar */}
                 <div className="flex justify-between items-center w-full z-10">
                   <div className="flex items-center gap-1 bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10">

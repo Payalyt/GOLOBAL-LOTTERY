@@ -48,44 +48,76 @@ export function Footer() {
                   </svg>
                 </div>
               )}
-              <div className="flex flex-col text-left mt-0.5">
-                <span className="text-[18px] sm:text-[24px] font-bodoni font-black tracking-wide text-white leading-none truncate flex items-center">
+              <div className="flex flex-col text-left leading-none select-none">
+                <span className="text-[18px] sm:text-[22px] font-black tracking-wider text-white uppercase leading-none">
                   {language === 'en' ? 'GLOBAL' : 'গ্লোবাল'}
-                  <span className="ml-1.5 sm:ml-2 font-bold" style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>
-                    {language === 'en' ? 'Lottery' : 'লটারি'}
-                  </span>
+                </span>
+                <span className="text-[9px] sm:text-[11px] font-black tracking-[0.25em] uppercase leading-none mt-0.5 sm:mt-1" style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>
+                  {language === 'en' ? 'LOTTERY' : 'লটারি'}
                 </span>
               </div>
             </div>
-            <p className="text-zinc-500 text-[11px] max-w-md font-semibold">
+            <p className="text-zinc-400 text-[11px] max-w-md font-semibold">
               {language === 'en' 
-                ? (siteConfig.footerDescEn || 'The premier lottery and sweepstakes draw in the UAE and internationally. Raising hopes and changing lives, one dream ticket at a time.') 
-                : (siteConfig.footerDescBn || 'সংযুক্ত আরব আমিরাত এবং আন্তর্জাতিকভাবে প্রধান লটারি ও সুইপস্টেক ড্র। একবারে একটি স্বপ্ন টিকিট কিনে মানুষের জীবন পরিবর্তন করা।')}
+                ? (siteConfig.footerDescEn || 'Operating since 2013 with official licenses across 148 countries worldwide. Raising hopes and changing lives, one dream ticket at a time.') 
+                : (siteConfig.footerDescBn || '২০১৩ সাল থেকে বিশ্বজুড়ে ১৪৮টি দেশে লাইসেন্সপ্রাপ্ত ও অনুমোদিত অনলাইন লটারি ড্র প্ল্যাটফর্ম। স্বপ্ন বাস্তবায়নে আমরা সর্বদা আপনার সাথে।')}
             </p>
           </div>
 
           {/* Core Support Badges */}
-          <div className="flex flex-wrap gap-4 items-center select-none">
-            <div className="bg-zinc-900 border border-zinc-800/80 rounded-xl px-4 py-2.5 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-red-650 bg-red-600 text-white font-black text-[10px] flex items-center justify-center shrink-0">18+</span>
+          <div className="flex flex-wrap gap-3 items-center select-none">
+            {/* Badge 1: 148 Countries Licensed */}
+            <div className="bg-zinc-900/90 border border-amber-500/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-[#E1BC4A] flex items-center justify-center shrink-0 border border-amber-500/20">
+                <Globe className="w-4 h-4" />
+              </div>
               <div className="leading-none text-left">
-                <span className="text-white font-black block text-[9px] uppercase tracking-wide">
+                <span className="text-white font-black block text-[10px] uppercase tracking-wide">
+                  {language === 'en' ? '148 Countries Licensed' : '১৪৮ দেশের লাইসেন্সপ্রাপ্ত'}
+                </span>
+                <span className="text-[8px] text-amber-400/90 block mt-0.5 font-bold uppercase">
+                  {language === 'en' ? 'Global Regulatory Certified' : 'আন্তর্জাতিক সার্টিফাইড ও অনুমোদিত'}
+                </span>
+              </div>
+            </div>
+
+            {/* Badge 2: Operating Since 2013 */}
+            <div className="bg-zinc-900/90 border border-emerald-500/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                <Award className="w-4 h-4" />
+              </div>
+              <div className="leading-none text-left">
+                <span className="text-white font-black block text-[10px] uppercase tracking-wide">
+                  {language === 'en' ? 'Operating Since 2013' : '২০১৩ সাল থেকে চলমান'}
+                </span>
+                <span className="text-[8px] text-emerald-400/90 block mt-0.5 font-bold uppercase">
+                  {language === 'en' ? '13+ Years World Class Trust' : '১৩+ বছরের বিশ্বস্ত অনলাইন সেবা'}
+                </span>
+              </div>
+            </div>
+
+            {/* Badge 3: 18+ Only */}
+            <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 shadow-sm">
+              <span className="w-7 h-7 rounded-lg bg-red-600 text-white font-black text-[10px] flex items-center justify-center shrink-0 shadow-sm">18+</span>
+              <div className="leading-none text-left">
+                <span className="text-white font-black block text-[10px] uppercase tracking-wide">
                   {language === 'en' ? 'Age 18+ Only' : '১৮+ বয়স শুধুমাত্র'}
                 </span>
-                <span className="text-[8px] text-zinc-500 block mt-0.5 font-bold uppercase">
+                <span className="text-[8px] text-zinc-400 block mt-0.5 font-bold uppercase">
                   {language === 'en' ? 'Responsible Play Assured' : 'দায়িত্বশীল খেলা নিশ্চিত'}
                 </span>
               </div>
             </div>
             
-            <div className="bg-zinc-900 border border-zinc-800/80 rounded-xl px-4 py-2.5 flex items-center gap-2">
+            {/* Badge 4: SSL Guaranteed */}
+            <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 shadow-sm">
               <ShieldCheck className="w-5 h-5 text-green-500 shrink-0" />
               <div className="leading-none text-left">
-                <span className="text-white font-black block text-[9px] uppercase tracking-wide">
-                  {language === 'en' ? 'SSL Guaranteed' : 'এসএসএল গ্যারান্টিযুক্ত'}
+                <span className="text-white font-black block text-[10px] uppercase tracking-wide">
+                  {language === 'en' ? 'SSL Guaranteed' : 'এসএসএল এনক্রিপ্টেড'}
                 </span>
-                <span className="text-[8px] text-zinc-500 block mt-0.5 font-bold uppercase">
-                  {language === 'en' ? '100% Encrypted Payments' : '১০০% এনক্রিপ্ট করা পেমেন্ট'}
+                <span className="text-[8px] text-zinc-400 block mt-0.5 font-bold uppercase">
+                  {language === 'en' ? '100% Encrypted Payments' : '১০০% নিরাপদ পেমেন্ট'}
                 </span>
               </div>
             </div>
@@ -520,13 +552,13 @@ export function Footer() {
           <div className="space-y-1 text-center md:text-left font-semibold">
             <p>
               {language === 'en'
-                ? (siteConfig.footerCopyrightEn || '© 2026 GLOBAL Lottery Registered Platform. All corporate marks, logos & licenses are properties of their respective governing entities.')
-                : (siteConfig.footerCopyrightBn || '© ২০২৬ গ্লোবাল লটারি রেজিস্টার্ড প্ল্যাটফর্ম। সমস্ত কর্পোরেট চিহ্ন, লোগো এবং লাইসেন্স তাদের নিজ নিজ গভর্নিং সত্তার সম্পত্তি।')}
+                ? (siteConfig.footerCopyrightEn || '© 2013-2026 GLOBAL Lottery Registered Platform. Officially Licensed across 148 Countries. All corporate marks, logos & licenses are properties of their respective governing entities.')
+                : (siteConfig.footerCopyrightBn || '© ২০১৩-২০২৬ গ্লোবাল লটারি রেজিস্টার্ড প্ল্যাটফর্ম। বিশ্বজুড়ে ১৪৮টি দেশে অনুমোদিত ও লাইসেন্সপ্রাপ্ত। সমস্ত কর্পোরেট চিহ্ন ও লাইসেন্স তাদের নিজ নিজ গভর্নিং সত্তার সম্পত্তি।')}
             </p>
             <p className="opacity-75">
               {language === 'en' 
-                ? (siteConfig.footerSubDescEn || 'This platform stimulates raffle draws, lottery statistics tracking, and lucky pick purchases with verified secure payments.')
-                : (siteConfig.footerSubDescBn || 'এই প্ল্যাটফর্মটি যাচাইকৃত নিরাপদ পেমেন্টের মাধ্যমে র‌্যাফেল ড্র, লটারির পরিসংখ্যান ট্র্যাকিং এবং লাকি পিক ক্রয় সিমুলেট করে।')}
+                ? (siteConfig.footerSubDescEn || 'Operating continuously since 2013. This platform stimulates raffle draws, lottery statistics tracking, and lucky pick purchases with verified secure payments.')
+                : (siteConfig.footerSubDescBn || '২০১৩ সাল থেকে নির্ভরযোগ্য সেবা প্রদান। এই প্ল্যাটফর্মটি লাইভ র‌্যাফেল ড্র, পরিসংখ্যান ট্র্যাকিং এবং পেমেন্ট সুবিধা নিশ্চিত করে।')}
             </p>
           </div>
 

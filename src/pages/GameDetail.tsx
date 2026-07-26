@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Shuffle, Heart, Trash2, Plus, ChevronDown, Check, HelpCircle } from 'lucide-react';
+import { Shuffle, Heart, Trash2, Plus, ChevronDown, Check, HelpCircle, Trophy } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth, getInitialGames } from '../context/AuthContext';
 import { resolveBannerImage } from '../components/Hero';
@@ -280,10 +280,11 @@ export function GameDetail() {
   // Dynamic banner background logic matching GameGrid logic for consistency
   // Priority: Explicit Image/Gradient -> Force Solid Switch -> Default Color
   let bannerStyle: React.CSSProperties = {};
+  const hasCustomCardImage = game.cardBgType === 'image' && Boolean(game.cardBgImage);
   
-  if (game.cardBgType === 'image' && game.cardBgImage) {
+  if (hasCustomCardImage) {
     bannerStyle = {
-      backgroundImage: `linear-gradient(135deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.85) 100%), url(${resolveBannerImage(game.cardBgImage)})`,
+      backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0) 65%, rgba(0, 0, 0, 0.8) 100%), url(${resolveBannerImage(game.cardBgImage!)})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
     };
@@ -464,89 +465,94 @@ export function GameDetail() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* LEFT SIDEBAR COLUMN: Styled Brand card matching premium mocks */}
-          <div className="lg:col-span-3">
+          {/* LEFT SIDEBAR COLUMN: Styled Brand card */}
+          <div className="lg:col-span-4">
             <div 
-              className={`rounded-[28px] ${!bannerStyle.background && !bannerStyle.backgroundColor && !bannerStyle.backgroundImage ? `bg-gradient-to-br ${bannerGradient}` : ''} p-8 text-white shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[500px]`}
+              className={`rounded-[28px] ${!bannerStyle.background && !bannerStyle.backgroundColor && !bannerStyle.backgroundImage ? `bg-gradient-to-br ${bannerGradient}` : ''} p-5 sm:p-6 text-white shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[480px] sm:min-h-[520px] w-full`}
               style={bannerStyle}
             >
               
               {/* Decorative radial gradients inside */}
-              <div className="absolute -top-10 -right-10 w-44 h-44 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-              <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-black/10 rounded-full blur-2xl pointer-events-none" />
+              {!hasCustomCardImage && (
+                <>
+                  <div className="absolute -top-10 -right-10 w-44 h-44 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+                  <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-black/10 rounded-full blur-2xl pointer-events-none" />
+                </>
+              )}
 
-              {/* Day & Logo area */}
-              <div className="space-y-5 relative z-10">
-                <span className="text-zinc-200/90 text-[10px] font-black tracking-widest uppercase block">
+              {/* Top Header Row Bar: Draw Time & Game Name Pill */}
+              <div className="flex justify-between items-center w-full z-10 relative">
+                <span className="text-zinc-200/90 text-[10px] sm:text-xs font-black tracking-widest uppercase bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/15 shadow-sm">
                   {game.drawTime} DRAW
                 </span>
 
-                {/* Styled Badge Pill looking like the Corporate Header Logo */}
-                <div className="inline-flex bg-white text-zinc-950 font-sans font-black tracking-tighter rounded-full pl-5 pr-4 py-2 items-center gap-1.5 shadow-md">
-                  <span className={`${brandText} text-sm tracking-wider uppercase font-extrabold italic`}>
-                    {game.name.substring(0, game.name.length - 2)}
-                  </span>
-                  <span className={`w-5.5 h-5.5 rounded-full ${brandBg} text-white flex items-center justify-center font-bold text-xs font-mono select-none`}>
-                    {game.name.slice(-1)}
+                <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/15 shadow-sm">
+                  <Trophy className="w-3.5 h-3.5 text-yellow-300 shrink-0" />
+                  <span className="text-[10px] sm:text-xs font-black tracking-wider uppercase text-white">
+                    {game.name}
                   </span>
                 </div>
               </div>
 
-              {/* Prize Value Info */}
-              <div className="space-y-1 my-8 relative z-10">
-                <span className="text-[10px] text-zinc-350 font-black tracking-widest uppercase block">
-                  GRAND PRIZE
-                </span>
-                <div className="text-3xl sm:text-4xl font-extrabold font-sans tracking-tight text-white leading-tight">
-                  {game.prize}
+              {/* Prize Value Info: Display centered text for standard cards; leave middle 100% open for artwork cards */}
+              {!hasCustomCardImage ? (
+                <div className="space-y-1 my-8 relative z-10 text-center">
+                  <span className="text-[10px] text-zinc-350 font-black tracking-widest uppercase block">
+                    GRAND PRIZE
+                  </span>
+                  <div className="text-3xl sm:text-4xl font-extrabold font-sans tracking-tight text-white leading-tight">
+                    {game.prize}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex-1 my-2 pointer-events-none" />
+              )}
 
-              {/* Next Draw Countdown */}
-              <div className="space-y-4 pt-4 border-t border-white/10 relative z-10">
-                <span className="text-[10px] text-zinc-200/90 font-black tracking-widest uppercase block">
+              {/* Next Draw Countdown Panel */}
+              <div className="space-y-3 pt-3 relative z-10 bg-black/50 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-white/15 shadow-2xl">
+                <span className="text-[9.5px] text-amber-300 font-black tracking-widest uppercase block text-center">
                   NEXT DRAW IN
                 </span>
 
-                {/* Digital Boxed Clock Layout matching mockup */}
-                <div className="flex items-center gap-2 select-none">
+                {/* Digital Clock Boxed Squares Layout */}
+                <div className="flex items-center justify-between gap-1 select-none">
                   
                   {/* Days */}
                   <div className="flex flex-col items-center">
-                    <div className="bg-white/10 border border-white/20 w-12 h-14 rounded-xl flex items-center justify-center font-sans font-black text-xl text-white shadow-inner">
+                    <div className="bg-white/10 border border-white/20 w-9 h-11 sm:w-10 sm:h-12 rounded-xl flex items-center justify-center font-sans font-black text-sm sm:text-base text-white shadow-inner">
                       {String(timeRemaining.days).padStart(2, '0')}
                     </div>
-                    <span className="text-[9px] font-bold text-zinc-300 tracking-wider mt-1.5 uppercase">DAYS</span>
+                    <span className="text-[7.5px] font-bold text-zinc-300 tracking-wider mt-1 uppercase">DAYS</span>
                   </div>
 
-                  <span className="text-white/40 font-bold self-start mt-4 animate-pulse shrink-0">:</span>
+                  <span className="text-white/40 font-bold self-start mt-2 animate-pulse shrink-0">:</span>
 
                   {/* Hours */}
                   <div className="flex flex-col items-center">
-                    <div className="bg-white/10 border border-white/20 w-12 h-14 rounded-xl flex items-center justify-center font-sans font-black text-xl text-white shadow-inner">
+                    <div className="bg-white/10 border border-white/20 w-9 h-11 sm:w-10 sm:h-12 rounded-xl flex items-center justify-center font-sans font-black text-sm sm:text-base text-white shadow-inner">
                       {String(timeRemaining.hours).padStart(2, '0')}
                     </div>
-                    <span className="text-[9px] font-bold text-zinc-300 tracking-wider mt-1.5 uppercase">HOURS</span>
+                    <span className="text-[7.5px] font-bold text-zinc-300 tracking-wider mt-1 uppercase">HOURS</span>
                   </div>
 
-                  <span className="text-white/40 font-bold self-start mt-4 animate-pulse shrink-0">:</span>
+                  <span className="text-white/40 font-bold self-start mt-2 animate-pulse shrink-0">:</span>
 
                   {/* Minutes */}
                   <div className="flex flex-col items-center">
-                    <div className="bg-white/10 border border-white/20 w-12 h-14 rounded-xl flex items-center justify-center font-sans font-black text-xl text-white shadow-inner">
+                    <div className="bg-white/10 border border-white/20 w-9 h-11 sm:w-10 sm:h-12 rounded-xl flex items-center justify-center font-sans font-black text-sm sm:text-base text-white shadow-inner">
                       {String(timeRemaining.mins).padStart(2, '0')}
                     </div>
-                    <span className="text-[9px] font-bold text-zinc-300 tracking-wider mt-1.5 uppercase">MINS</span>
+                    <span className="text-[7.5px] font-bold text-zinc-300 tracking-wider mt-1 uppercase">MINS</span>
                   </div>
 
-                  <span className="text-white/40 font-bold self-start mt-4 animate-pulse shrink-0">:</span>
+                  <span className="text-white/40 font-bold self-start mt-2 animate-pulse shrink-0">:</span>
 
                   {/* Seconds */}
                   <div className="flex flex-col items-center">
-                    <div className="bg-white/10 border border-white/20 w-12 h-14 rounded-xl flex items-center justify-center font-sans font-black text-xl text-white shadow-inner">
+                    <div className="bg-white/10 border border-white/20 w-9 h-11 sm:w-10 sm:h-12 rounded-xl flex items-center justify-center font-sans font-black text-sm sm:text-base text-white shadow-inner">
                       {String(timeRemaining.secs).padStart(2, '0')}
                     </div>
-                    <span className="text-[9px] font-bold text-zinc-300 tracking-wider mt-1.5 uppercase">SECS</span>
+                    <span className="text-[7.5px] font-bold text-zinc-300 tracking-wider mt-1 uppercase">SECS</span>
                   </div>
 
                 </div>
@@ -556,7 +562,7 @@ export function GameDetail() {
           </div>
 
           {/* RIGHT MAIN WORKING PANELS: Tickets, selections & details matching Screenshots */}
-          <div className="lg:col-span-9 space-y-8">
+          <div className="lg:col-span-8 space-y-8">
             
             {/* Play Selection Container */}
             <div className="bg-white dark:bg-zinc-900 border border-[#E5E5EB] dark:border-zinc-800 rounded-[28px] p-6 sm:p-8 shadow-sm">

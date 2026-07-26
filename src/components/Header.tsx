@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, ChevronDown, User as UserIcon, Menu, X, Landmark, Trophy, FileText, Gift, Flame, Sparkles, Coins, ShieldCheck, Sun, Moon, Globe } from 'lucide-react';
+import { ShoppingCart, ChevronDown, User as UserIcon, Menu, X, Landmark, Trophy, FileText, Gift, Flame, Sparkles, Coins, ShieldCheck, Sun, Moon, Globe, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -217,12 +217,12 @@ export function Header() {
                   className="w-full h-full object-contain transform hover:scale-105 transition-transform drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
                 />
               </div>
-              <div className="hidden md:flex flex-col text-left overflow-hidden mt-0.5">
-                <span className="text-[18px] sm:text-[26px] font-bodoni font-black tracking-wide text-zinc-900 dark:text-zinc-50 leading-none truncate flex items-center">
+              <div className="flex flex-col text-left leading-none select-none">
+                <span className="text-[18px] sm:text-[24px] md:text-[27px] font-black tracking-wide text-zinc-900 dark:text-zinc-50 uppercase leading-none">
                   {language === 'en' ? 'GLOBAL' : 'গ্লোবাল'}
-                  <span className="ml-1.5 sm:ml-2 font-bold" style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>
-                    {language === 'en' ? 'Lottery' : 'লটারি'}
-                  </span>
+                </span>
+                <span className="text-[10px] sm:text-[12px] md:text-[13px] font-black tracking-[0.28em] uppercase leading-none mt-0.5 sm:mt-1" style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>
+                  {language === 'en' ? 'LOTTERY' : 'লটারি'}
                 </span>
               </div>
             </Link>
@@ -360,9 +360,11 @@ export function Header() {
 
                 <button 
                   onClick={logout} 
-                  className="text-[9px] font-extrabold text-amber-500 hover:underline cursor-pointer uppercase font-sans border border-amber-500/20 px-1.5 sm:px-2 py-1 sm:py-1.5 rounded hover:bg-amber-500/10 whitespace-nowrap"
+                  className="flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-black bg-rose-600 hover:bg-rose-700 text-white px-2.5 sm:px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer uppercase whitespace-nowrap active:scale-95 ml-1 border border-rose-500/30"
+                  title={t('logout', language)}
                 >
-                  {t('logout', language)}
+                  <LogOut className="w-3.5 h-3.5 shrink-0" />
+                  <span>{t('logout', language)}</span>
                 </button>
               </div>
             ) : (
@@ -422,12 +424,12 @@ export function Header() {
                         </svg>
                       </div>
                     )}
-                    <div className="flex flex-col text-left mt-0.5">
-                      <span className="text-[16px] font-bodoni font-black tracking-wide text-zinc-900 dark:text-zinc-50 leading-none truncate flex items-center">
+                    <div className="flex flex-col text-left leading-none select-none">
+                      <span className="text-[17px] font-black tracking-wider text-zinc-900 dark:text-zinc-50 uppercase leading-none">
                         {language === 'en' ? 'GLOBAL' : 'গ্লোবাল'}
-                        <span className="ml-1.5 font-bold" style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>
-                          {language === 'en' ? 'Lottery' : 'লটারি'}
-                        </span>
+                      </span>
+                      <span className="text-[9px] font-black tracking-[0.22em] uppercase leading-none mt-0.5" style={{ color: siteConfig.primaryHex || '#E1BC4A' }}>
+                        {language === 'en' ? 'LOTTERY' : 'লটারি'}
                       </span>
                     </div>
                   </Link>

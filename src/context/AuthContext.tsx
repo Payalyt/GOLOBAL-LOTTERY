@@ -588,12 +588,12 @@ const DEFAULT_SITE_CONFIG: SiteThemeConfig = {
   unlockSubBn: 'আমাদের ডায়নামিক অ্যানালিটিক্স স্যুট ব্যবহার করে হাজার হাজার স্মার্ট লটারি ড্রয়ারদের সাথে যোগ দিন। ঐতিহাসিক হিটম্যাপ, ঠাণ্ডা/গরম নম্বরের ফ্রিকোয়েন্সি এবং সিমুলেটেড চেকআউট সম্ভাবনা দেখতে আপনার ফোন নম্বর দিয়ে নিবন্ধন করুন।',
   unlockPerksEn: 'Comprehensive Hot & Cold Heatmaps, Personalised Lucky Number Generator, Next Draw Probability Calculator, Automatic Winners Match-Alerts',
   unlockPerksBn: 'বিস্তারিত হট ও কোল্ড হিটম্যাপ, ব্যক্তিগত লাকি নম্বর জেনারেটর, পরবর্তী ড্র সম্ভাবনা ক্যালকুলেটর, স্বয়ংক্রিয় বিজয়ী ম্যাচ-অ্যালার্ট',
-  footerDescEn: 'The premier lottery and sweepstakes draw in the UAE and internationally. Raising hopes and changing lives, one dream ticket at a time.',
-  footerDescBn: 'সংযুক্ত আরব আমিরাত এবং আন্তর্জাতিকভাবে প্রধান লটারি ও সুইপস্টেক ড্র। একবারে একটি স্বপ্ন টিকিট কিনে মানুষের জীবন পরিবর্তন করা।',
-  footerCopyrightEn: '© 2026 GLOBAL Lottery Registered Platform. All corporate marks, logos & licenses are properties of their respective governing entities.',
-  footerCopyrightBn: '© ২০২৬ গ্লোবাল লটারি রেজিস্টার্ড প্ল্যাটফর্ম। সমস্ত কর্পোরেট চিহ্ন, লোগো এবং লাইসেন্স তাদের নিজ নিজ গভর্নিং সত্তার সম্পত্তি।',
-  footerSubDescEn: 'This platform stimulates raffle draws, lottery statistics tracking, and lucky pick purchases with verified secure payments.',
-  footerSubDescBn: 'এই প্ল্যাটফর্মটি যাচাইকৃত নিরাপদ পেমেন্টের মাধ্যমে র‌্যাফেল ড্র, লটারির পরিসংখ্যান ট্র্যাকিং এবং লাকি পিক ক্রয় সিমুলেট করে।',
+  footerDescEn: 'Operating since 2013 with official licenses across 148 countries worldwide. Raising hopes and changing lives, one dream ticket at a time.',
+  footerDescBn: '২০১৩ সাল থেকে বিশ্বজুড়ে ১৪৮টি দেশে লাইসেন্সপ্রাপ্ত ও অনুমোদিত অনলাইন লটারি ড্র প্ল্যাটফর্ম। স্বপ্ন বাস্তবায়নে আমরা সর্বদা আপনার সাথে।',
+  footerCopyrightEn: '© 2013-2026 GLOBAL Lottery Registered Platform. Officially Licensed across 148 Countries. All corporate marks, logos & licenses are properties of their respective governing entities.',
+  footerCopyrightBn: '© ২০১৩-২০২৬ গ্লোবাল লটারি রেজিস্টার্ড প্ল্যাটফর্ম। বিশ্বজুড়ে ১৪৮টি দেশে অনুমোদিত ও লাইসেন্সপ্রাপ্ত। সমস্ত কর্পোরেট চিহ্ন ও লাইসেন্স তাদের নিজ নিজ গভর্নিং সত্তার সম্পত্তি।',
+  footerSubDescEn: 'Operating continuously since 2013. This platform stimulates raffle draws, lottery statistics tracking, and lucky pick purchases with verified secure payments.',
+  footerSubDescBn: '২০১৩ সাল থেকে নির্ভরযোগ্য সেবা প্রদান। এই প্ল্যাটফর্মটি লাইভ র‌্যাফেল ড্র, পরিসংখ্যান ট্র্যাকিং এবং পেমেন্ট সুবিধা নিশ্চিত করে।',
   // Default Custom Banners
   banners: [
     {

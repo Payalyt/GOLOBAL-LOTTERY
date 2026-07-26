@@ -420,7 +420,7 @@ app.post("/api/gemini/lucky-numbers", async (req, res) => {
 });
 
 // --- VITE MIDDLEWARE / STATIC ASSETS ---
-if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+if (process.env.NODE_ENV !== "production") {
   console.log("[Server] Development mode: Mounting Vite live development server middleware.");
   import("vite").then(({ createServer: createViteServer }) => {
     createViteServer({
@@ -443,13 +443,9 @@ if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   });
 }
 
-// --- STANDALONE LISTENER (Cloud Run, Local, VPS) ---
-// Only listen on port 3000 if not running within a Serverless Vercel environment
-if (!process.env.VERCEL) {
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[Server] Standalone server active and listening on http://localhost:${PORT}`);
-  });
-}
+// --- STANDALONE LISTENER (Cloud Run, Container) ---
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`[Server] Standalone server active and listening on http://localhost:${PORT}`);
+});
 
-// Export default for Vercel Serverless Function compatibility
 export default app;

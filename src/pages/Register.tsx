@@ -6,7 +6,7 @@ import { auth, db } from '../lib/firebase';
 import { doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, increment } from 'firebase/firestore';
 import { Eye, EyeOff, X } from 'lucide-react';
 import { resolveBannerImage } from '../components/Hero';
-import { Smart3DLogo, SmartPosterBackground } from '../components/SmartImage';
+import { Smart3DLogo, SmartPosterBackground, CasinoPosterShowcase } from '../components/SmartImage';
 
 const COUNTRIES_LIST = [
   "Bangladesh", "United Arab Emirates", "Saudi Arabia", "India", "Kuwait", "Oman",
@@ -358,373 +358,406 @@ export function Register() {
   };
 
   return (
-    <div className="relative min-h-screen py-8 px-4 text-gray-900 dark:text-zinc-100 flex flex-col justify-center items-center font-roboto-sans transition-colors duration-300 overflow-hidden">
-      {/* Full Screen Lottery Poster Background */}
+    <div className="relative min-h-screen py-8 sm:py-12 px-3 sm:px-6 text-gray-900 dark:text-zinc-100 flex flex-col justify-center items-center font-roboto-sans transition-colors duration-300 overflow-hidden">
+      {/* Full Screen Lottery Poster Ambient Background */}
       <SmartPosterBackground />
 
       {isFormVisible ? (
-        <div className="max-w-md w-full mx-auto bg-white/95 dark:bg-[#101622]/95 backdrop-blur-xl p-6 sm:p-8 border border-white/20 dark:border-zinc-700/50 rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.85)] text-gray-950 dark:text-zinc-100 relative font-roboto-sans z-10 my-4 animate-in fade-in zoom-in-95 duration-300">
-          <button
-            onClick={() => setIsFormVisible(false)}
-            className="absolute left-4 top-4 p-2 bg-gray-100/80 dark:bg-zinc-800/80 hover:bg-red-500 hover:text-white dark:hover:bg-red-600 rounded-full transition-all cursor-pointer z-20 shadow-md active:scale-95"
-            aria-label="Close"
-            title={language === 'en' ? "Close Form & View Poster" : "নিবন্ধন ফরম বন্ধ করুন"}
-          >
-            <X className="w-4.5 h-4.5 text-gray-600 dark:text-zinc-300 hover:text-white" />
-          </button>
-
-        {/* 3D Logo Header */}
-        <div className="text-center mb-4">
-          <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center mb-2 relative">
-            <Smart3DLogo 
-              customUrl={siteConfig.logoImageUrl ? resolveBannerImage(siteConfig.logoImageUrl) : undefined}
-              className="w-full h-full object-contain rounded-2xl drop-shadow-[0_8px_20px_rgba(0,0,0,0.7)]"
-            />
-          </div>
-          <h2 className="text-2xl font-black tracking-tight uppercase text-gray-900 dark:text-zinc-100">
-            {language === 'en' ? 'Sign Up' : 'নিবন্ধন করুন'}
-          </h2>
-          <p className="text-[10px] text-gray-500 dark:text-zinc-400 mt-1 uppercase tracking-wider font-bold">
-            {language === 'en' 
-              ? 'Create your player account to start winning' 
-              : 'আপনার প্লেয়ার অ্যাকাউন্ট তৈরি করুন'}
-          </p>
-        </div>
-        
-        {successMsg && (
-          <div className="mb-4 p-3 bg-green-50 dark:bg-emerald-950/20 text-green-700 dark:text-emerald-450 rounded-lg text-sm font-semibold border border-green-100 dark:border-emerald-900/30 font-roboto-sans">
-            ✅ {successMsg}
-          </div>
-        )}
-        
-        {errorMsg && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-450 rounded-lg text-sm font-semibold border border-red-100 dark:border-red-900/30 font-roboto-sans">
-            ⚠️ {errorMsg}
-          </div>
-        )}
-
-        <form className="space-y-4 font-roboto-sans" onSubmit={handleSubmit}>
-          <div>
-            <div className="flex justify-between items-center">
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
-                {language === 'en' ? 'Username' : 'ইউজারনেম'}
-              </label>
-              <span className="text-[10px] text-gray-400 dark:text-zinc-500">
-                {language === 'en' ? 'Accepts small & capital letters' : 'ছোট এবং বড় ইংরেজি অক্ষর গ্রহণ করে'}
-              </span>
-            </div>
-            <input 
-              type="text" 
-              placeholder={language === 'en' ? "e.g. RobinHood_21" : "যেমন: RobinHood_21"}
-              className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans" 
-              required 
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-            {formData.name && (
-              <div className="mt-1 text-[11px] font-roboto-sans">
-                {isUsernameValid ? (
-                  <span className="text-emerald-600 font-semibold">
-                    {language === 'en' ? '✓ Valid Username' : '✓ সঠিক ইউজারনেম'}
-                  </span>
-                ) : (
-                  <span className="text-red-500 font-semibold">
-                    {language === 'en' 
-                      ? '✗ Use 3-30 letters, numbers, spaces or underscores' 
-                      : '✗ অন্তত ৩-৩০টি অক্ষর, সংখ্যা, স্পেস বা আন্ডারস্কোর ব্যবহার করুন'}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+        <div className="w-full max-w-5xl mx-auto relative z-10 animate-in fade-in zoom-in-95 duration-300">
           
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
-              {language === 'en' ? 'Email Address' : 'ইমেইল ঠিকানা'}
-            </label>
-            <input 
-              type="email" 
-              placeholder="example@gmail.com"
-              className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans" 
-              required 
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-            {formData.email && (
-              <div className="mt-1 text-[11px] font-roboto-sans">
-                {isEmailValid ? (
-                  <span className="text-emerald-600 font-semibold">
-                    {language === 'en' ? '✓ Valid Email format' : '✓ সঠিক ইমেইল ফরম্যাট'}
-                  </span>
-                ) : (
-                  <span className="text-red-500 font-semibold">
-                    {language === 'en' ? '✗ Please enter a valid email' : '✗ অনুগ্রহ করে একটি সঠিক ইমেইল ঠিকানা দিন'}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
-              {language === 'en' ? 'Phone Number' : 'মোবাইল নম্বর'}
-            </label>
-            <input 
-              type="text" 
-              placeholder="+8801700000000"
-              className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans" 
-              required 
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            />
-            {formData.phone && (
-              <div className="mt-1 text-[11px] font-roboto-sans">
-                {isPhoneValid ? (
-                  <span className="text-emerald-600 font-semibold">
-                    {language === 'en' ? '✓ Valid Phone number' : '✓ সঠিক মোবাইল নম্বর'}
-                  </span>
-                ) : (
-                  <span className="text-red-500 font-semibold">
-                    {language === 'en' 
-                      ? '✗ Please enter a valid 10-15 digit phone' 
-                      : '✗ অনুগ্রহ করে একটি সঠিক ১০-১৫ ডিজিটের মোবাইল নম্বর দিন'}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
-                {language === 'en' ? 'NID Card Number' : 'এনআইডি কার্ড নম্বর'}
-              </label>
-              <input 
-                type="text" 
-                placeholder={language === 'en' ? "10, 13 or 17 digits" : "১০, ১৩ অথবা ১৭ সংখ্যা"}
-                className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans" 
-                value={formData.nidNumber}
-                onChange={(e) => setFormData({ ...formData, nidNumber: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
-                {language === 'en' ? 'Passport Number' : 'পাসপোর্ট নম্বর'}
-              </label>
-              <input 
-                type="text" 
-                placeholder={language === 'en' ? "Alphanumeric number" : "অ্যালফানিউমেরিক নম্বর"}
-                className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans" 
-                value={formData.passportNumber}
-                onChange={(e) => setFormData({ ...formData, passportNumber: e.target.value })}
-              />
-            </div>
-            <div className="col-span-1 sm:col-span-2 text-[10px] text-gray-500 dark:text-zinc-400 font-roboto-sans mt-[-6px]">
-              {language === 'en' 
-                ? '* Either NID or Passport is required.' 
-                : '* এনআইডি অথবা পাসপোর্ট নম্বরের যেকোনো একটি আবশ্যক।'}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
-              {language === 'en' ? 'Country of Residence' : 'বসবাসের দেশ'}
-            </label>
-            <select 
-              className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans"
-              value={formData.country}
-              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-            >
-              {COUNTRIES_LIST.map((countryName) => (
-                <option key={countryName} value={countryName}>{countryName}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
-              {language === 'en' ? 'Password' : 'পাসওয়ার্ড'}
-            </label>
-            <div className="relative mt-1">
-              <input 
-                type={showPassword ? "text" : "password"} 
-                placeholder={language === 'en' ? "Strong Password" : "শক্তিশালী পাসওয়ার্ড"}
-                className="block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 pr-10 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans" 
-                required 
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
+          {/* Main Grid Container: Left Poster Showcase, Right Casino Register Form */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-stretch">
             
-            {/* Real-time Password Strength Check */}
-            {formData.password && (
-              <div className="mt-2 space-y-2 text-xs text-gray-600 dark:text-zinc-300 bg-gray-50 dark:bg-zinc-950 p-3.5 rounded-xl border border-gray-100 dark:border-zinc-850 font-roboto-sans">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-500 dark:text-zinc-400">
-                    {language === 'en' ? 'Password Strength:' : 'পাসওয়ার্ডের শক্তি:'}
-                  </span>
-                  <span className={`font-extrabold text-[10px] uppercase ${
-                    strengthScore <= 2 ? 'text-red-600' :
-                    strengthScore <= 3 ? 'text-yellow-600' :
-                    strengthScore <= 4 ? 'text-lime-600' : 'text-emerald-600'
-                  }`}>
-                    {strengthScore <= 1 ? (language === 'en' ? 'Very Weak' : 'অত্যন্ত দুর্বল') :
-                     strengthScore === 2 ? (language === 'en' ? 'Weak' : 'দুর্বল') :
-                     strengthScore === 3 ? (language === 'en' ? 'Medium' : 'মাঝারি') :
-                     strengthScore === 4 ? (language === 'en' ? 'Strong' : 'শক্তিশালী') : (language === 'en' ? 'Very Strong' : 'অত্যন্ত শক্তিশালী')}
-                  </span>
-                </div>
-                
-                {/* Progress Bar */}
-                <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden flex gap-0.5">
-                  {[1, 2, 3, 4, 5].map((step) => (
-                    <div 
-                      key={step} 
-                      className={`h-full flex-1 transition-all duration-300 ${
-                        step <= strengthScore 
-                          ? (strengthScore <= 2 ? 'bg-red-500' :
-                             strengthScore === 3 ? 'bg-yellow-500' :
-                             strengthScore === 4 ? 'bg-lime-500' : 'bg-emerald-500')
-                          : 'bg-gray-200'
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                {/* Requirements List */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 mt-1 text-[11px] font-roboto-sans">
-                  <div className="flex items-center gap-1">
-                    <span className={reqLength ? 'text-emerald-600 font-bold' : 'text-red-500'}>
-                      {reqLength ? '✓' : '✗'} {language === 'en' ? '8+ Characters' : '৮+ অক্ষর'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className={reqUpper ? 'text-emerald-600 font-bold' : 'text-red-500'}>
-                      {reqUpper ? '✓' : '✗'} {language === 'en' ? 'Uppercase (A-Z)' : 'বড় অক্ষর (A-Z)'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className={reqLower ? 'text-emerald-600 font-bold' : 'text-red-500'}>
-                      {reqLower ? '✓' : '✗'} {language === 'en' ? 'Lowercase (a-z)' : 'ছোট অক্ষর (a-z)'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className={reqNumber ? 'text-emerald-600 font-bold' : 'text-red-500'}>
-                      {reqNumber ? '✓' : '✗'} {language === 'en' ? 'Number (0-9)' : 'সংখ্যা (0-9)'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1 sm:col-span-2">
-                    <span className={reqSpecial ? 'text-emerald-600 font-bold' : 'text-red-500'}>
-                      {reqSpecial ? '✓' : '✗'} {language === 'en' ? 'Symbol (@$!%*?&_#.-)' : 'বিশেষ প্রতীক (@$!%*?&_#.-)'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">
-              {language === 'en' ? 'Confirm Password' : 'পুনরায় পাসওয়ার্ড'}
-            </label>
-            <div className="relative mt-1">
-              <input 
-                type={showConfirmPassword ? "text" : "password"} 
-                placeholder={language === 'en' ? "Confirm Password" : "পুনরায় পাসওয়ার্ড লিখুন"}
-                className="block bg-white text-zinc-950 w-full border border-gray-300 rounded-xl p-2.5 pr-10 focus:ring-2 focus:ring-black focus:outline-none font-roboto-sans" 
-                required 
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
-              >
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
+            {/* Left Side: Full Page Casino Poster & Jackpot Showcase */}
+            <div className="lg:col-span-5 hidden lg:flex flex-col h-full">
+              <CasinoPosterShowcase className="min-h-[640px]" />
             </div>
-            {formData.confirmPassword && (
-              <div className="mt-1.5 text-[11px] font-roboto-sans">
-                {formData.password === formData.confirmPassword ? (
-                  <span className="text-emerald-600 font-semibold">
-                    {language === 'en' ? '✓ Passwords match' : '✓ পাসওয়ার্ড দুটি মিলেছে'}
-                  </span>
-                ) : (
-                  <span className="text-red-500 font-semibold">
-                    {language === 'en' ? '✗ Passwords do not match' : '✗ পাসওয়ার্ড মেলেনি'}
-                  </span>
-                )}
+
+            {/* Right Side: Luxury Dark Casino Registration Form */}
+            <div className="lg:col-span-7 w-full mx-auto bg-[#0a0f1d]/95 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden border-2 border-amber-500/40 hover:border-amber-400/70 font-roboto-sans relative transition-all duration-300 flex flex-col justify-between">
+              
+              {/* Gold Top Accent Line */}
+              <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-600" />
+
+              {/* Close (X) button to hide form & view full un-obscured poster artwork */}
+              <button
+                onClick={() => setIsFormVisible(false)}
+                className="absolute top-4 left-4 p-2.5 bg-zinc-900/90 hover:bg-rose-600 text-zinc-300 hover:text-white rounded-full transition-all cursor-pointer z-20 shadow-lg border border-amber-500/30 active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider"
+                aria-label="Close"
+                title={language === 'en' ? "Close Form & View Poster" : "নিবন্ধন ফরম বন্ধ করুন"}
+              >
+                <X className="w-4 h-4" />
+                <span className="hidden sm:inline">{language === 'en' ? 'Full Poster' : 'পোস্টার'}</span>
+              </button>
+
+              {/* 3D Logo Header */}
+              <div className="p-6 sm:p-8 pb-3 text-center relative overflow-hidden pt-10">
+                <div className="mx-auto w-16 h-16 sm:w-18 sm:h-18 flex items-center justify-center mb-2 relative drop-shadow-[0_12px_25px_rgba(225,188,74,0.3)]">
+                  <Smart3DLogo 
+                    customUrl={siteConfig.logoImageUrl ? resolveBannerImage(siteConfig.logoImageUrl) : undefined}
+                    className="w-full h-full object-contain transform hover:scale-105 transition-transform"
+                  />
+                </div>
+
+                <div className="inline-block bg-gradient-to-r from-amber-500/20 via-yellow-400/20 to-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-0.5 rounded-full mb-1.5">
+                  🎰 VIP PLAYER REGISTRATION
+                </div>
+
+                <h2 className="text-2xl sm:text-3xl font-black tracking-[0.15em] text-white uppercase drop-shadow-md">
+                  {language === 'en' ? 'Sign Up' : 'নিবন্ধন করুন'}
+                </h2>
+                <p className="text-amber-400/90 text-[10px] mt-1 uppercase tracking-widest font-black">
+                  {language === 'en' 
+                    ? 'Create your high roller account to start winning' 
+                    : 'আপনার প্লেয়ার অ্যাকাউন্ট তৈরি করুন'}
+                </p>
               </div>
-            )}
-          </div>
+              
+              {/* Divider line */}
+              <div className="border-b border-amber-500/20 mx-6 sm:mx-8" />
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-350">
-              {language === 'en' ? 'Referral Code (Optional)' : 'রেফারেল কোড (ঐচ্ছিক)'}
-            </label>
-            <input 
-              type="text" 
-              placeholder={language === 'en' ? "e.g. PAYAL123" : "যেমন: PAYAL123"}
-              className="mt-1 block bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 w-full border border-gray-300 dark:border-zinc-800 rounded-xl p-2.5 focus:ring-2 focus:ring-black dark:focus:ring-zinc-700 focus:outline-none font-roboto-sans uppercase" 
-              value={formData.referredBy}
-              onChange={(e) => setFormData({ ...formData, referredBy: e.target.value })}
-            />
-          </div>
+              <div className="p-6 sm:p-8 pt-6 font-roboto-sans flex-1">
+                {successMsg && (
+                  <div className="mb-5 p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-300 text-xs font-semibold leading-relaxed shadow-inner font-roboto-sans">
+                    ✅ {successMsg}
+                  </div>
+                )}
+                
+                {errorMsg && (
+                  <div className="mb-5 p-4 rounded-2xl bg-red-950/40 border border-red-500/50 text-red-300 text-xs font-semibold leading-relaxed shadow-inner font-roboto-sans">
+                    ⚠️ {errorMsg}
+                  </div>
+                )}
 
-          <div className="flex items-start pt-2">
-            <input 
-              type="checkbox" 
-              id="agreeTerms"
-              className="h-4 w-4 mt-0.5 rounded border-gray-300 text-black focus:ring-black bg-white shrink-0" 
-              required 
-              checked={formData.agreeTerms}
-              onChange={(e) => setFormData({ ...formData, agreeTerms: e.target.checked })}
-            />
-            <label htmlFor="agreeTerms" className="ml-2 block text-xs text-gray-600 leading-normal cursor-pointer font-roboto-sans">
-              {language === 'en' 
-                ? 'I agree to the Terms & Conditions and Rules of GLOBAL Lottery.' 
-                : 'আমি গ্লোবাল লটারির সকল নিয়ম ও শর্তাবলীর সাথে একমত।'}
-            </label>
-          </div>
+                <form className="space-y-4 font-roboto-sans" onSubmit={handleSubmit}>
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-amber-400/90">
+                        {language === 'en' ? 'Username' : 'ইউজারনেম'}
+                      </label>
+                      <span className="text-[9px] text-zinc-400">
+                        {language === 'en' ? 'Accepts small & capital letters' : 'ছোট এবং বড় ইংরেজি অক্ষর গ্রহণ করে'}
+                      </span>
+                    </div>
+                    <input 
+                      type="text" 
+                      placeholder={language === 'en' ? "e.g. RobinHood_21" : "যেমন: RobinHood_21"}
+                      className="block bg-zinc-950/90 text-white placeholder-zinc-500 w-full border border-amber-500/30 rounded-xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none font-semibold shadow-inner" 
+                      required 
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    />
+                    {formData.name && (
+                      <div className="mt-1 text-[11px] font-roboto-sans">
+                        {isUsernameValid ? (
+                          <span className="text-emerald-400 font-bold">
+                            {language === 'en' ? '✓ Valid Username' : '✓ সঠিক ইউজারনেম'}
+                          </span>
+                        ) : (
+                          <span className="text-rose-400 font-bold">
+                            {language === 'en' 
+                              ? '✗ Use 3-30 letters, numbers, spaces or underscores' 
+                              : '✗ অন্তত ৩-৩০টি অক্ষর, সংখ্যা, স্পেস বা আন্ডারস্কোর ব্যবহার করুন'}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-amber-400/90 mb-1">
+                      {language === 'en' ? 'Email Address' : 'ইমেইল ঠিকানা'}
+                    </label>
+                    <input 
+                      type="email" 
+                      placeholder="example@gmail.com"
+                      className="block bg-zinc-950/90 text-white placeholder-zinc-500 w-full border border-amber-500/30 rounded-xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none font-semibold shadow-inner" 
+                      required 
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                    {formData.email && (
+                      <div className="mt-1 text-[11px] font-roboto-sans">
+                        {isEmailValid ? (
+                          <span className="text-emerald-400 font-bold">
+                            {language === 'en' ? '✓ Valid Email format' : '✓ সঠিক ইমেইল ফরম্যাট'}
+                          </span>
+                        ) : (
+                          <span className="text-rose-400 font-bold">
+                            {language === 'en' ? '✗ Please enter a valid email' : '✗ অনুগ্রহ করে একটি সঠিক ইমেইল ঠিকানা দিন'}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
-          <button 
-            type="submit" 
-            disabled={loading}
-            className={`w-full ${loading ? 'bg-zinc-600' : 'bg-zinc-950 hover:bg-zinc-800'} text-white p-3 rounded-xl font-bold tracking-wider uppercase transition-colors shadow-md mt-4 text-xs flex items-center justify-center gap-2`}
-          >
-            {loading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                {language === 'en' ? 'Processing...' : 'প্রক্রিয়াকরণ করা হচ্ছে...'}
-              </>
-            ) : (
-              language === 'en' ? 'Create Account' : 'অ্যাকাউন্ট তৈরি করুন'
-            )}
-          </button>
-        </form>
-        <p className="mt-5 text-sm text-center text-gray-500 dark:text-zinc-400 font-roboto-sans">
-          {language === 'en' ? 'Already have an account? ' : 'ইতিমধ্যে অ্যাকাউন্ট আছে? '}
-          <Link to="/login" className="text-amber-500 font-extrabold hover:underline">
-            {language === 'en' ? 'Log in' : 'লগইন করুন'}
-          </Link>
-        </p>
-      </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-amber-400/90 mb-1">
+                      {language === 'en' ? 'Phone Number' : 'মোবাইল নম্বর'}
+                    </label>
+                    <input 
+                      type="text" 
+                      placeholder="+8801700000000"
+                      className="block bg-zinc-950/90 text-white placeholder-zinc-500 w-full border border-amber-500/30 rounded-xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none font-semibold shadow-inner" 
+                      required 
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                    {formData.phone && (
+                      <div className="mt-1 text-[11px] font-roboto-sans">
+                        {isPhoneValid ? (
+                          <span className="text-emerald-400 font-bold">
+                            {language === 'en' ? '✓ Valid Phone number' : '✓ সঠিক মোবাইল নম্বর'}
+                          </span>
+                        ) : (
+                          <span className="text-rose-400 font-bold">
+                            {language === 'en' 
+                              ? '✗ Please enter a valid 10-15 digit phone' 
+                              : '✗ অনুগ্রহ করে একটি সঠিক ১০-১৫ ডিজিটের মোবাইল নম্বর দিন'}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-amber-400/90 mb-1">
+                        {language === 'en' ? 'NID Card Number' : 'এনআইডি কার্ড নম্বর'}
+                      </label>
+                      <input 
+                        type="text" 
+                        placeholder={language === 'en' ? "10, 13 or 17 digits" : "১০, ১৩ অথবা ১৭ সংখ্যা"}
+                        className="block bg-zinc-950/90 text-white placeholder-zinc-500 w-full border border-amber-500/30 rounded-xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none font-semibold shadow-inner" 
+                        value={formData.nidNumber}
+                        onChange={(e) => setFormData({ ...formData, nidNumber: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-amber-400/90 mb-1">
+                        {language === 'en' ? 'Passport Number' : 'পাসপোর্ট নম্বর'}
+                      </label>
+                      <input 
+                        type="text" 
+                        placeholder={language === 'en' ? "Alphanumeric number" : "অ্যালফানিউমেরিক নম্বর"}
+                        className="block bg-zinc-950/90 text-white placeholder-zinc-500 w-full border border-amber-500/30 rounded-xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none font-semibold shadow-inner" 
+                        value={formData.passportNumber}
+                        onChange={(e) => setFormData({ ...formData, passportNumber: e.target.value })}
+                      />
+                    </div>
+                    <div className="col-span-1 sm:col-span-2 text-[10px] text-amber-400/80 font-bold mt-[-4px]">
+                      {language === 'en' 
+                        ? '* Either NID or Passport is required.' 
+                        : '* এনআইডি অথবা পাসপোর্ট নম্বরের যেকোনো একটি আবশ্যক।'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-amber-400/90 mb-1">
+                      {language === 'en' ? 'Country of Residence' : 'বসবাসের দেশ'}
+                    </label>
+                    <select 
+                      className="block bg-zinc-950 text-white border border-amber-500/30 rounded-xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none w-full font-semibold shadow-inner"
+                      value={formData.country}
+                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    >
+                      {COUNTRIES_LIST.map((countryName) => (
+                        <option key={countryName} value={countryName}>{countryName}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-amber-400/90 mb-1">
+                      {language === 'en' ? 'Password' : 'পাসওয়ার্ড'}
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder={language === 'en' ? "Strong Password" : "শক্তিশালী পাসওয়ার্ড"}
+                        className="block bg-zinc-950/90 text-white placeholder-zinc-500 w-full border border-amber-500/30 rounded-xl p-3 pr-10 focus:ring-2 focus:ring-amber-400 focus:outline-none font-mono text-xs shadow-inner" 
+                        required 
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-amber-300 focus:outline-none cursor-pointer"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    
+                    {/* Real-time Password Strength Check */}
+                    {formData.password && (
+                      <div className="mt-2 space-y-2 text-xs text-zinc-300 bg-zinc-950 p-3.5 rounded-xl border border-amber-500/20 font-roboto-sans">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold uppercase tracking-wider text-[10px] text-zinc-400">
+                            {language === 'en' ? 'Password Strength:' : 'পাসওয়ার্ডের শক্তি:'}
+                          </span>
+                          <span className={`font-extrabold text-[10px] uppercase ${
+                            strengthScore <= 2 ? 'text-rose-400' :
+                            strengthScore <= 3 ? 'text-amber-400' :
+                            strengthScore <= 4 ? 'text-lime-400' : 'text-emerald-400'
+                          }`}>
+                            {strengthScore <= 1 ? (language === 'en' ? 'Very Weak' : 'অত্যন্ত দুর্বল') :
+                             strengthScore === 2 ? (language === 'en' ? 'Weak' : 'দুর্বল') :
+                             strengthScore === 3 ? (language === 'en' ? 'Medium' : 'মাঝারি') :
+                             strengthScore === 4 ? (language === 'en' ? 'Strong' : 'শক্তিশালী') : (language === 'en' ? 'Very Strong' : 'অত্যন্ত শক্তিশালী')}
+                          </span>
+                        </div>
+                        
+                        {/* Progress Bar */}
+                        <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((step) => (
+                            <div 
+                              key={step} 
+                              className={`h-full flex-1 transition-all duration-300 ${
+                                step <= strengthScore 
+                                  ? (strengthScore <= 2 ? 'bg-rose-500' :
+                                     strengthScore === 3 ? 'bg-amber-500' :
+                                     strengthScore === 4 ? 'bg-lime-500' : 'bg-emerald-500')
+                                  : 'bg-zinc-800'
+                              }`}
+                            />
+                          ))}
+                        </div>
+
+                        {/* Requirements List */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 mt-1 text-[10px] font-roboto-sans">
+                          <div className="flex items-center gap-1">
+                            <span className={reqLength ? 'text-emerald-400 font-bold' : 'text-rose-400'}>
+                              {reqLength ? '✓' : '✗'} {language === 'en' ? '8+ Characters' : '৮+ অক্ষর'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className={reqUpper ? 'text-emerald-400 font-bold' : 'text-rose-400'}>
+                              {reqUpper ? '✓' : '✗'} {language === 'en' ? 'Uppercase (A-Z)' : 'বড় অক্ষর (A-Z)'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className={reqLower ? 'text-emerald-400 font-bold' : 'text-rose-400'}>
+                              {reqLower ? '✓' : '✗'} {language === 'en' ? 'Lowercase (a-z)' : 'ছোট অক্ষর (a-z)'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className={reqNumber ? 'text-emerald-400 font-bold' : 'text-rose-400'}>
+                              {reqNumber ? '✓' : '✗'} {language === 'en' ? 'Number (0-9)' : 'সংখ্যা (0-9)'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 sm:col-span-2">
+                            <span className={reqSpecial ? 'text-emerald-400 font-bold' : 'text-rose-400'}>
+                              {reqSpecial ? '✓' : '✗'} {language === 'en' ? 'Symbol (@$!%*?&_#.-)' : 'বিশেষ প্রতীক (@$!%*?&_#.-)'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-amber-400/90 mb-1">
+                      {language === 'en' ? 'Confirm Password' : 'পুনরায় পাসওয়ার্ড'}
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type={showConfirmPassword ? "text" : "password"} 
+                        placeholder={language === 'en' ? "Confirm Password" : "পুনরায় পাসওয়ার্ড লিখুন"}
+                        className="block bg-zinc-950/90 text-white placeholder-zinc-500 w-full border border-amber-500/30 rounded-xl p-3 pr-10 focus:ring-2 focus:ring-amber-400 focus:outline-none font-mono text-xs shadow-inner" 
+                        required 
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-amber-300 focus:outline-none cursor-pointer"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {formData.confirmPassword && (
+                      <div className="mt-1 text-[11px] font-roboto-sans">
+                        {formData.password === formData.confirmPassword ? (
+                          <span className="text-emerald-400 font-bold">
+                            {language === 'en' ? '✓ Passwords match' : '✓ পাসওয়ার্ড দুটি মিলেছে'}
+                          </span>
+                        ) : (
+                          <span className="text-rose-400 font-bold">
+                            {language === 'en' ? '✗ Passwords do not match' : '✗ পাসওয়ার্ড মেলেনি'}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-amber-400/90 mb-1">
+                      {language === 'en' ? 'Referral Code (Optional)' : 'রেফারেল কোড (ঐচ্ছিক)'}
+                    </label>
+                    <input 
+                      type="text" 
+                      placeholder={language === 'en' ? "e.g. PAYAL123" : "যেমন: PAYAL123"}
+                      className="block bg-zinc-950/90 text-white placeholder-zinc-500 w-full border border-amber-500/30 rounded-xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none font-semibold uppercase shadow-inner" 
+                      value={formData.referredBy}
+                      onChange={(e) => setFormData({ ...formData, referredBy: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="flex items-start pt-1">
+                    <input 
+                      type="checkbox" 
+                      id="agreeTerms"
+                      className="h-4 w-4 mt-0.5 rounded border-amber-500/50 text-amber-500 focus:ring-amber-400 bg-zinc-950 shrink-0 cursor-pointer" 
+                      required 
+                      checked={formData.agreeTerms}
+                      onChange={(e) => setFormData({ ...formData, agreeTerms: e.target.checked })}
+                    />
+                    <label htmlFor="agreeTerms" className="ml-2 block text-xs text-zinc-300 leading-normal cursor-pointer font-roboto-sans font-medium">
+                      {language === 'en' 
+                        ? 'I agree to the Terms & Conditions and Rules of GLOBAL Lottery.' 
+                        : 'আমি গ্লোবাল লটারির সকল নিয়ম ও শর্তাবলীর সাথে একমত।'}
+                    </label>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={loading}
+                    className={`w-full font-black uppercase tracking-widest text-zinc-950 py-4 px-6 rounded-xl shadow-[0_10px_25px_rgba(225,188,74,0.35)] bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:brightness-110 ${loading ? 'opacity-70' : ''} transition-all flex items-center justify-center gap-2 mt-4 text-xs cursor-pointer active:scale-[0.98] border border-amber-300`}
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-zinc-900/20 border-t-zinc-900 rounded-full animate-spin" />
+                        {language === 'en' ? 'PROCESSING...' : 'প্রক্রিয়াকরণ করা হচ্ছে...'}
+                      </>
+                    ) : (
+                      language === 'en' ? 'CREATE VIP ACCOUNT' : 'অ্যাকাউন্ট তৈরি করুন'
+                    )}
+                  </button>
+                </form>
+
+                <p className="mt-5 text-xs text-center text-zinc-400 font-bold uppercase tracking-wider">
+                  {language === 'en' ? 'Already have an account? ' : 'ইতিমধ্যে অ্যাকাউন্ট আছে? '}
+                  <Link to="/login" className="text-amber-400 font-black hover:underline hover:text-yellow-300 ml-1">
+                    {language === 'en' ? 'Log in' : 'লগইন করুন'}
+                  </Link>
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
       ) : (
         /* Poster View Mode when Register form is closed */
-        <div className="relative z-10 flex flex-col items-center justify-center text-center max-w-md w-full mx-auto px-4 animate-in fade-in zoom-in-95 duration-300">
-          <div className="bg-zinc-950/85 backdrop-blur-2xl p-8 sm:p-10 rounded-[2.5rem] border border-white/20 shadow-[0_30px_70px_rgba(0,0,0,0.9)] flex flex-col items-center w-full relative overflow-hidden">
-            {/* Top Glow Accent */}
-            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-24 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col items-center justify-center text-center max-w-lg w-full mx-auto px-4 animate-in fade-in zoom-in-95 duration-300">
+          <div className="bg-[#0a0f1d]/90 backdrop-blur-2xl p-8 sm:p-10 rounded-[2.5rem] border-2 border-amber-500/50 shadow-[0_30px_70px_rgba(0,0,0,0.95)] flex flex-col items-center w-full relative overflow-hidden">
             
-            <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mb-4 relative drop-shadow-[0_12px_25px_rgba(0,0,0,0.8)]">
+            {/* Top Glow Accent */}
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-64 h-28 bg-amber-500/25 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mb-4 relative drop-shadow-[0_12px_25px_rgba(225,188,74,0.4)]">
               <Smart3DLogo 
                 customUrl={siteConfig.logoImageUrl ? resolveBannerImage(siteConfig.logoImageUrl) : undefined}
                 className="w-full h-full object-contain transform hover:scale-105 transition-transform"
@@ -734,7 +767,7 @@ export function Register() {
             <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-[0.18em] text-white mb-2 drop-shadow-md">
               GLOBAL LOTTERY
             </h2>
-            <p className="text-xs text-amber-400 font-black uppercase tracking-widest mb-8">
+            <p className="text-xs text-amber-400 font-black uppercase tracking-widest mb-6">
               {language === 'en' ? 'Full Poster View Mode Active' : 'পোস্টার ভিউ মোড সক্রিয়'}
             </p>
 
@@ -742,7 +775,7 @@ export function Register() {
               <button
                 type="button"
                 onClick={() => setIsFormVisible(true)}
-                className="flex-1 py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-white text-xs bg-gradient-to-r from-amber-500 to-yellow-600 shadow-xl hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-white/20"
+                className="flex-1 py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-zinc-950 text-xs bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 shadow-xl hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-amber-300"
               >
                 {language === 'en' ? 'Open Sign Up' : 'নিবন্ধন ফরম খুলুন'}
               </button>
@@ -750,8 +783,7 @@ export function Register() {
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-white text-xs shadow-lg hover:brightness-105 transition-all cursor-pointer border border-white/20"
-                style={{ backgroundColor: siteConfig.primaryHex || '#FF003C' }}
+                className="py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-zinc-300 text-xs bg-zinc-800/90 hover:bg-zinc-700/90 border border-zinc-700 transition-all cursor-pointer active:scale-95 shadow-lg"
               >
                 {language === 'en' ? 'Log In' : 'লগইন'}
               </button>

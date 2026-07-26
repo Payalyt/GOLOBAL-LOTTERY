@@ -94,10 +94,10 @@ export function Hero() {
     
     return (
       <div 
-        className={`relative w-full overflow-hidden rounded-[12px] sm:rounded-[24px] md:rounded-[32px] ${
+        className={`relative w-full aspect-[16/9] overflow-hidden rounded-[12px] sm:rounded-[24px] md:rounded-[32px] ${
           hasText 
-            ? 'min-h-[160px] xs:min-h-[190px] sm:min-h-[340px] md:min-h-[420px] p-3 xs:p-4 sm:p-8 md:p-12 flex flex-col md:flex-row items-center justify-between' 
-            : 'w-full aspect-[16/9] sm:aspect-[2.2/1] md:aspect-[2.5/1] min-h-[160px] xs:min-h-[200px] sm:min-h-[320px] md:min-h-[400px] p-0'
+            ? 'p-3 xs:p-4 sm:p-6 md:p-10 flex flex-col md:flex-row items-center justify-between' 
+            : 'p-0'
         } shadow-xl sm:shadow-2xl border border-white/10 transition-all duration-750 ease-in-out cursor-pointer`}
         style={bgStyle}
         onClick={() => !hasText && banner.linkUrl && navigate(banner.linkUrl)}
@@ -222,7 +222,7 @@ export function Hero() {
   // FALLBACK: Default GLOBAL Lottery static hero banner (original style perfectly preserved, compact on mobile!)
   return (
     <div 
-      className="relative w-full overflow-hidden rounded-[14px] sm:rounded-[32px] min-h-[170px] xs:min-h-[200px] sm:min-h-[420px] flex flex-row items-center justify-between p-3 xs:p-4 sm:p-12 shadow-xl sm:shadow-2xl border"
+      className="relative w-full aspect-[16/9] overflow-hidden rounded-[14px] sm:rounded-[28px] md:rounded-[32px] flex flex-row items-center justify-between p-3 xs:p-4 sm:p-8 md:p-10 shadow-xl sm:shadow-2xl border"
       style={{ 
         background: siteConfig.heroBannerBgType === 'solid' 
           ? siteConfig.heroBannerBgSolidHex 

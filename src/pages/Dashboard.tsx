@@ -45,29 +45,37 @@ export function Dashboard() {
   const [notifications, setNotifications] = useState<{id: string, message: string, type: 'success' | 'error'}[]>([]);
 
   // Real-time toast alerts for database notifications
-  const prevNotificationsRef = useRef<string[]>([]);
+  const prevNotificationsRef = useRef<string[] | null>(null);
 
   useEffect(() => {
     if (!user || !systemNotifications) return;
 
+    // On initial load, record current notification IDs so historical notifications don't trigger floating toast popups
+    if (prevNotificationsRef.current === null) {
+      prevNotificationsRef.current = systemNotifications.map(n => n.id);
+      return;
+    }
+
     const unreadNew = systemNotifications.filter(
-      n => !n.read && !prevNotificationsRef.current.includes(n.id)
+      n => !n.read && !prevNotificationsRef.current!.includes(n.id)
     );
 
-    unreadNew.forEach(n => {
-      const type = n.type === 'success' || n.type === 'payment' ? 'success' : 'error';
-      const newNotif = {
-        id: n.id,
-        message: `${n.title}: ${n.message}`,
-        type: type as 'success' | 'error'
-      };
-      setNotifications(prev => [...prev, newNotif]);
-      
-      // Auto-remove notification from floating toasts after 10 seconds
-      setTimeout(() => {
-        setNotifications(prev => prev.filter(x => x.id !== newNotif.id));
-      }, 10000);
-    });
+    if (unreadNew.length > 0) {
+      unreadNew.forEach(n => {
+        const type = n.type === 'success' || n.type === 'payment' ? 'success' : 'error';
+        const newNotif = {
+          id: n.id,
+          message: `${n.title}: ${n.message}`,
+          type: type as 'success' | 'error'
+        };
+        setNotifications(prev => [newNotif, ...prev].slice(0, 2)); // Limit max 2 active toast alerts
+        
+        // Auto-remove notification from floating toasts after 5 seconds
+        setTimeout(() => {
+          setNotifications(prev => prev.filter(x => x.id !== newNotif.id));
+        }, 5000);
+      });
+    }
 
     // Sync ref
     prevNotificationsRef.current = systemNotifications.map(n => n.id);

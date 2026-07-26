@@ -7,7 +7,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswor
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { resolveBannerImage } from '../components/Hero';
-import { Smart3DLogo, SmartPosterBackground } from '../components/SmartImage';
+import { Smart3DLogo, SmartPosterBackground, CasinoPosterShowcase } from '../components/SmartImage';
 
 export function Login() {
   const navigate = useNavigate();
@@ -318,196 +318,224 @@ export function Login() {
   };
 
   return (
-    <div className="relative min-h-screen py-12 px-4 text-gray-900 dark:text-zinc-100 flex flex-col justify-center items-center font-roboto-sans transition-colors duration-300 overflow-hidden">
-      {/* Full Screen Lottery Poster Background */}
+    <div className="relative min-h-screen py-8 sm:py-12 px-3 sm:px-6 text-gray-900 dark:text-zinc-100 flex flex-col justify-center items-center font-roboto-sans transition-colors duration-300 overflow-hidden">
+      {/* Full Screen Lottery Poster Ambient Background */}
       <SmartPosterBackground />
 
       {isFormVisible ? (
-        <div className="max-w-md w-full mx-auto bg-white/95 dark:bg-[#101622]/95 backdrop-blur-xl rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.85)] overflow-hidden border border-white/20 dark:border-zinc-700/50 font-roboto-sans relative z-10 transition-all duration-300 transform scale-100 animate-in fade-in zoom-in-95">
+        <div className="w-full max-w-5xl mx-auto relative z-10 animate-in fade-in zoom-in-95 duration-300">
           
-          {/* Close (X) button to hide form & view full poster wallpaper */}
-          <button
-            type="button"
-            onClick={() => setIsFormVisible(false)}
-            className="absolute top-4 left-4 p-2 bg-gray-100/80 dark:bg-zinc-800/80 hover:bg-red-500 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-zinc-300 rounded-full transition-all cursor-pointer z-20 shadow-md active:scale-95"
-            title={language === 'en' ? "Close Form & View Poster" : "লগইন ফরম বন্ধ করুন"}
-          >
-            <X className="w-4.5 h-4.5" />
-          </button>
-        
-        {/* Luxury Header Area with SSL Badge and 3D Logo */}
-        <div className="p-6 sm:p-8 pb-4 text-center relative overflow-hidden">
-          {/* SSL Badge in top right */}
-          <div className="absolute top-4 right-4 bg-zinc-100 dark:bg-[#181f2f] border border-zinc-200/50 dark:border-zinc-800/80 px-3 py-1 rounded-full text-[8px] font-black tracking-widest text-amber-500 dark:text-amber-400 uppercase select-none shadow-sm">
-            {t('secureSsl')}
-          </div>
-          
-          {/* Pure 3D Logo Graphic - No Yellow Background Tile */}
-          <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center mb-3 relative mt-2">
-            <Smart3DLogo 
-              customUrl={siteConfig.logoImageUrl ? resolveBannerImage(siteConfig.logoImageUrl) : undefined}
-              className="w-full h-full object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)] transform hover:scale-105 transition-transform"
-            />
-          </div>
-
-          <h2 className="text-2xl font-black tracking-[0.18em] text-zinc-900 dark:text-white uppercase">
-            {t('globalLottery')}
-          </h2>
-          <p className="text-gray-500 dark:text-zinc-400 text-[10px] mt-1.5 uppercase tracking-widest font-black">
-            {isForgotMode ? t('secureResetPortal') : t('gatewayLuxury')}
-          </p>
-        </div>
-
-        {/* Divider line */}
-        <div className="border-b border-gray-100 dark:border-zinc-800/80 mx-6 sm:mx-8" />
-
-        {/* Regular Login Form & Forgot Password Form */}
-        <div className="p-6 sm:p-8 pt-6 font-roboto-sans">
-          {errorMsg && (
-            <div className="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-750 dark:text-red-400 text-xs font-semibold leading-relaxed">
-              ⚠️ {errorMsg}
+          {/* Main Grid Container: Left Poster Showcase on desktop, Right Casino Login Form */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-stretch">
+            
+            {/* Left Side: Full Page Casino Poster & Jackpot Showcase */}
+            <div className="lg:col-span-6 hidden lg:flex flex-col h-full">
+              <CasinoPosterShowcase className="min-h-[580px]" />
             </div>
-          )}
 
-          {successMsg && (
-            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 text-emerald-850 dark:text-emerald-400 text-xs font-semibold leading-relaxed">
-              ✅ {successMsg}
-            </div>
-          )}
+            {/* Right Side: Luxury Dark Casino Login Card */}
+            <div className="lg:col-span-6 w-full max-w-md mx-auto bg-[#0a0f1d]/95 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden border-2 border-amber-500/40 hover:border-amber-400/70 font-roboto-sans relative transition-all duration-300 flex flex-col justify-between">
+              
+              {/* Gold Top Accent Line */}
+              <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-600" />
 
-          {!isForgotMode ? (
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-zinc-400">{t('emailAddress')}</label>
-                <div className="mt-1.5 relative">
-                  <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 dark:text-zinc-500 font-bold text-sm">@</span>
-                  <input 
-                    type="email" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@email.com"
-                    className="pl-11 bg-gray-50 dark:bg-[#0c111c] text-zinc-950 dark:text-zinc-100 block w-full border border-gray-200 dark:border-zinc-800/80 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:outline-none transition-all font-semibold shadow-inner" 
-                    required 
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-zinc-400">{t('password')}</label>
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      setErrorMsg('');
-                      setSuccessMsg('');
-                      setForgotEmail(email);
-                      setIsForgotMode(true);
-                    }}
-                    className="text-[10px] font-black text-amber-500 hover:text-amber-400 tracking-wide uppercase cursor-pointer"
-                  >
-                    {t('forgotPassword')}
-                  </button>
-                </div>
-                <div className="mt-1.5 relative">
-                  <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 dark:text-zinc-500">
-                    <Key className="w-4 h-4 text-gray-400 dark:text-zinc-500 stroke-[2.5]" />
-                  </span>
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="pl-11 pr-10 bg-gray-50 dark:bg-[#0c111c] text-zinc-950 dark:text-zinc-100 block w-full border border-gray-200 dark:border-zinc-800/80 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:outline-none transition-all font-mono shadow-inner" 
-                    required 
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 focus:outline-none"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <button 
-                type="submit" 
-                disabled={loading}
-                className={`w-full font-black uppercase tracking-widest text-white py-4 px-6 rounded-xl shadow-lg ${loading ? 'opacity-70' : 'hover:brightness-105'} transition-all flex items-center justify-center gap-2 mt-4 text-xs cursor-pointer active:scale-[0.98]`}
-                style={{ backgroundColor: siteConfig.primaryHex || '#FF003C' }}
+              {/* Close (X) button to hide form & view full un-obscured poster artwork */}
+              <button
+                type="button"
+                onClick={() => setIsFormVisible(false)}
+                className="absolute top-4 left-4 p-2.5 bg-zinc-900/90 hover:bg-rose-600 text-zinc-300 hover:text-white rounded-full transition-all cursor-pointer z-20 shadow-lg border border-amber-500/30 active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider"
+                title={language === 'en' ? "Close Form & View Full Poster Artwork" : "পোস্টার পুরো দেখুন"}
               >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    {language === 'en' ? 'Authenticating...' : 'যাচাই করা হচ্ছে...'}
-                  </>
-                ) : (
-                  <>
-                    {t('signInToDashboard')} <ArrowRight className="w-4.5 h-4.5 stroke-[3]" />
-                  </>
-                )}
+                <X className="w-4 h-4" />
+                <span className="hidden sm:inline">{language === 'en' ? 'Full Poster' : 'পোস্টার'}</span>
               </button>
 
-              <p className="mt-6 text-xs text-center text-gray-500 dark:text-zinc-400 font-bold uppercase tracking-wider">
-                {t('newToLottery')}{' '}
-                <Link to="/register" className="text-amber-500 dark:text-amber-400 font-black hover:underline ml-1">
-                  {t('registerAccount')}
-                </Link>
-              </p>
-            </form>
-          ) : (
-            <form onSubmit={handleForgotPassword} className="space-y-5">
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-zinc-400">{t('emailAddress')}</label>
-                <div className="mt-1.5 relative">
-                  <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 dark:text-zinc-500 font-bold text-sm">@</span>
-                  <input 
-                    type="email" 
-                    value={forgotEmail}
-                    onChange={(e) => setForgotEmail(e.target.value)}
-                    placeholder="name@email.com"
-                    className="pl-11 bg-gray-50 dark:bg-[#0c111c] text-zinc-950 dark:text-zinc-100 block w-full border border-gray-200 dark:border-zinc-800/80 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:outline-none transition-all font-semibold shadow-inner" 
-                    required 
+              {/* SSL Badge in top right */}
+              <div className="absolute top-4 right-4 bg-amber-500/10 border border-amber-500/40 px-3 py-1 rounded-full text-[9px] font-black tracking-widest text-amber-400 uppercase select-none shadow-sm flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                {t('secureSsl')}
+              </div>
+
+              {/* Luxury Casino Header Area with 3D Logo */}
+              <div className="p-6 sm:p-8 pb-3 text-center relative overflow-hidden pt-12">
+                <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center mb-3 relative drop-shadow-[0_12px_25px_rgba(225,188,74,0.3)]">
+                  <Smart3DLogo 
+                    customUrl={siteConfig.logoImageUrl ? resolveBannerImage(siteConfig.logoImageUrl) : undefined}
+                    className="w-full h-full object-contain transform hover:scale-105 transition-transform"
                   />
                 </div>
-                <span className="text-[10px] text-gray-500 dark:text-zinc-400 mt-2 block font-medium leading-relaxed">
-                  {t('resetInstructions')}
-                </span>
+
+                <div className="inline-block bg-gradient-to-r from-amber-500/20 via-yellow-400/20 to-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-0.5 rounded-full mb-2">
+                  🎰 777 CASINO VIP PORTAL
+                </div>
+
+                <h2 className="text-2xl sm:text-3xl font-black tracking-[0.18em] text-white uppercase drop-shadow-md">
+                  {t('globalLottery')}
+                </h2>
+                <p className="text-amber-400/90 text-[10px] mt-1 uppercase tracking-widest font-black">
+                  {isForgotMode ? t('secureResetPortal') : t('gatewayLuxury')}
+                </p>
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    setErrorMsg('');
-                    setSuccessMsg('');
-                    setIsForgotMode(false);
-                  }}
-                  className="flex-1 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300 py-3.5 px-4 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all text-center cursor-pointer bg-white dark:bg-[#151c2a]"
-                >
-                  {t('backToSignIn')}
-                </button>
-                <button 
-                  type="submit" 
-                  style={{ backgroundColor: siteConfig.primaryHex || '#FF003C' }}
-                  className="flex-1 font-black uppercase tracking-wider text-white py-3.5 px-4 rounded-xl shadow-md hover:brightness-105 transition-all text-xs cursor-pointer active:scale-[0.98]"
-                >
-                  {t('sendResetLink')}
-                </button>
-              </div>
-            </form>
-          )}
+              {/* Divider line */}
+              <div className="border-b border-amber-500/20 mx-6 sm:mx-8" />
 
+              {/* Form Body */}
+              <div className="p-6 sm:p-8 pt-6 font-roboto-sans flex-1">
+                {errorMsg && (
+                  <div className="mb-5 p-4 rounded-2xl bg-red-950/40 border border-red-500/50 text-red-300 text-xs font-semibold leading-relaxed shadow-inner">
+                    ⚠️ {errorMsg}
+                  </div>
+                )}
+
+                {successMsg && (
+                  <div className="mb-5 p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-300 text-xs font-semibold leading-relaxed shadow-inner">
+                    ✅ {successMsg}
+                  </div>
+                )}
+
+                {!isForgotMode ? (
+                  <form onSubmit={handleLogin} className="space-y-5">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-amber-400/90 mb-1.5">
+                        {t('emailAddress')}
+                      </label>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-amber-400 font-black text-sm">@</span>
+                        <input 
+                          type="email" 
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="name@email.com"
+                          className="pl-11 bg-zinc-950/90 text-white placeholder-zinc-500 block w-full border border-amber-500/30 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none transition-all font-semibold shadow-inner" 
+                          required 
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-amber-400/90">
+                          {t('password')}
+                        </label>
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setErrorMsg('');
+                            setSuccessMsg('');
+                            setForgotEmail(email);
+                            setIsForgotMode(true);
+                          }}
+                          className="text-[10px] font-black text-amber-400 hover:text-amber-300 tracking-wide uppercase cursor-pointer transition-colors"
+                        >
+                          {t('forgotPassword')}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-amber-400">
+                          <Key className="w-4 h-4 stroke-[2.5]" />
+                        </span>
+                        <input 
+                          type={showPassword ? "text" : "password"} 
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="pl-11 pr-10 bg-zinc-950/90 text-white placeholder-zinc-500 block w-full border border-amber-500/30 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none transition-all font-mono shadow-inner" 
+                          required 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-amber-300 focus:outline-none cursor-pointer"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Submit Button with High Roller Casino Gradient */}
+                    <button 
+                      type="submit" 
+                      disabled={loading}
+                      className={`w-full font-black uppercase tracking-widest text-zinc-950 py-4 px-6 rounded-xl shadow-[0_10px_25px_rgba(225,188,74,0.35)] bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:brightness-110 ${loading ? 'opacity-70' : ''} transition-all flex items-center justify-center gap-2 mt-4 text-xs cursor-pointer active:scale-[0.98] border border-amber-300`}
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-zinc-900/20 border-t-zinc-900 rounded-full animate-spin" />
+                          {language === 'en' ? 'AUTHENTICATING...' : 'যাচাই করা হচ্ছে...'}
+                        </>
+                      ) : (
+                        <>
+                          {t('signInToDashboard')} <ArrowRight className="w-4.5 h-4.5 stroke-[3]" />
+                        </>
+                      )}
+                    </button>
+
+                    <p className="mt-6 text-xs text-center text-zinc-400 font-bold uppercase tracking-wider">
+                      {t('newToLottery')}{' '}
+                      <Link to="/register" className="text-amber-400 font-black hover:underline hover:text-yellow-300 ml-1">
+                        {t('registerAccount')}
+                      </Link>
+                    </p>
+                  </form>
+                ) : (
+                  <form onSubmit={handleForgotPassword} className="space-y-5">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-amber-400/90 mb-1.5">
+                        {t('emailAddress')}
+                      </label>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-amber-400 font-black text-sm">@</span>
+                        <input 
+                          type="email" 
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          placeholder="name@email.com"
+                          className="pl-11 bg-zinc-950/90 text-white placeholder-zinc-500 block w-full border border-amber-500/30 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none transition-all font-semibold shadow-inner" 
+                          required 
+                        />
+                      </div>
+                      <span className="text-[10px] text-zinc-400 mt-2 block font-medium leading-relaxed">
+                        {t('resetInstructions')}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          setErrorMsg('');
+                          setSuccessMsg('');
+                          setIsForgotMode(false);
+                        }}
+                        className="flex-1 border border-zinc-700 text-zinc-300 py-3.5 px-4 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-zinc-800 transition-all text-center cursor-pointer bg-zinc-900"
+                      >
+                        {t('backToSignIn')}
+                      </button>
+                      <button 
+                        type="submit" 
+                        className="flex-1 font-black uppercase tracking-wider text-zinc-950 bg-gradient-to-r from-amber-400 to-yellow-300 py-3.5 px-4 rounded-xl shadow-md hover:brightness-110 transition-all text-xs cursor-pointer active:scale-[0.98]"
+                      >
+                        {t('sendResetLink')}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+              </div>
+            </div>
+
+          </div>
         </div>
-      </div>
       ) : (
-        /* Poster View Mode when Login form is closed */
-        <div className="relative z-10 flex flex-col items-center justify-center text-center max-w-md w-full mx-auto px-4 animate-in fade-in zoom-in-95 duration-300">
-          <div className="bg-zinc-950/85 backdrop-blur-2xl p-8 sm:p-10 rounded-[2.5rem] border border-white/20 shadow-[0_30px_70px_rgba(0,0,0,0.9)] flex flex-col items-center w-full relative overflow-hidden">
-            {/* Top Glow Accent */}
-            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-24 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+        /* Full Screen Poster View Mode when Login form is toggled closed */
+        <div className="relative z-10 flex flex-col items-center justify-center text-center max-w-lg w-full mx-auto px-4 animate-in fade-in zoom-in-95 duration-300">
+          <div className="bg-[#0a0f1d]/90 backdrop-blur-2xl p-8 sm:p-10 rounded-[2.5rem] border-2 border-amber-500/50 shadow-[0_30px_70px_rgba(0,0,0,0.95)] flex flex-col items-center w-full relative overflow-hidden">
             
-            <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mb-4 relative drop-shadow-[0_12px_25px_rgba(0,0,0,0.8)]">
+            {/* Top Glow Accent */}
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-64 h-28 bg-amber-500/25 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mb-4 relative drop-shadow-[0_12px_25px_rgba(225,188,74,0.4)]">
               <Smart3DLogo 
                 customUrl={siteConfig.logoImageUrl ? resolveBannerImage(siteConfig.logoImageUrl) : undefined}
                 className="w-full h-full object-contain transform hover:scale-105 transition-transform"
@@ -517,16 +545,15 @@ export function Login() {
             <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-[0.18em] text-white mb-2 drop-shadow-md">
               {t('globalLottery')}
             </h2>
-            <p className="text-xs text-amber-400 font-black uppercase tracking-widest mb-8">
-              {language === 'en' ? 'Full Poster View Mode Active' : 'পোস্টার ভিউ মোড সক্রিয়'}
+            <p className="text-xs text-amber-400 font-black uppercase tracking-widest mb-6">
+              {language === 'en' ? 'Full Lottery Poster Mode Active' : 'পোস্টার ভিউ মোড সক্রিয়'}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full">
               <button
                 type="button"
                 onClick={() => setIsFormVisible(true)}
-                className="flex-1 py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-white text-xs shadow-xl hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-white/20"
-                style={{ backgroundColor: siteConfig.primaryHex || '#FF003C' }}
+                className="flex-1 py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-zinc-950 text-xs shadow-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-amber-300"
               >
                 <User className="w-4 h-4 stroke-[2.5]" />
                 {t('signInToDashboard')}
@@ -535,7 +562,7 @@ export function Login() {
               <button
                 type="button"
                 onClick={() => navigate('/')}
-                className="py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-zinc-300 text-xs bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700 transition-all cursor-pointer active:scale-95 shadow-lg"
+                className="py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-zinc-300 text-xs bg-zinc-800/90 hover:bg-zinc-700/90 border border-zinc-700 transition-all cursor-pointer active:scale-95 shadow-lg"
               >
                 {language === 'en' ? 'Back to Home' : 'হোমে ফিরে যান'}
               </button>

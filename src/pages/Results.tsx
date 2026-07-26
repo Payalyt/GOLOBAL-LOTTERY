@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Calendar, ArrowLeft, ChevronLeft, ChevronRight, Trophy, Sparkles } from 'lucide-react';
 import { useAuth, getInitialGames } from '../context/AuthContext';
+import { resolveBannerImage } from '../components/Hero';
 
 interface GameConfig {
   maxSelections: number;
@@ -333,6 +334,23 @@ export function Results() {
   const latestDraw = currentDrawList[0] || { date: 'No Draw Yet', numbers: [], totalWinners: '0 Players', totalPaid: '$0.00' };
   const pastDraws = currentDrawList.slice(1);
 
+  const hasCustomImage = activeGame.cardBgType === 'image' && Boolean(activeGame.cardBgImage);
+  let cardBgStyle: React.CSSProperties = {};
+  if (hasCustomImage) {
+    cardBgStyle = {
+      backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0) 65%, rgba(0, 0, 0, 0.8) 100%), url(${resolveBannerImage(activeGame.cardBgImage!)})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    };
+  } else if (activeGame.cardBgType === 'gradient' && activeGame.cardBgGradient) {
+    cardBgStyle = {
+      background: activeGame.cardBgGradient,
+    };
+  } else if (siteConfig?.allGamesSolidBg || activeGame.isSolidStyle || activeGame.cardBgType === 'color') {
+    const activeBgHex = siteConfig?.allGamesSolidBg ? (siteConfig?.allGamesSolidHex || '#1C2C80') : (activeGame.bgHex || siteConfig?.primaryHex || '#E1BC4A');
+    cardBgStyle = { backgroundColor: activeBgHex };
+  }
+
   return (
     <div className="bg-[#FAF9FC] dark:bg-zinc-950 min-h-screen text-zinc-900 dark:text-zinc-100 font-sans pb-16">
       
@@ -373,89 +391,93 @@ export function Results() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* LEFT SIDEBAR COLUMN: Styled Brand Card */}
-          <div className="lg:col-span-3">
-            <div className={`rounded-[28px] bg-gradient-to-br ${bannerGradient} p-8 text-white shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[520px]`}>
+          <div className="lg:col-span-4">
+            <div 
+              className={`rounded-[28px] ${!cardBgStyle.backgroundImage && !cardBgStyle.background && !cardBgStyle.backgroundColor ? `bg-gradient-to-br ${bannerGradient}` : ''} p-5 sm:p-6 text-white shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[480px] sm:min-h-[520px] w-full`}
+              style={cardBgStyle}
+            >
               
               {/* Decorative radial gradients inside */}
-              <div className="absolute -top-10 -right-10 w-44 h-44 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-              <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-black/10 rounded-full blur-2xl pointer-events-none" />
+              {!hasCustomImage && (
+                <>
+                  <div className="absolute -top-10 -right-10 w-44 h-44 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+                  <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-black/10 rounded-full blur-2xl pointer-events-none" />
+                </>
+              )}
 
-              {/* Day & Logo area */}
-              <div className="space-y-5 relative z-10">
-                <span className="text-zinc-205/90 text-xs font-black tracking-widest uppercase block">
+              {/* Top Header Row Bar: Draw Time & Game Name Pill */}
+              <div className="flex justify-between items-center w-full z-10 relative">
+                <span className="text-zinc-200/90 text-[10px] sm:text-xs font-black tracking-widest uppercase bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/15 shadow-sm">
                   {activeGame.drawTime} DRAW
                 </span>
 
-                {/* Stylized Logo: Beautiful star/trophy symbol, no container background box/shadow */}
-                <div className="flex items-center gap-2 select-none">
-                  <Trophy className="w-6 h-6 text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.7)] shrink-0 animate-bounce" style={{ animationDuration: '3s' }} />
-                  <div className="flex flex-col">
-                    <span className="text-xl font-black tracking-tighter uppercase font-sans text-white leading-none flex items-center gap-1">
-                      {activeGame.name}
-                      <Sparkles className="w-3.5 h-3.5 text-yellow-300 inline" />
-                    </span>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-white/60 mt-0.5">
-                      OFFICIAL DRAW
-                    </span>
+                <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/15 shadow-sm">
+                  <Trophy className="w-3.5 h-3.5 text-yellow-300 shrink-0" />
+                  <span className="text-[10px] sm:text-xs font-black tracking-wider uppercase text-white">
+                    {activeGame.name}
+                  </span>
+                </div>
+              </div>
+
+              {/* Prize Value Info: Display centered text for standard cards; leave middle 100% open for artwork cards */}
+              {!hasCustomImage ? (
+                <div className="space-y-1 my-8 relative z-10 text-center">
+                  <span className="text-[10px] text-zinc-350 font-black tracking-widest uppercase block">
+                    GRAND PRIZE
+                  </span>
+                  <div className="text-3xl sm:text-4xl font-extrabold font-sans tracking-tight text-white leading-tight">
+                    {activeGame.prize}
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex-1 my-2 pointer-events-none" />
+              )}
 
-              {/* Prize Value Info */}
-              <div className="space-y-1 my-8 relative z-10">
-                <span className="text-[10px] text-zinc-350 font-black tracking-widest uppercase block">
-                  GRAND PRIZE
-                </span>
-                <div className="text-3xl sm:text-4xl font-extrabold font-sans tracking-tight text-white leading-tight">
-                  {activeGame.prize}
-                </div>
-              </div>
-
-              {/* Next Draw Countdown */}
-              <div className="space-y-5 pt-4 border-t border-white/10 relative z-10">
-                <span className="text-[10px] text-zinc-200/90 font-black tracking-widest uppercase block">
+              {/* Next Draw Countdown Panel */}
+              <div className="space-y-3 pt-3 relative z-10 bg-black/50 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-white/15 shadow-2xl">
+                <span className="text-[9.5px] text-amber-300 font-black tracking-widest uppercase block text-center">
                   NEXT DRAW
                 </span>
 
                 {/* Digital Clock Boxed Squares Layout */}
-                <div className="flex items-center gap-2 select-none">
+                <div className="flex items-center justify-between gap-1 select-none">
                   
                   {/* Days */}
                   <div className="flex flex-col items-center">
-                    <div className="bg-white/10 border border-white/20 w-11 h-13 rounded-xl flex items-center justify-center font-sans font-black text-lg text-white shadow-inner">
+                    <div className="bg-white/10 border border-white/20 w-9 h-11 sm:w-10 sm:h-12 rounded-xl flex items-center justify-center font-sans font-black text-sm sm:text-base text-white shadow-inner">
                       {String(timeRemaining.days).padStart(2, '0')}
                     </div>
-                    <span className="text-[8.5px] font-bold text-zinc-300 tracking-wider mt-1.5 uppercase">DAYS</span>
+                    <span className="text-[7.5px] font-bold text-zinc-300 tracking-wider mt-1 uppercase">DAYS</span>
                   </div>
 
-                  <span className="text-white/40 font-bold self-start mt-3 animate-pulse shrink-0">:</span>
+                  <span className="text-white/40 font-bold self-start mt-2 animate-pulse shrink-0">:</span>
 
                   {/* Hours */}
                   <div className="flex flex-col items-center">
-                    <div className="bg-white/10 border border-white/20 w-11 h-13 rounded-xl flex items-center justify-center font-sans font-black text-lg text-white shadow-inner">
+                    <div className="bg-white/10 border border-white/20 w-9 h-11 sm:w-10 sm:h-12 rounded-xl flex items-center justify-center font-sans font-black text-sm sm:text-base text-white shadow-inner">
                       {String(timeRemaining.hours).padStart(2, '0')}
                     </div>
-                    <span className="text-[8.5px] font-bold text-zinc-300 tracking-wider mt-1.5 uppercase">HOURS</span>
+                    <span className="text-[7.5px] font-bold text-zinc-300 tracking-wider mt-1 uppercase">HOURS</span>
                   </div>
 
-                  <span className="text-white/40 font-bold self-start mt-3 animate-pulse shrink-0">:</span>
+                  <span className="text-white/40 font-bold self-start mt-2 animate-pulse shrink-0">:</span>
 
                   {/* Minutes */}
                   <div className="flex flex-col items-center">
-                    <div className="bg-white/10 border border-white/20 w-11 h-13 rounded-xl flex items-center justify-center font-sans font-black text-lg text-white shadow-inner">
+                    <div className="bg-white/10 border border-white/20 w-9 h-11 sm:w-10 sm:h-12 rounded-xl flex items-center justify-center font-sans font-black text-sm sm:text-base text-white shadow-inner">
                       {String(timeRemaining.mins).padStart(2, '0')}
                     </div>
-                    <span className="text-[8.5px] font-bold text-zinc-300 tracking-wider mt-1.5 uppercase">MINS</span>
+                    <span className="text-[7.5px] font-bold text-zinc-300 tracking-wider mt-1 uppercase">MINS</span>
                   </div>
 
-                  <span className="text-white/40 font-bold self-start mt-3 animate-pulse shrink-0">:</span>
+                  <span className="text-white/40 font-bold self-start mt-2 animate-pulse shrink-0">:</span>
 
                   {/* Seconds */}
                   <div className="flex flex-col items-center">
-                    <div className="bg-white/10 border border-white/20 w-11 h-13 rounded-xl flex items-center justify-center font-sans font-black text-lg text-white shadow-inner">
+                    <div className="bg-white/10 border border-white/20 w-9 h-11 sm:w-10 sm:h-12 rounded-xl flex items-center justify-center font-sans font-black text-sm sm:text-base text-white shadow-inner">
                       {String(timeRemaining.secs).padStart(2, '0')}
                     </div>
-                    <span className="text-[8.5px] font-bold text-zinc-300 tracking-wider mt-1.5 uppercase">SECS</span>
+                    <span className="text-[7.5px] font-bold text-zinc-300 tracking-wider mt-1 uppercase">SECS</span>
                   </div>
 
                 </div>
@@ -463,7 +485,7 @@ export function Results() {
                 {/* PLAY NOW BUTTON */}
                 <Link
                   to={`/games/${activeGame.name}`}
-                  className="bg-[#0f0d24] dark:bg-zinc-950 text-white hover:bg-[#1a1738] dark:hover:bg-zinc-900 tracking-widest uppercase text-[10.5px] font-black py-4 px-6 rounded-full w-full block text-center shadow-md transition-transform active:scale-95 duration-100 mt-6 border border-transparent dark:border-zinc-800"
+                  className="bg-amber-400 hover:bg-amber-300 text-zinc-950 tracking-widest uppercase text-[10.5px] font-black py-3 px-4 rounded-full w-full block text-center shadow-lg transition-transform active:scale-95 duration-100 mt-2 border border-amber-300/50"
                 >
                   PLAY FOR ${activeGame.price}
                 </Link>
@@ -473,7 +495,7 @@ export function Results() {
           </div>
 
           {/* RIGHT MAIN DRAW RESULTS LISTING PANEL: Matches Mockup exactly */}
-          <div className="lg:col-span-9 space-y-8">
+          <div className="lg:col-span-8 space-y-8">
             
             {/* Back to Play anchor link */}
             <div className="flex justify-start">

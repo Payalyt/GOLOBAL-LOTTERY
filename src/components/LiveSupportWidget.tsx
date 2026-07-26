@@ -1,8 +1,38 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { formatSupportLink, getDisplaySupportLabel } from '../utils/support';
-import { MessageSquare, PhoneCall, Send, Mail, Headphones, X, ExternalLink, Sparkles, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Headphones, X, ExternalLink, ShieldCheck, CheckCircle2, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+const WhatsappLogo = () => (
+  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+    <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.762.459 3.48 1.332 5.001l-1.416 5.166 5.289-1.385a9.972 9.972 0 004.78 1.222h.005c5.507 0 9.99-4.478 9.99-9.985 0-2.667-1.039-5.174-2.928-7.062a9.92 9.92 0 00-7.062-2.941zm5.82 14.331c-.244.685-1.42 1.309-1.959 1.393-.501.077-1.156.111-3.328-.787-2.781-1.149-4.571-3.974-4.71-4.159-.138-.184-1.127-1.498-1.127-2.858 0-1.36.713-2.028.968-2.302.254-.275.553-.344.737-.344.184 0 .368.001.529.009.171.008.401-.065.627.478.232.558.788 1.921.857 2.062.069.141.115.306.023.491-.092.185-.138.306-.277.472-.138.165-.292.368-.417.493-.138.139-.283.291-.122.567.161.276.717 1.182 1.541 1.916 1.061.944 1.956 1.236 2.232 1.374.276.138.438.115.6-.069.162-.184.692-.806.876-1.082.184-.276.368-.23.622-.138.254.092 1.611.759 1.888.898.276.138.461.207.53.322.069.115.069.668-.175 1.353z"/>
+  </svg>
+);
+
+const TelegramLogo = () => (
+  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.25-5.54 3.67-.52.36-1 .53-1.42.52-.47-.01-1.37-.26-2.03-.48-.82-.27-1.47-.42-1.42-.88.03-.24.38-.49 1.07-.75 4.19-1.82 6.98-3.02 8.38-3.6 3.99-1.65 4.82-1.94 5.36-1.95.12 0 .38.03.55.17.14.12.18.28.2.42-.01.06.01.24 0 .38z"/>
+  </svg>
+);
+
+const ImoLogo = () => (
+  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+  </svg>
+);
+
+const EmailLogo = () => (
+  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+  </svg>
+);
+
+const LiveSupportLogo = () => (
+  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+    <path d="M12 1a9 9 0 0 0-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2a7 7 0 0 1 14 0v2h-4v8h3c1.66 0 3-1.34 3-3v-7a9 9 0 0 0-9-9z"/>
+  </svg>
+);
 
 export function LiveSupportWidget() {
   const { siteConfig, language } = useAuth();
@@ -33,8 +63,20 @@ export function LiveSupportWidget() {
   const telegramLabel = getDisplaySupportLabel('telegram', siteConfig.footerTelegram || siteConfig.agentTelegramLink);
   const imoLabel = getDisplaySupportLabel('imo', siteConfig.footerImo || siteConfig.agentImoLink);
 
+  const handleToggleSupport = () => {
+    if ((window as any).Tawk_API) {
+      if (typeof (window as any).Tawk_API.showWidget === 'function') {
+        (window as any).Tawk_API.showWidget();
+      }
+      if (typeof (window as any).Tawk_API.maximize === 'function') {
+        (window as any).Tawk_API.maximize();
+        return;
+      }
+    }
+    setIsOpen(prev => !prev);
+  };
+
   const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
     if (!inputMessage.trim()) return;
 
     const userMsg = inputMessage.trim();
@@ -127,115 +169,43 @@ export function LiveSupportWidget() {
 
             {/* Tab Body */}
             {activeTab === 'quick' ? (
-              <div className="p-4 space-y-2.5 overflow-y-auto max-h-[420px]">
-                {/* WhatsApp */}
+              <div className="p-4 space-y-3 overflow-y-auto max-h-[420px]">
+                {/* Live Support Desk (Tawk.to) */}
                 <a
-                  href={whatsappLink}
+                  href={liveChatTarget || '#'}
+                  onClick={(e) => {
+                    if ((window as any).Tawk_API) {
+                      if (typeof (window as any).Tawk_API.showWidget === 'function') {
+                        (window as any).Tawk_API.showWidget();
+                      }
+                      if (typeof (window as any).Tawk_API.maximize === 'function') {
+                        e.preventDefault();
+                        (window as any).Tawk_API.maximize();
+                        setIsOpen(false);
+                      }
+                    }
+                  }}
                   target="_blank"
                   rel="noreferrer"
-                  className="group flex items-center justify-between p-3 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all text-emerald-950 dark:text-emerald-300"
+                  className="group flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 border border-purple-400/40 transition-all text-white shadow-lg cursor-pointer"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-                      <MessageSquare className="w-5 h-5 fill-current" />
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shadow-md border border-white/30 group-hover:scale-105 transition-transform shrink-0">
+                      <LiveSupportLogo />
                     </div>
                     <div>
-                      <div className="text-xs font-extrabold uppercase tracking-wide">WhatsApp Support</div>
-                      <div className="text-[11px] opacity-80 font-medium">
-                        {language === 'bn' ? 'সরাসরি হোয়াটসঅ্যাপে চ্যাট করুন' : 'Tap to open WhatsApp'}
+                      <div className="text-sm font-black uppercase tracking-wide text-white">24/7 TAWK LIVE CHAT</div>
+                      <div className="text-[11px] font-extrabold text-purple-200 mt-0.5">
+                        {language === 'bn' ? 'সরাসরি এজেন্টদের সাথে চ্যাট করতে ক্লিক করুন' : 'Tap for Instant 1-on-1 Support Agent'}
                       </div>
                     </div>
                   </div>
-                  <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                  <ExternalLink className="w-5 h-5 text-white/80 group-hover:translate-x-0.5 transition-transform shrink-0" />
                 </a>
 
-                {/* Telegram */}
-                <a
-                  href={telegramLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group flex items-center justify-between p-3 rounded-2xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 transition-all text-sky-950 dark:text-sky-300"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform">
-                      <Send className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-extrabold uppercase tracking-wide">Telegram Channel</div>
-                      <div className="text-[11px] opacity-80 font-medium">
-                        {language === 'bn' ? 'অফিসিয়াল টেলিগ্রাম চ্যানেলে যোগ দিন' : 'Tap to open Telegram'}
-                      </div>
-                    </div>
-                  </div>
-                  <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </a>
-
-                {/* IMO */}
-                <a
-                  href={imoLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group flex items-center justify-between p-3 rounded-2xl bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 transition-all text-teal-950 dark:text-teal-300"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-teal-500 text-white flex items-center justify-center shadow-md shadow-teal-500/20 group-hover:scale-105 transition-transform">
-                      <PhoneCall className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-extrabold uppercase tracking-wide">IMO Live Chat</div>
-                      <div className="text-[11px] opacity-80 font-medium">
-                        {language === 'bn' ? 'ইমোতে সরাসরি চ্যাট করুন' : 'Tap to open IMO app'}
-                      </div>
-                    </div>
-                  </div>
-                  <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </a>
-
-                {/* Email Support */}
-                <a
-                  href={emailLink}
-                  className="group flex items-center justify-between p-3 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-all text-amber-950 dark:text-amber-300"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform">
-                      <Mail className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-extrabold uppercase tracking-wide">Email Support</div>
-                      <div className="text-[11px] opacity-80 font-medium">
-                        {language === 'bn' ? 'অফিসিয়াল কাস্টমার ইমেইল' : 'Official Customer Service Email'}
-                      </div>
-                    </div>
-                  </div>
-                  <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </a>
-
-                {/* Live Chat External Link if configured */}
-                {liveChatTarget && liveChatTarget.startsWith('http') && (
-                  <a
-                    href={liveChatTarget}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group flex items-center justify-between p-3 rounded-2xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 transition-all text-purple-950 dark:text-purple-300"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20 group-hover:scale-105 transition-transform">
-                        <Sparkles className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-extrabold uppercase tracking-wide">Live Support Desk</div>
-                        <div className="text-[11px] opacity-80 font-medium">
-                          {language === 'bn' ? '২৪/৭ সরাসরি সাপোর্ট পোর্টাল' : '24/7 Agent Live Chat Desk'}
-                        </div>
-                      </div>
-                    </div>
-                    <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                  </a>
-                )}
-
-                <div className="pt-2 text-center text-[10px] text-gray-400 dark:text-zinc-500 font-medium flex items-center justify-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                  {language === 'bn' ? 'অফিসিয়াল নিরাপদ সাপোর্ট সার্ভিস' : 'Official Verified Support Services'}
+                <div className="pt-2 text-center text-[11px] text-gray-500 dark:text-zinc-400 font-bold flex items-center justify-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  {language === 'bn' ? 'অফিসিয়াল ২৪/৭ কাস্টমার চ্যাট সাপোর্ট' : 'Official 24/7 Live Support Chat'}
                 </div>
               </div>
             ) : (
@@ -288,7 +258,7 @@ export function LiveSupportWidget() {
 
       {/* Floating Toggle Button */}
       <button
-        onClick={() => setIsOpen(prev => !prev)}
+        onClick={handleToggleSupport}
         className="group relative flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-black text-xs rounded-full shadow-[0_10px_25px_rgba(225,188,74,0.4)] border border-amber-300/40 transition-all transform hover:scale-105 active:scale-95"
       >
         <span className="relative flex h-3 w-3">
